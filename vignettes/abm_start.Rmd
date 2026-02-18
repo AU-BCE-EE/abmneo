@@ -1,5 +1,5 @@
 ---
-title: 'Demo of new simple1 version'
+title: 'Demo of `abm()` function'
 output: pdf_document
 author: Sasha D. Hafner
 date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"

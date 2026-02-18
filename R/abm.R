@@ -1,8 +1,8 @@
 
 abm <- function(
-  days = 365,                                # Number of days to run
-  delta_t = 1,                               # Time step for output
-  times = NULL,                              # Optional vector of times for output
+  days = 365,
+  delta_t = 1,
+  times = NULL,
   mng_pars = NULL,
   man_pars = NULL,
   init_pars = list(conc_init =  c(man_pars$comp_fresh, man_pars$VFA_fresh)),
@@ -11,19 +11,22 @@ abm <- function(
   chem_pars = NULL,
   inhib_pars = NULL,
   mt_pars = NULL,
-  ctrl_pars = list(respir = TRUE,
-                   pH_inhib = FALSE, 
-                   approx_method = 'early',
-                   par_key = '\\.',
-                   rates_calc = 'instant'),
+  ctrl_pars = list(
+    respir = TRUE,
+    pH_inhib = FALSE, 
+    approx_method = 'early',
+    par_key = '\\.',
+    rates_calc = 'instant'
+  ),
   var_pars = list(var = NULL),
   add_pars = NULL,
   pars = NULL,
-  startup = 0,                                # Number of times complete simulation should be run before returning results
-  starting = NULL,                            # Output from previous simulation to be starting condition for new one
-  warn = TRUE) {
+  startup = 0,
+  starting = NULL,
+  warn = TRUE
+) {
 
-  # Sort out parameters, package all parameters into a single list pars, add some others
+  # Sort out parameters, package all parameters into a single pars list, add some others
   # Includes sorting out var_pars
   # All these steps are skipped if pars is provided
   if (is.null(pars)) {
@@ -60,8 +63,8 @@ abm <- function(
   # Create initial state variable vector
   y <- makeInitState(pars) 
 
+  # Option 1: Fixed slurry production rate, regular emptying schedule
   if (is.null(pars$var)) {
-    # Option 1: Fixed slurry production rate, regular emptying schedule
     # Temperature-dependent par values
     pars <- calcTempPars(pars, y)
     dat <- abmReg(days = days, 

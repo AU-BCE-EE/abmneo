@@ -1,9 +1,10 @@
 abmReg <- function(
-      days, 
-			delta_t, 
-			times_regular, 
-			y, 
-			pars) { 
+  days, 
+  delta_t, 
+  times_regular, 
+  y, 
+  pars
+) { 
 
   # Figure out timing
   intervals <- getRegTimes(pars, days)

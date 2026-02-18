@@ -1,9 +1,0 @@
-
-
-processing file: 01_slurry_mass.Rmd
-output file: 01_slurry_mass.knit.md
-
-
-Output created: 01_slurry_mass.pdf
-Warning message:
-In sink() : no sink to remove

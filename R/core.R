@@ -149,7 +149,7 @@ abm_core <- function(
     pars <- update_var_pars(series, pars, y, i - 1)
 
     # Calculate log Ka for speciation
-    pars <- calcKa(pars)
+    pars <- calc_ka(pars)
     
     # Create default y.eff vector with zeros because washing could occur, and dat needs columns
     y.eff <- 0 * empty_store(y)$eff

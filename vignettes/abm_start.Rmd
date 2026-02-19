@@ -1,5 +1,5 @@
 ---
-title: 'Demo of `abm()` function'
+title: 'Demo of `abm()` function in abmneo'
 output: pdf_document
 author: Sasha D. Hafner
 date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
@@ -8,40 +8,15 @@ date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
 # Overview
 This demo shows:
 
-1. basic usage,
-2. variable substrates,
-3. time-variable inputs,
-4. speciation (proton-transfer reactions),
-5. inhibition,
-6. volatilization, and
-7. COD balance,
-
 # Prep
 
 ```{r}
 devtools::load_all()
 ```
 
-# 
-The simplest usage is with constant slurry production rate and a fixed schedule.
+# Input parameters
+
 We need to set some parameters, first management parameters.
-
-Mass dat for structure only has time and slurry_mass.
-
-```{r}
-mass_series <- data.frame(
-  time = c(0, 1, 10, 15, 30), 
-  slurry_mass = c(1000, 7000, 2000, 1500, 3000)
-)
-
-structure = list(
-  type = 'series',
-  dat = mass_series
-)
-
-plot(slurry_mass ~ time, data = structure$dat, type = 'o')
-```
-
 ```{r}
 temp_series <- data.frame(
   time = c(0, 1, 10, 15, 30), 
@@ -50,21 +25,9 @@ temp_series <- data.frame(
 var_pars <- list(var = temp_series)
 ```
 
-Now pared-down mng_pars
+Now pared-down mng_pars, only those that apply to both types ().
 
 ```{r}
-#mass_structure = list(
-#  type = 'series',
-#  data = 
-#
-#slurry_prod_rate = 10000, 
-#                 slurry_mass = 1000,     
-#                 resid_depth = 0.1,      
-#                 empty_int = 100,          
-#                 wash_water = 0,            
-#                 wash_int = NA,
-#                 rest_d = 0,
-
 mng_pars <- list(storage_depth = 2,     
                  area = 100,              
                  temp_C = 20,
@@ -95,7 +58,7 @@ grp_pars <- list(grps = c('m0', 'm1', 'm2','sr1'),
                  xa_init = c(default = 0.05),
                  dd_rate = c(default = 0.02),
                  ksv = c(default = 1, sr1 = 0.5),
-                 kss = c(sr1 = 0.5),
+                 kss = c(default = 0.5),
                  qhat_opt = c(m0 = 1, m1 = 1, m2 = 2, sr1 = 9),
                  T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 44),
                  T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),
@@ -112,6 +75,108 @@ The name should be `CH3COOH`.
 man_pars <- list(VFA_fresh = c(CH3COOH = 2), pH = 7, dens = 1000)
 chem_pars <- list(COD_conv = c(CH4 = 1/0.2507))
 ```
+
+# 1. Slurry mass versus production rate inputs
+
+Mass dat for structure only has time and slurry_mass.
+
+```{r}
+mass_series <- data.frame(
+  time = c(0, 1, 10, 15, 30), 
+  slurry_mass = c(1000, 7000, 2000, 1500, 3000)
+)
+
+structure <- list(
+  type = 'series',
+  dat = mass_series
+)
+
+plot(slurry_mass ~ time, data = structure$dat, type = 'o')
+```
+
+Note: not `var_pars` needed.
+
+```{r}
+devtools::load_all()
+out1 <- abm(
+  50,
+  structure = structure,
+  mng_pars = mng_pars,
+  man_pars = man_pars,
+  grp_pars = grp_pars,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars
+)
+```
+Q
+
+```{r}
+plot(slurry_mass ~ time, data = out1, type = 'l')
+plot(CH4_emis_rate ~ time, data = out1, type = 'l')
+plot(CH4_emis_cum ~ time, data = out1, type = 'l')
+```
+
+With regular inputs
+
+```{r}
+structure <- list(
+  type = 'regular',
+  slurry_prod_rate = 10000, 
+  slurry_mass = 1000,     
+  resid_depth = 0.1,      
+  empty_int = 10,          
+  wash_water = 100,            
+  wash_int = NA,
+  rest_d = 1
+)
+```
+
+```{r}
+devtools::load_all()
+out2 <- abm(
+  50,
+  structure = structure,
+  mng_pars = mng_pars,
+  man_pars = man_pars,
+  grp_pars = grp_pars,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars
+)
+```
+Q
+
+```{r}
+out2$slurry_mass
+out2$slurry_mass_eff
+```
+
+```{r}
+plot(slurry_mass ~ time, data = out2, type = 'l')
+plot(CH4_emis_rate ~ time, data = out2, type = 'l')
+plot(CH4_emis_cum ~ time, data = out2, type = 'l')
+```
+
+
+
+
+
+
+
+
+ut
+
+#mass_structure = list(
+#  type = 'series',
+#  data = 
+#
+#slurry_prod_rate = 10000, 
+#                 slurry_mass = 1000,     
+#                 resid_depth = 0.1,      
+#                 empty_int = 100,          
+#                 wash_water = 0,            
+#                 wash_int = NA,
+#                 rest_d = 0,
+
 
 # 3. Time-variable inputs part 1
 The `abm()` function can handle variability over time in any inputs now.

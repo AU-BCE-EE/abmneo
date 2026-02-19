@@ -51,27 +51,93 @@ make_series <- function(
 
   # If inputs are for regular schedule, create var data frame
   if (structure$type == 'regular') {
-    stop('Yo! Ya gotta add code for making var out of regular!')
-  }
 
-  # Extract dat
-  dat <- structure$dat
+    # If empty interval is set to 0 or NA the storage is never emptied. 
+    empty_int <- structure$empty_int
+    if(empty_int == 0 || is.na(empty_int)) {
+      empty_int <- days + 1
+    }
+    
+    # Figure out time intervals for loop
+    if (!is.na(structure$wash_int) && structure$wash_water > 0) {  
+      wash_int <- structure$wash_int
+      rest_d <- structure$rest_d
+    } else {
+      wash_int <- Inf
+      rest_d <- 0
+    }
+    wash_rest_int <- wash_int + rest_d
+
+    # Continue sorting out intervals
+    i <- 0
+    t_int <- 0
+    t_nowash <- 0
+    wash <- FALSE
+
+    # Each interval is either 1) the fixed empty_int or if time between washings would be exceeded, 
+    # 2) time to get to a washing event, or 3) time until end of simulation
+    while (sum(t_int, wash * rest_d) < days) {
+      i <- i + 1
+      t_int[i] <- min(wash_int - t_nowash, empty_int, days - sum(t_int, wash * rest_d))
+      if (t_int[i] == wash_int - t_nowash) {
+        wash[i] <- TRUE
+        t_nowash <- 0
+      } else {
+        wash[i] <- FALSE
+        t_nowash <- t_nowash + t_int[i]
+      }
+    }
+
+    # Number of empty or wash intervals
+    n_int <- length(t_int)
+
+    # Create dat data frame
+    resid_mass <- structure$resid_depth * pars$area * pars$dens
+    dat <- data.frame(
+      time = cumsum(c(0, t_int)), 
+      slurry_mass = c(
+        structure$slurry_mass,
+	structure$slurry_prod_rate * t_int + resid_mass
+      ),
+      resid_mass = resid_mass,
+      removal = TRUE
+    )
+
+    # No final removal
+    dat[nrow(dat), 'removal'] <- FALSE
+
+    dat$slurry_prod_rate <- structure$slurry_prod_rate
+
+    return(dat)
+
+    # NTS: Need to return here because calc_prod_rem() will not work for this regular stuff
+    # NTS: Need to get time checks and var_pars though. . 
+    # NTS: Separte?
+
+  } else {
+    # Extract dat
+    dat <- structure$dat
+  }
 
   # Add missing time 0
   if (dat[1, 'time'] > 0) {
     dat <- rbind(c(0, dat$slurry_mass[1]), dat)
   }
 
-  # Check for the right columns
-  if (ncol(dat) != 2 || !identical(names(dat), c('time', 'slurry_mass'))) {
-    stop('The structure dat element must have two columns: time and slurry_mass.')
-  }
+  ## Check for the right columns
+  #if (ncol(dat) != 2 || !identical(names(dat), c('time', 'slurry_mass'))) {
+  #  stop('The structure dat element must have two columns: time and slurry_mass.')
+  #}
 
   # Cannot have no slurry present because is used in all concentration calculations
   dat[dat[, 'slurry_mass'] == 0, 'slurry_mass'] <- 1E-10
 
-  # Add in var_pars data frame (if NULL, then no effect)
-  series <- merge(dat, pars$var, by = 'time', all = TRUE)
+  # Add in var_pars data frame if present
+  if (inherits(pars$var, 'data.frame')) {
+    series <- merge(dat, pars$var, by = 'time', all = TRUE)
+  } else {
+    series <- dat
+  }
 
   # Fill in missing values
   if (pars$fill_method == 'interp') {

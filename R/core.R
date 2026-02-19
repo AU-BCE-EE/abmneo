@@ -33,7 +33,6 @@ abm <- function(
   # All these steps are skipped if pars is provided
   if (is.null(pars)) {
     pars <- pack_pars(
-      structure = structure,
       mng_pars = mng_pars,
       man_pars = man_pars,
       init_pars = init_pars,

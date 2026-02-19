@@ -2,7 +2,6 @@
 # Sorts out parameters and packages them all together in the output list
 # This is a central function that does a lot and is (unfortunately) complicated
 pack_pars <- function(
-  structure,
   mng_pars,
   man_pars,
   init_pars,
@@ -199,10 +198,10 @@ combine_var_pars <- function(var_pars) {
         ll[[j]] <- x
       }
       var_pars$var[[nv]] <- ll
+      # Take only the var element (but note that var_pars is still a list--see [] not [[]])
+      # And var_pars must remain a list (see single brackets) to avoid duplicate par elements from combining into par
+      var_pars <- var_pars['var']
     }
-    # Take only the var element (but note that var_pars is still a list--see [] not [[]])
-    # And var_pars must remain a list (see single brackets) to avoid duplicate par elements from combining into par
-    var_pars <- var_pars['var']
   }
 
   # Check for time and at least one other column name

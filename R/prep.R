@@ -7,7 +7,11 @@ get_init_state <- function(
   pars
 ) {
  
-  slurry_mass_init <- structure$dat[1, 'slurry_mass']
+  if (structure$type == 'series') {
+    slurry_mass_init <- structure$dat[1, 'slurry_mass']
+  } else {
+    slurry_mass_init <- structure$slurry_mass
+  }
 
   if (!is.null(pars$kl)) {
     emis <- pars$kl * 0

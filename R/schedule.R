@@ -7,7 +7,7 @@ get_schedule <- function(
   delta_t
 ) {
 
-  if (schedule$type != 'ready') {
+  if (structure$type != 'ready') {
     stop('structure type is not yet \"ready\"--something is wrong.')
   }
 
@@ -19,7 +19,7 @@ get_schedule <- function(
   dat <- structure$dat
 
   # Include days argument in times vector
-  times <- sort(unique(c(times, pars$var$time)))
+  times <- sort(unique(c(times, dat$time)))
     
   # Notes about time: 1) All simulations start at 0, 2) days must be at least as long as var data
   # Note that this works even with t_end = NULL (is ignored)
@@ -119,9 +119,14 @@ fix_structure <- function(
   # Extract dat
   dat <- structure$dat
 
-  # Make sure at least slurry_mass is in dat data frame
-  if (!'slurry_mass' %in% names(dat)) {
-    stop('The pars var element is missing a slurry_mass column, which is required.')
+  # Add missing time 0
+  if (dat[1, 'time'] > 0) {
+    dat <- rbind(c(0, dat$slurry_mass[1]), dat)
+  }
+
+  # Check for the right columns
+  if (ncol(dat) != 2 || !identical(names(dat), c('time', 'slurry_mass'))) {
+    stop('The structure dat element must have two columns: time and slurry_mass.')
   }
 
   # Cannot have no slurry present because is used in all concentration calculations

@@ -52,7 +52,7 @@ abm <- function(
     pars <- starting_pars(pars, starting)
   }
 
-  # Sort out structure
+  # Sort out structure, extending time as needed, checking for required components, and adding in any var_pars
   structure <- fix_structure(structure, pars, days)
   structure <- calc_prod_rem(structure, pars)
   # Indicate in type element that structure is now ready for use (skips processing in abm_startup()).
@@ -75,7 +75,7 @@ abm <- function(
   } 
 
   # Create initial state variable vector
-  y <- get_init_state(pars) 
+  y <- get_init_state(structure, pars) 
 
   # Get timing of intervals
   schedule <- get_schedule(
@@ -84,6 +84,9 @@ abm <- function(
     days, 
     delta_t
   )
+
+  browser()
+  # Good so far. Need to make sure var and structure$dat have the same times. . .
 
   dat <- abm_core(
     days = days,

@@ -27,7 +27,7 @@ abm_core <- function(
 
     # Fill in current pars from var
     # Also adds 2 temperature-dependent derivative vectors
-    pars <- updateVarPars(pars, y, i - 1)
+    pars <- update_var_pars(pars, y, i - 1)
 
     # Calculate log Ka for speciation
     pars <- calcKa(pars)

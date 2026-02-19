@@ -1,6 +1,6 @@
 # Copy time-variable parameters into their normal par position for an interval
 
-updateVarPars <- function(pars, y, i) {
+update_var_pars <- function(pars, y, i) {
 
   vdat <- pars$var[, names(pars$var) != 'time', drop = FALSE]
 

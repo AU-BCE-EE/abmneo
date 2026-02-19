@@ -42,6 +42,14 @@ structure = list(
 plot(slurry_mass ~ time, data = structure$dat, type = 'o')
 ```
 
+```{r}
+temp_series <- data.frame(
+  time = c(0, 1, 10, 15, 30), 
+  temp_C = c(10, 20, 25, 15, 10)
+)
+var_pars <- list(var = temp_series)
+```
+
 Now pared-down mng_pars
 
 ```{r}
@@ -105,23 +113,6 @@ man_pars <- list(VFA_fresh = c(CH3COOH = 2), pH = 7, dens = 1000)
 chem_pars <- list(COD_conv = c(CH4 = 1/0.2507))
 ```
 
-# 2. Substrate flexibility
-
-Particulate substrates are defined in `sub_pars` now and there are no specific substrates hard-wired in the code.
-VFA is the only intermediate, and it is hard-wired.
-Here we will use three substrates.
-Parameter values have no connection to reality in this example.
-
-```{r}
-sub_pars2 <- list(subs = c('cellulose', 'protein', 'lipids'),
-                  T_opt_hyd = c(default = 60),
-                  T_min_hyd = c(default = 0),
-                  T_max_hyd = c(default = 90),
-                  hydrol_opt = c(lipids = 0.1, protein = 0.01, cellulose = 0.05),
-                  sub_fresh = c(lipids = 3, protein = 20, cellulose = 35),
-                  sub_init = c(lipids = 3, protein = 20, cellulose = 35))
-```
-
 # 3. Time-variable inputs part 1
 The `abm()` function can handle variability over time in any inputs now.
 Here slurry mass and temperature will vary.
@@ -131,19 +122,17 @@ The `var` element is the only required one.
 The `var` data frame must have a `slurry_mass` column if it is used--it is not possible to use an `abm_regular()`-like approach with variable temperature etc.
 
 ```{r}
-var_pars <- list(var = var_dat)
-```
-
-```{r}
 devtools::load_all()
 
 out3a <- abm(50,
+	     structure = structure,
              mng_pars = mng_pars,
              man_pars = man_pars,
              grp_pars = grp_pars,
              sub_pars = sub_pars,
              chem_pars = chem_pars,
              var_pars = var_pars)
+
 ```
 
 

@@ -215,11 +215,15 @@ combine_var_pars <- function(var_pars) {
       }
       var_pars$var[[nv]] <- ll
     }
+    # Take only the var element (but note that var_pars is still a list--see [] not [[]])
+    # And var_pars must remain a list (see single brackets) to avoid duplicate par elements from combining into par
+    var_pars <- var_pars['var']
   }
 
-  # Take only the var element 
-  # And var_pars must remain a list (see single brackets) to avoid duplicate par elements from combining into par
-  var_pars <- var_pars['var']
+  # Check for time and at least one other column name
+  if (ncol(var_pars$var) == 1 || names(var_pars$var)[1] != 'time') {
+    stop('Optional var_pars element var must be a data frame with first column time and at least one additional column.')
+  }
 
   return(var_pars)
 

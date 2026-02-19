@@ -1,3 +1,4 @@
+# Main abm function
 
 abm <- function(
   days = 365,
@@ -30,17 +31,19 @@ abm <- function(
   # Includes sorting out var_pars
   # All these steps are skipped if pars is provided
   if (is.null(pars)) {
-    pars <- packPars(mng_pars = mng_pars,
-                     man_pars = man_pars,
-                     init_pars = init_pars,
-                     grp_pars = grp_pars,
-                     sub_pars = sub_pars,
-                     chem_pars = chem_pars,
-                     inhib_pars = inhib_pars,
-                     ctrl_pars = ctrl_pars,
-                     var_pars = var_pars,
-                     add_pars = add_pars,
-                     days = days)
+    pars <- packPars(
+      mng_pars = mng_pars,
+      man_pars = man_pars,
+      init_pars = init_pars,
+      grp_pars = grp_pars,
+      sub_pars = sub_pars,
+      chem_pars = chem_pars,
+      inhib_pars = inhib_pars,
+      ctrl_pars = ctrl_pars,
+      var_pars = var_pars,
+      add_pars = add_pars,
+      days = days
+    )
   }
   
   if (!is.null(starting) & inherits(starting, 'data.frame')) {
@@ -50,50 +53,51 @@ abm <- function(
   # If startup repetitions are requested, repeat some number of times before returning results
   if (startup > 0) {
     cat('\nStartup run ')
-    out <- abmStartup(days = days,
-                      delta_t = delta_t,
-                      times = times,
-                      pars = pars,
-                      startup = startup,
-                      starting = starting,
-                      warn = warn)
+    out <- abmStartup(
+      days = days,
+      delta_t = delta_t,
+      times = times,
+      pars = pars,
+      startup = startup,
+      starting = starting,
+      warn = warn
+    )
     return(out)
   } 
 
   # Create initial state variable vector
   y <- makeInitState(pars) 
 
-  # Option 1: Fixed slurry production rate, regular emptying schedule
-  if (is.null(pars$var)) {
-    # Temperature-dependent par values
-    pars <- calcTempPars(pars, y)
-    dat <- abmReg(days = days, 
-                  delta_t = delta_t, 
-                  times_regular = times, 
-                  y = y, 
-                  pars = pars)
-  } else if (inherits(pars$var, 'data.frame')) {
-    # Option 2: Everything based on given slurry mass vs. time
-    dat <- abmVar(days = days, 
-                  delta_t = delta_t, 
-                  times = times, 
-                  y = y, 
-                  pars = pars, 
-                  warn = warn)
-  } else {
-    stop('pars_var must be NULL or a data frame')
-  }
+  # Get timing of intervals
+  schd <- makeTimeList(pars, times, days, delta_t)
+
+  dat <- abmVar(
+    days = days,
+    schd = schd, 
+    y = y, 
+    pars = pars, 
+    warn = warn
+  )
 
   # Clean up and extend output
-  dat <- cleanOutput(dat, pars, addcols = TRUE, addconcs = TRUE, cumeff = TRUE)
+  dat <- cleanOutput(
+    dat, 
+    times,
+    pars, 
+    addcols = TRUE, 
+    addconcs = TRUE, 
+    cumeff = TRUE
+  )
 
   # Check COD balance
-  codbal <- checkCOD(dat = dat, 
-                     grps = pars$grps, 
-                     subs = pars$subs, 
-                     COD_conv = pars$COD_conv, 
-                     stoich = pars$stoich, 
-                     rtol = 0.01)
+  codbal <- checkCOD(
+    dat = dat, 
+    grps = pars$grps, 
+    subs = pars$subs, 
+    COD_conv = pars$COD_conv, 
+    stoich = pars$stoich, 
+    rtol = 0.01
+  )
 
   # Return results
   return(dat)

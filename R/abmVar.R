@@ -1,16 +1,12 @@
-abmVar <-
-  function(days, 
-           delta_t, 
-           times, 
-           y, 
-           pars, 
-           warn) {
+abmVar <- function(
+  days,
+  schd,
+  y, 
+  pars, 
+  warn
+) {
     
-  pars$abm_regular <- FALSE
-  
-  # Get timing of intervals
-  timelist <- makeTimeList(pars, times, days, delta_t)
-  n_int <- length(timelist)
+  n_int <- length(schd)
   
   # Empty data frame for holding results
   dat <- NULL
@@ -25,7 +21,7 @@ abmVar <-
   for (i in 2:n_int) {
 
     # Sort out call duration
-    t_call <- min(max(timelist[[i]]), t_rem)
+    t_call <- min(max(schd[[i]]), t_rem)
 
     # Fill in current pars from var
     # Also adds 2 temperature-dependent derivative vectors
@@ -46,7 +42,7 @@ abmVar <-
 
     # Get times for lsoda() call
     # Need some care with times to make sure t_call is last one in case it is not multiple of delta_t
-    tt <- timelist[[i]]
+    tt <- schd[[i]]
 
     # Call up ODE solver
     out <- deSolve::lsoda(y = y, 
@@ -74,11 +70,6 @@ abmVar <-
     t_rem <- t_rem - t_call
     t_run <- t_run + t_call
     
-  }
-
-  # Drop times from slurry mass data that were not requested in output
-  if (!is.null(times)) {
-    dat <- dat[dat$time %in% c(times, days), ]
   }
 
   return(dat)

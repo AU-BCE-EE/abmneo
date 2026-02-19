@@ -1,6 +1,11 @@
 # Creates list of interval times for simulation
 
-makeTimeList <- function(pars, times, days, delta_t) {
+makeTimeList <- function(
+  pars, 
+  times, 
+  days, 
+  delta_t
+) {
   
   # Sort out times returned by ODE solver
   if (is.null(times)) {

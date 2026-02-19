@@ -1,10 +1,14 @@
 # Checks and prepares var par data, especially slurry_mass
 # Applies approx_method to slurry_mass
 
-fixVarDat <- function(pars, days) {
+fixVarDat <- function(
+  pars, 
+  days
+) {
 
-  if (is.null(pars$var)) {
-    return(pars)
+  # If inputs are for regular schedule, create var data frame
+  if (pars$regular) {
+    stop('Yo! Ya gotta add code for making var out of regular!')
   }
 
   # Make sure at least slurry_mass is in pars$var data frame

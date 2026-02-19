@@ -1,18 +1,19 @@
 # Sorts out parameters and packages them all together in the output list
 # This is a central function that does a lot and is (unfortunately) complicated
 
-packPars <- function(mng_pars,
-                     man_pars,
-                     init_pars,
-                     grp_pars,
-                     sub_pars,
-                     chem_pars,
-                     inhib_pars,
-                     ctrl_pars,
-                     var_pars,
-                     add_pars,
-                     days,
-                     starting) {
+packPars <- function(
+  mng_pars,
+  man_pars,
+  init_pars,
+  grp_pars,
+  sub_pars,
+  chem_pars,
+  inhib_pars,
+  ctrl_pars,
+  var_pars,
+  add_pars,
+  days
+) {
 
   # Move extra var_pars into first (var) element, possibly as lists within each data frame element~
   if(!is.null(var_pars) && !is.null(var_pars$var)) {
@@ -22,62 +23,20 @@ packPars <- function(mng_pars,
   # Combine pars to make extraction and pass to rates() easier ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars <- c(mng_pars, man_pars, init_pars, grp_pars, sub_pars, chem_pars, inhib_pars, ctrl_pars, var_pars)
 
-  # Sort out add_pars parameter inputs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Note: pe.pars = add_pars that use par.element approach, these are converted to normal (simple) add_par elements here
-  # Note: sa.pars = normal (simple) add_pars that do not need to be converted
-  # Note: Use of [] vs. [[]] affect how code works--needs to work for both lists and vector pars
-  # Note: par.element approach is only designed to work for vector elements
-  par_key <- ctrl_pars$par_key
-  if (!is.null(add_pars) && length(add_pars) > 0 && any(ii <- grepl(par_key, names(add_pars)))) {
-    pe.pars <- add_pars[ii]
-    sa.pars <- add_pars[!ii]
-    apnames <- names(pe.pars)
-    pe.pars[!grepl('[A-Za-z]', pe.pars)] <- as.numeric(pe.pars[!grepl('[A-Za-z]', pe.pars)])
-    split.pars <- strsplit(apnames, par_key)
-    pnames <- sapply(split.pars, '[[', 1)
-    enames <- sapply(split.pars, '[[', 2)
-    names(pe.pars) <- enames
-    pe.pars <- split(pe.pars, pnames)
-    add_pars <- c(sa.pars, pe.pars)
+  # Add indicator for already variable inputs
+  if(!is.null(var_pars) && !is.null(var_pars$var)) {
+    pars$regular <- FALSE  
+  } else {
+    pars$regular <- TRUE
   }
 
-  # If any additional parameters were added (or modified) using add_pars, update them in pars list here
-  # But grp_pars and sub_pars work differently than the others because of the default = keyword (and all =, but this is discouraged)
-  # Needs to work in a case where default is all but e.g., m1 is given in add_pars (see def stuff below)
-  grp_par_nms <- names(grp_pars)[!names(grp_pars) %in% c('grps', 'meths', 'srs', 'aer', 'ferm')]
-  sub_par_nms <- names(sub_pars)[names(sub_pars) != 'subs']
-  if (!is.null(add_pars) && length(add_pars) > 0) {
-    if (any(bad.names <- !names(add_pars) %in% names(pars))) {
-      stop ('Some `add_pars` names not recognized as valid parameters: ', names(add_pars)[bad.names]) 
-    }
-    # Add in pars (or replace existing elements unless it is time series data added)
-    for (i in names(add_pars)) {
-      if (!is.data.frame(add_pars[[i]]) && length(pars[[i]]) > 1) {
-        pars[[i]][names(add_pars[[i]])] <- unlist(add_pars[[i]])
-      } else {
-        def <- pars[[i]]['all']
-        pars[[i]] <- add_pars[[i]]
-        if (i %in% c(grp_par_nms, sub_par_nms)) {
-          pars[[i]]['default'] <- def
-        }
-      }
-    }
-  }
-  
-  # Unlike others, grps and subs in add_pars *will* override default vector (i.e., can be used to remove groups)
-  if ('grps' %in% names(add_pars)) {
-    pars$grps <- add_pars$grps
-  }
-  if ('subs' %in% names(add_pars)) {
-    pars$subs <- add_pars$subs
-  }
+  # Sort out add_pars and similar parameter inputs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  pars <- add_pars(pars, add_pars)
 
-  # Finish working with var_pars
+  # Finish working with var_pars ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # This must come after add_par block because approx_method (and other relevant pars?) could be set with add_pars
-  if (!is.null(pars$var)) {
-    pars <- fixVarDat(pars, days)
-    pars <- calcProdRem(pars)
-  }
+  pars <- fixVarDat(pars, days)
+  pars <- calcProdRem(pars)
 
   # Multiple microbial groups ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # NTS: need to sort out how this works with above mess for add_pars with grps
@@ -92,6 +51,10 @@ packPars <- function(mng_pars,
   # Note: `default` does *not* work with add_pars argument because grps are already defined in defaults
   # Note: But `all` *does* work
   # expandPars() will also sort out element order and drop excluded elements
+  grp_par_nms <- c("yield", "xa_fresh", "xa_init", "dd_rate", "ksv", "kss", "qhat_opt", "T_opt", "T_min", "T_max")
+  grp_par_nms <- grp_par_nms[grp_par_nms %in% names(pars)]
+  sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init")
+  sub_par_nms <- sub_par_nms[sub_par_nms %in% names(pars)]
   pars <- expandPars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
   pars <- expandPars(pars = pars, elnms = pars$subs, parnms = sub_par_nms)
 
@@ -100,7 +63,7 @@ packPars <- function(mng_pars,
   checkGrpNames(pars)
 
   # O2 kl ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # O2 kl is handled differently from others
+  # O2 kl is handled differently from other kl values, so here it becomes a separate pars element
   if (!is.null(pars$kl) && 'O2' %in% names(pars$kl)) {
     pars$O2kl <- pars$kl['O2']
     pars$kl <- pars$kl[names(pars$kl) != 'O2']
@@ -135,7 +98,7 @@ packPars <- function(mng_pars,
 
   # Solutes ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # CH3COOH is always present
-  pars$sols <- c(pars$comps, 'CH3COOH')
+  pars$sols <- unique(c(pars$comps, 'CH3COOH'))
   pars$conc_fresh <- c(pars$comp_fresh, pars$VFA_fresh)
 
   # Master species, fill in masters = masters
@@ -153,16 +116,16 @@ packPars <- function(mng_pars,
   # If missing, assume only VFA is produced
   if (is.null(pars$stoich)) {
     # Fill in missing stochiometry
-    pars$stoich <- matrix(rep(1, length(pars$subs)),
-                          nrow = 1,
-                          dimnames = list(c('CH3COOH'), c(pars$subs))
-                         )
-  }
-
-  # Or calculated from substrate chemical formulas
-  if (all(tolower(pars$stoich) == 'calc')) {
+    pars$stoich <- matrix(
+      rep(1, length(pars$subs)),
+      nrow = 1,
+      dimnames = list(c('CH3COOH'), c(pars$subs))
+    )
+  } else if (all(tolower(pars$stoich) == 'calc')) {
+    # Or calculated from substrate chemical formulas
     pars$stoich <- getStoich(pars)
   }
+  # Else given
 
   # Substrates ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars$n_subs <- length(pars$subs)

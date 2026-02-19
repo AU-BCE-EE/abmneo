@@ -1,6 +1,11 @@
 # Clean up abm_*() output before returning it
 
-cleanOutput <- function(dat, pars, addcols, addconcs, cumeff) {
+cleanOutput <- function(dat, times, pars, addcols, addconcs, cumeff) {
+
+  # Drop times that were not requested in output
+  if (!is.null(times)) {
+    dat <- dat[dat$time %in% c(times, days), ]
+  }
 
   # Replace . in names with _
   names(dat) <- gsub('\\.', '_', names(dat))

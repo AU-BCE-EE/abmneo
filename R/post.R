@@ -101,3 +101,51 @@ add_out <- function(main, new = NULL) {
   return(main)
 
 }
+
+# Function for emptying storage struction
+# Note: enrich_names could also be length 1 vector: '^xa|^RFd$|^iNDF$' etc.
+empty_store <- function(
+  y, 
+  resid_mass = 0, 
+  resid_enrich = 0, 
+  skip = FALSE,
+  enrich_names = c('^xa', '^m[0-9]', '^sr[0-9]', '^RFd$', '^CPs$', '^iNDF$', '^VSd$', '^Cfat$', '^starch$', '^ash$'),
+  ignore_names = c('_emis', '_load', '_cum_', '_conv_', 'cum$'),
+  warn = TRUE
+) {
+
+  y <- unlist(y)
+  slurry_mass <- y['slurry_mass']
+
+  which.ignore <- grepl(paste(ignore_names, collapse = '|'), names(y))
+
+  if (slurry_mass > resid_mass & !skip) {
+    # Masses before emptying
+    y.before <- y
+    # Calculate mass of each variable remaining in storage
+    resid_frac <- resid_mass / slurry_mass
+    resid_par <- logistic(logit(resid_frac) + resid_enrich)
+    which.enrich <- grepl(paste(enrich_names, collapse = '|'), names(y))
+    y[which.enrich] <- y[which.enrich] * resid_par
+    y[!which.enrich & !which.ignore] <- y[!which.enrich & !which.ignore] * resid_frac
+    # Effluent
+    y.eff <- y.before - y
+    y.eff <- y.eff[!which.ignore]
+    names(y.eff) <- paste0(names(y.eff), '_eff')
+  } else {
+    if (warn) {
+      warning('Emptying skipped.')
+    }
+    y.eff <- 0 * y
+    y.eff <- y.eff[!which.ignore]
+    names(y.eff) <- paste0(names(y.eff), '_eff')
+  }
+
+  return(list(store = y, eff = y.eff))
+
+}
+
+
+get_last_state <- function(out, y) {
+  y <- unlist(out[nrow(out), names(y)])
+}

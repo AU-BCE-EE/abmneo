@@ -111,7 +111,7 @@ pack_pars <- function(
     )
   } else if (all(tolower(pars$stoich) == 'calc')) {
     # Or calculated from substrate chemical formulas
-    pars$stoich <- getStoich(pars)
+    pars$stoich <- get_stoich(pars)
   }
   # Else given
 

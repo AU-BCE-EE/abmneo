@@ -31,7 +31,7 @@ abm <- function(
   # Includes sorting out var_pars
   # All these steps are skipped if pars is provided
   if (is.null(pars)) {
-    pars <- packPars(
+    pars <- pack_pars(
       mng_pars = mng_pars,
       man_pars = man_pars,
       init_pars = init_pars,
@@ -47,13 +47,13 @@ abm <- function(
   }
   
   if (!is.null(starting) & inherits(starting, 'data.frame')) {
-    pars <- moveStartingPars(pars, starting)
+    pars <- starting_pars(pars, starting)
   }
 
   # If startup repetitions are requested, repeat some number of times before returning results
   if (startup > 0) {
     cat('\nStartup run ')
-    out <- abmStartup(
+    out <- abm_startup(
       days = days,
       delta_t = delta_t,
       times = times,
@@ -66,12 +66,12 @@ abm <- function(
   } 
 
   # Create initial state variable vector
-  y <- makeInitState(pars) 
+  y <- get_init_state(pars) 
 
   # Get timing of intervals
-  schd <- makeTimeList(pars, times, days, delta_t)
+  schd <- get_schedule(pars, times, days, delta_t)
 
-  dat <- abmVar(
+  dat <- abm_core(
     days = days,
     schd = schd, 
     y = y, 

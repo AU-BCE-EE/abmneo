@@ -1,4 +1,6 @@
-abmVar <- function(
+# Heart of abm(), with lsoda call
+
+abm_core <- function(
   days,
   schd,
   y, 

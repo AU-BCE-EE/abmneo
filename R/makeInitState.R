@@ -1,3 +1,4 @@
+
 makeInitState <- function(pars) {
  
   if (!is.null(pars$var) && inherits(pars$var, 'data.frame')) {
@@ -21,14 +22,16 @@ makeInitState <- function(pars) {
     emis <- NULL
   }
   
-  y <- c(pars$xa_init * slurry_mass_init,                       # Multiple microbial groups
-         pars$sub_init[pars$subs] * slurry_mass_init,           # Multiple particulate substrates 
-         pars$conc_init * slurry_mass_init,                     # VFA and conservative solutes
-         slurry_mass = slurry_mass_init, 
-         CH4_emis_cum = 0, 
-         emis,
-         slurry_load = 0,
-         COD_load = 0)
+  y <- c(
+    pars$xa_init * slurry_mass_init,                       # Multiple microbial groups
+    pars$sub_init[pars$subs] * slurry_mass_init,           # Multiple particulate substrates 
+    pars$conc_init * slurry_mass_init,                     # VFA and conservative solutes
+    slurry_mass = slurry_mass_init, 
+    CH4_emis_cum = 0, 
+    emis,
+    slurry_load = 0,
+    COD_load = 0
+  )
   
   return(y)
 

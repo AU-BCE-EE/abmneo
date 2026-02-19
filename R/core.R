@@ -103,7 +103,7 @@ abm <- function(
   )
 
   # Check COD balance
-  codbal <- checkCOD(
+  codbal <- check_COD(
     dat = dat, 
     grps = pars$grps, 
     subs = pars$subs, 

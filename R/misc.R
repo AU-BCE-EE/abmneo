@@ -1,5 +1,5 @@
-# Replace missing values in multiple data frame columns with interpolated values
 
+# Replace missing values in multiple data frame columns with interpolated values
 interpm <- function(dat, x, ys, by = NA, ...) {
 
   if (is.na(by)) {
@@ -25,3 +25,5 @@ interpm <- function(dat, x, ys, by = NA, ...) {
   return(dat)
 
 }
+
+

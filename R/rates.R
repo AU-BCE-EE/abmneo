@@ -117,7 +117,7 @@ update_var_pars <- function(
   pars <- tempsC2K(pars, cutoff = 200)
 
   # Calculate temperature-dependent par values
-  pars <- calcTempPars(pars, y)
+  pars <- calc_temp_pars(pars, y)
 
   return(pars)
 

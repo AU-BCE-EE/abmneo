@@ -2,6 +2,7 @@
 # Sorts out parameters and packages them all together in the output list
 # This is a central function that does a lot and is (unfortunately) complicated
 pack_pars <- function(
+  structure,
   mng_pars,
   man_pars,
   init_pars,
@@ -23,20 +24,8 @@ pack_pars <- function(
   # Combine pars to make extraction and pass to rates() easier ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars <- c(mng_pars, man_pars, init_pars, grp_pars, sub_pars, chem_pars, inhib_pars, ctrl_pars, var_pars)
 
-  # Add indicator for already variable inputs
-  if(!is.null(var_pars) && !is.null(var_pars$var)) {
-    pars$regular <- FALSE  
-  } else {
-    pars$regular <- TRUE
-  }
-
   # Sort out add_pars and similar parameter inputs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars <- fix_add_pars(pars, add_pars)
-
-  # Finish working with var_pars ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # This must come after add_par block because approx_method (and other relevant pars?) could be set with add_pars
-  pars <- fix_var_pars(pars, days)
-  pars <- calc_prod_pars(pars)
 
   # Multiple microbial groups ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # NTS: need to sort out how this works with above mess for add_pars with grps
@@ -51,10 +40,9 @@ pack_pars <- function(
   # Note: `default` does *not* work with add_pars argument because grps are already defined in defaults
   # Note: But `all` *does* work
   # expandPars() will also sort out element order and drop excluded elements
+  # NTS: Could these vectors of names be set in some kind of defaults?
   grp_par_nms <- c("yield", "xa_fresh", "xa_init", "dd_rate", "ksv", "kss", "qhat_opt", "T_opt", "T_min", "T_max")
-  grp_par_nms <- grp_par_nms[grp_par_nms %in% names(pars)]
   sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init")
-  sub_par_nms <- sub_par_nms[sub_par_nms %in% names(pars)]
   pars <- expand_pars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
   pars <- expand_pars(pars = pars, elnms = pars$subs, parnms = sub_par_nms)
 
@@ -165,98 +153,16 @@ starting_pars <- function(pars, starting) {
   
 }
 
-
-# Checks and prepares var par data, especially slurry_mass
-# Applies approx_method to slurry_mass
-fix_var_pars <- function(
-  pars, 
-  days
-) {
-
-  # If inputs are for regular schedule, create var data frame
-  if (pars$regular) {
-    stop('Yo! Ya gotta add code for making var out of regular!')
-  }
-
-  # Make sure at least slurry_mass is in pars$var data frame
-  if (!'slurry_mass' %in% names(pars$var)) {
-    stop('The pars var element is missing a slurry_mass column, which is required.')
-  }
-
-  # Cannot have no slurry present because is used in all concentration calculations
-  pars$var[pars$var[, 'slurry_mass'] == 0, 'slurry_mass'] <- 1E-10
-
-  # Trim unused times
-  pars$var <- pars$var[pars$var$time <= days, ]
-
-  # Check for sorted time
-  if (is.unsorted(pars$var$time)) {
-    stop('Column `time` must be sorted when time-variable parameters are used (pars), but it is not: ',
-         head(pars$var$time))
-  }
-  
-  # If simulation continues past pars data frame time, extend last row all the way
-  if (pars$var[nrow(pars$var), 'time'] < days) {
-    t_end <- days
-    pars$var <- rbind(pars$var, pars$var[nrow(pars$var), ])
-    pars$var[nrow(pars$var), 'time'] <- days
-    # But make sure washing is not repeated!
-    if (ncol(pars$var) > 2) {
-      pars$var[nrow(pars$var), 3:ncol(pars$var)] <- 0
-    }
-  }
-
-  # For 'mid' option, other variables are copied from previous time
-  if (pars$approx_method == 'mid') {
-    # Get midpoint time
-    ir <- which(- c(0, diff(pars$var[, 'slurry_mass'])) > 0)
-    tt <- (pars$var[ir, 'time']  + pars$var[ir - 1, 'time']) / 2
-    nr <- pars$var[ir, ]
-    nr$time <- tt
-    pars$var <- rbind(pars$var, nr)
-    pars$var <- pars$var[order(pars$var$time), ]
-  } 
-  
-  return(pars)
-
-}
-
-# Sorts out slurry production values and removal timing
-calc_prod_pars <- function(pars) {
-  
-  if (is.null(pars$var)) {
-    return(pars)
-  }
-
-  # Removals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Note final 0--alignment is a bit tricky
-  if (pars$approx_method %in% c('late', 'mid')) {
-    removals <- - c(0, diff(pars$var[-nrow(pars$var), 'slurry_mass']), 0) > 0
-  } else if (pars$approx_method == 'early') {
-    removals <- - c(diff(pars$var[, 'slurry_mass']), 0) > 0
-  } 
-  pars$var$removal <- removals
-
-  # Slurry production rate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  slurry_prod_rate_t <- c(diff(pars$var[, 'slurry_mass']) / diff(pars$var[, 'time']), 0) 
-  slurry_prod_rate_t[slurry_prod_rate_t < 0] <- 0
-  slurry_prod_rate_t[!is.finite(slurry_prod_rate_t)] <- 0
-  pars$var$slurry_prod_rate <- slurry_prod_rate_t
-
-  # Residual slurry for emptying ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (pars$approx_method == 'late') {
-    pars$var$resid_mass <- pars$var$slurry_mass
-  } else {
-    pars$var$resid_mass <- c(pars$var$slurry_mass[-1], 0)
-  }
-
-  return(pars)
-}
-
-
 # Apply all keyword stuff
-expand_pars <- function(pars, elnms, parnms) {
+expand_pars <- function(
+  pars, 
+  elnms, 
+  parnms
+) {
   
+  # Trim to only those elements in pars
+  parnms <- parnms[parnms %in% names(pars)]
+
   for (i in parnms) {
     ppo <- pars[[i]]
     p_nms <- names(pars[[i]])

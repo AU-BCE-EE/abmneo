@@ -1,6 +1,7 @@
 # Main abm function
 
 abm <- function(
+  structure,
   days = 365,
   delta_t = 1,
   times = NULL,
@@ -32,6 +33,7 @@ abm <- function(
   # All these steps are skipped if pars is provided
   if (is.null(pars)) {
     pars <- pack_pars(
+      structure = structure,
       mng_pars = mng_pars,
       man_pars = man_pars,
       init_pars = init_pars,
@@ -50,10 +52,17 @@ abm <- function(
     pars <- starting_pars(pars, starting)
   }
 
+  # Sort out structure
+  structure <- fix_structure(structure, pars, days)
+  structure <- calc_prod_rem(structure, pars)
+  # Indicate in type element that structure is now ready for use (skips processing in abm_startup()).
+  structure$type <- 'ready'
+
   # If startup repetitions are requested, repeat some number of times before returning results
   if (startup > 0) {
     cat('\nStartup run ')
     out <- abm_startup(
+      structure = structure,
       days = days,
       delta_t = delta_t,
       times = times,
@@ -69,18 +78,23 @@ abm <- function(
   y <- get_init_state(pars) 
 
   # Get timing of intervals
-  schd <- get_schedule(pars, times, days, delta_t)
+  schedule <- get_schedule(
+    structure, 
+    times, 
+    days, 
+    delta_t
+  )
 
   dat <- abm_core(
     days = days,
-    schd = schd, 
+    schedule = schedule, 
     y = y, 
     pars = pars, 
     warn = warn
   )
 
   # Clean up and extend output
-  dat <- cleanOutput(
+  dat <- clean_output(
     dat, 
     times,
     pars, 

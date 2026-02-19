@@ -2,7 +2,7 @@
 
 abm_core <- function(
   days,
-  schd,
+  schedule,
   y, 
   pars, 
   warn

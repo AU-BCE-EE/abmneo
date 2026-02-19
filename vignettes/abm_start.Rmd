@@ -22,21 +22,44 @@ This demo shows:
 devtools::load_all()
 ```
 
-# 1. Basic behavior
+# 
 The simplest usage is with constant slurry production rate and a fixed schedule.
 We need to set some parameters, first management parameters.
 
+Mass dat for structure only has time and slurry_mass.
+
 ```{r}
-mng_pars <- list(slurry_prod_rate = 10000, 
-                 slurry_mass = 1000,     
-                 storage_depth = 2,     
-                 resid_depth = 0.1,      
+mass_series <- data.frame(
+  time = c(0, 1, 10, 15, 30), 
+  slurry_mass = c(1000, 7000, 2000, 1500, 3000)
+)
+
+structure = list(
+  type = 'series',
+  dat = mass_series
+)
+
+plot(slurry_mass ~ time, data = structure$dat, type = 'o')
+```
+
+Now pared-down mng_pars
+
+```{r}
+#mass_structure = list(
+#  type = 'series',
+#  data = 
+#
+#slurry_prod_rate = 10000, 
+#                 slurry_mass = 1000,     
+#                 resid_depth = 0.1,      
+#                 empty_int = 100,          
+#                 wash_water = 0,            
+#                 wash_int = NA,
+#                 rest_d = 0,
+
+mng_pars <- list(storage_depth = 2,     
                  area = 100,              
-                 empty_int = 100,          
                  temp_C = 20,
-                 wash_water = 0,            
-                 wash_int = NA,
-                 rest_d = 0,
                  resid_enrich = 1)
 ```
 
@@ -102,15 +125,6 @@ sub_pars2 <- list(subs = c('cellulose', 'protein', 'lipids'),
 # 3. Time-variable inputs part 1
 The `abm()` function can handle variability over time in any inputs now.
 Here slurry mass and temperature will vary.
-
-```{r}
-var_dat <- data.frame(time = c(0, 1, 10, 15, 30), 
-                      slurry_mass = c(1000, 7000, 2000, 1500, 3000),
-                      temp_C = c(10, 15, 15, 20, 20))
-
-plot(slurry_mass ~ time, data = var_dat, type = 'o')
-plot(temp_C ~ time, data = var_dat, type = 'o')
-```
 
 This data frame goes in the `var_pars` argument, which must be a list, even though it might have a single element named `var`.
 The `var` element is the only required one.

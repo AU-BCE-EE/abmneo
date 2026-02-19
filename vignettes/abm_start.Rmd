@@ -132,8 +132,18 @@ out3a <- abm(50,
              sub_pars = sub_pars,
              chem_pars = chem_pars,
              var_pars = var_pars)
-
 ```
+c
+series
+pars$slurry_prod_rate
+ls()
+  ders <- inflow + growth + respir + consump + death + hydrol + volat + meth
+growth
+ders
+inflow
+p$grps
+p$slurry_prod_rate
+Q
 
 
 

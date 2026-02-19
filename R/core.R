@@ -4,11 +4,12 @@ abm_core <- function(
   days,
   schedule,
   y, 
+  series,
   pars, 
   warn
 ) {
     
-  n_int <- length(schd)
+  n_int <- length(schedule)
   
   # Empty data frame for holding results
   dat <- NULL
@@ -23,11 +24,11 @@ abm_core <- function(
   for (i in 2:n_int) {
 
     # Sort out call duration
-    t_call <- min(max(schd[[i]]), t_rem)
+    t_call <- min(max(schedule[[i]]), t_rem)
 
     # Fill in current pars from var
     # Also adds 2 temperature-dependent derivative vectors
-    pars <- update_var_pars(pars, y, i - 1)
+    pars <- update_var_pars(series, pars, y, i - 1)
 
     # Calculate log Ka for speciation
     pars <- calcKa(pars)
@@ -44,7 +45,7 @@ abm_core <- function(
 
     # Get times for lsoda() call
     # Need some care with times to make sure t_call is last one in case it is not multiple of delta_t
-    tt <- schd[[i]]
+    tt <- schedule[[i]]
 
     # Call up ODE solver
     out <- deSolve::lsoda(y = y, 

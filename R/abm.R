@@ -17,6 +17,7 @@ abm <- function(
     respir = TRUE,
     pH_inhib = FALSE, 
     approx_method = 'early',
+    fill_method = 'interp',
     par_key = '\\.',
     rates_calc = 'instant'
   ),
@@ -52,13 +53,8 @@ abm <- function(
     pars <- starting_pars(pars, starting)
   }
 
-  # Sort out structure, extending time as needed, checking for required components, and adding in any var_pars
-  structure <- fix_structure(structure, pars, days)
-  structure <- calc_prod_rem(structure, pars)
-  # Indicate in type element that structure is now ready for use (skips processing in abm_startup()).
-  structure$type <- 'ready'
-
   # If startup repetitions are requested, repeat some number of times before returning results
+  # Uses pars, already packed and with starting values added
   if (startup > 0) {
     cat('\nStartup run ')
     out <- abm_startup(
@@ -74,24 +70,25 @@ abm <- function(
     return(out)
   } 
 
+  # Sort out structure, extending time as needed, checking for required components, and adding in any var_pars
+  series <- make_series(structure, pars, days)
+
   # Create initial state variable vector
   y <- get_init_state(structure, pars) 
 
-  # Get timing of intervals
+  # Get timing of intervals (list of times)
   schedule <- get_schedule(
-    structure, 
+    series, 
     times, 
     days, 
     delta_t
   )
 
-  browser()
-  # Good so far. Need to make sure var and structure$dat have the same times. . .
-
   dat <- abm_core(
     days = days,
     schedule = schedule, 
     y = y, 
+    series = series,
     pars = pars, 
     warn = warn
   )

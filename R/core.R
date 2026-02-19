@@ -64,10 +64,10 @@ abm_core <- function(
     y <- getLastState(out, y)
 
     # Add effluent results
-    out <- addEff(out, y.eff)
+    out <- add_eff(out, y.eff)
  
     # Clean up and stack output with earlier results
-    dat <- addOut(dat, out)
+    dat <- add_out(dat, out)
     
     # Update time remaining and total time run so far
     t_rem <- t_rem - t_call

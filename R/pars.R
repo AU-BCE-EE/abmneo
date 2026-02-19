@@ -97,7 +97,7 @@ pack_pars <- function(
 
   # Mass conversion factors ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Need to be above stoich matrix determination (below)
-  pars$mcf <- unlist(lapply(c(pars$form, pars$mspec), getMassConv))
+  pars$mcf <- unlist(lapply(c(pars$form, pars$mspec), get_mass_conv))
 
   # Sort out stoichiometry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Three possibilities: 1) NULL, 2) "calc", 3) given
@@ -136,21 +136,6 @@ pack_pars <- function(
 
   return(pars)
  
-}
-
-
-# Move pars from starting argument into place
-starting_pars <- function(pars, starting) {
-  
-  message('Using starting conditions from `starting` argument')
-  pars$xa_init[pars$grps] <- as.numeric(starting[nrow(starting), paste0(pars$grps, '_conc')])
-  pars$conc_init['CH3COOH'] <- as.numeric(starting[nrow(starting), 'CH3COOH_conc'])
-  pars$sub_init[pars$subs] <- as.numeric(starting[nrow(starting), paste0(pars$subs, '_conc')])
-  # Set slurry_mass as well?
-  # NTS: Set comp solutes also?
-
-  return(pars)
-  
 }
 
 # Apply all keyword stuff
@@ -315,3 +300,14 @@ check_grp_names <- function(pars) {
   }
 
 }
+
+# Converts temperature parameters from C to K if values look like K (> cutoff, e.g., 270)
+tempsC2K <- function(pars, cutoff) {
+
+  for (i in grep('T_', names(pars))) {
+    pars[[i]][pars[[i]] < cutoff] <- pars[[i]][pars[[i]] < cutoff] + 273.15
+  }
+
+  return(pars)
+}
+

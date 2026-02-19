@@ -1,6 +1,36 @@
+# Stoichometry functions
+
+mol_mass <- function(form, elements = NULL) {
+
+  ## Check argument
+  #checkArgClassValue(form, 'character')
+
+  # Loop through all elements in form
+  mmass <- NULL
+  for(f in form) {
+    # If and only if first letter of form is lowercase, entire string is capitalized
+    if(grepl('^[a-z]', f)) f <- toupper(f) 
+
+    # Get coefficients of formula
+    fc <- read_formula(f)
+
+    if (!is.null(elements)) {
+      fc <- fc[intersect(names(fc), elements)]
+    }
+
+    # Check for unidentified element
+    if(any(!names(fc) %in% names(atom.weights))) stop('One or more elements in \"form\" is not in the database. You can add it to the \"atom.weights\" vector if you want to modify the function code. Otherwise send a request to sasha.hafner@bce.au.dk.')
+
+    # Calculate molar mass, using names of fc for indexing
+    mmass <- c(mmass, sum(atom.weights[names(fc)]*fc))
+  }
+
+  return(mmass)
+}
+
 # Fermentation stoichiometry
 # Example calls:
-# source('readFormula.R')
+# source('read_formula.R')
 # predFerm('C6H10O5', acefrac = 0, fs = 0.1)
 # predFerm('C6H10O5', acefrac = 0.5, fs = 0.1)
 # predFerm('C6H10O5', acefrac = 1)
@@ -13,7 +43,7 @@ customOrgStoich <- function(
   dover = FALSE
   ) {
   
-  fc <- readFormula(form, elements)
+  fc <- read_formula(form, elements)
 
   # Use symbols from O-19 in R&M
   n <- as.numeric(fc['C'])
@@ -202,5 +232,127 @@ predMethan <- function(
                    tol = tol)
 
   return(rtot)
+
+}
+
+
+# Modified: 4 April 2016 SDH
+# NTS: apparently *not* vectorized! Revisit. Had to modify calcCOD 10 Mar 2017 to fix it.
+
+read_formula <- function(
+  form,
+  elements = NULL,        # Set of elements returned, all others ignored, e.g., c('C', 'H', 'N', 'O')
+  min.elements = NULL,    # Minimum set of elements, will return error if these at least are not included
+  cdigits = 6,
+  value = 'numeric'       # Type of output, 'numeric' for named vector, 'shortform' for shortened formula
+) {
+
+  form.orig <- form
+
+  # Remove spaces
+  form <- gsub(' ', '', form)
+
+  # Add implied coefficients of 1 (also after ")")
+  form <- gsub('([a-zA-Z\\)])([A-Z\\)\\(])', '\\11\\2', form)
+  form <- gsub('([a-zA-Z\\)])([A-Z\\)\\(])', '\\11\\2', form) # Repeated for e.g., COOH
+  form <- gsub('([a-zA-Z\\)])$', '\\11', form)
+
+  # Find parentheses and remove them, multipying coefficients inside by coefficient at end
+  # So (CH2)2 ---> C2H4
+  # First add ( after N), e.g., (CH2)2CH3 ---> (CH2)2(CH3 for separation below
+  form <- gsub('(\\)[0-9\\.]+)', '\\1(', form)
+  # Drop extra (
+  form <- gsub('^\\(', '', form)
+  form <- gsub('\\($', '', form)
+  form <- gsub('\\(\\(', '(', form)
+  s1  <- strsplit(form, '\\(')[[1]]
+
+  # Build up elementwise formula piecewise
+  formpw <- NULL
+  for(i in 1:length(s1)) {
+    xx <- s1[i]
+    if(grepl('\\)', xx)) {
+      nn <- as.numeric(gsub('.+\\)','',xx))
+      ff <- gsub('\\).+', '', xx)
+      cc <- nn*as.numeric(strsplit(ff, '[A-Za-z]+')[[1]][-1])
+      ee <- strsplit(ff, '[0-9.]+')[[1]]
+      formpw <- paste0(formpw, paste0(ee, cc, collapse = ''))
+    } else {
+      formpw <- paste0(formpw, xx)
+    }
+  }
+
+  form <- formpw
+
+  # Extract integer coefficients 
+  cc <- as.numeric(strsplit(form, '[A-Za-z]+')[[1]][-1])
+  names(cc) <- strsplit(form, '[0-9.]+')[[1]]
+
+  # Sort out elements to return
+  if(is.null(elements)) elements <- unique(names(cc))
+  fc <- numeric(length(elements))
+  names(fc) <- elements
+
+  # Fill in fc, summing elements of cc if required (if elements are repeated)
+  for(i in elements) {
+    for(j in 1:length(cc)) {
+      if(names(cc)[j]==i) fc[i] <- fc[i] + cc[j]
+    }
+  }
+
+  # Simplify form based on fc (for output only)
+  # format() is for the rare case with something like C0.00001, to avoid C1e-5 which will result in an error
+  form <- paste0(names(fc), format(signif(fc/min(fc), cdigits), scientific = FALSE), collapse = '')
+  # Drop spaces that come in with format(...scientific = FALSE) (scipen fix)
+  form <- gsub(' ', '', form)
+  # And drop coefficients of 1
+  form <- gsub('([a-zA-Z])1([a-zA-Z])', '\\1\\2', form)
+  form <- gsub('([a-zA-Z])1$', '\\1\\2', form)
+  
+  # Check for minimum set of elements
+  if(!is.null(min.elements)) if(any(!min.elements %in% names(fc)) | any(fc[min.elements] == 0)) stop('Minimum elements required are ', min.elements, ' (from min.elements argument), but form is ', form.orig, ', interpreted as ', form)
+
+  if(value == 'numeric') return(fc)
+  if(value == 'shortform') as.vector(form)
+
+}
+
+
+# Returns COD per mol substrate
+calcCOD <- function(form) {
+
+  # If and only if first letter of form is lowercase, entire string is capitalized
+  if(grepl('^[a-z]', form)) form <- toupper(form)
+  # Read formula (function not vectorized)
+  fc <- read_formula(form, elements = c('C', 'H', 'O', 'N'))
+  # Calculate COD based on Rittmann and McCarty
+  COD <- as.vector((2*fc['C'] + 0.5*fc['H'] - 1.5*fc['N'] - fc['O']) * mol_mass('O'))
+
+  return(COD)
+}
+
+
+# Get mass conversion factor to go from moles of component to mass COD, N, C, S, or total, in that order
+get_mass_conv <- function(form) {
+
+  # Remove p and m (+/-)
+  form <- gsub('p$|m$', '', form)
+  
+  cod <- calcCOD(form)
+  fn <- read_formula(form)
+  
+  if (cod > 0) {
+    cf <- cod
+  } else if ('N' %in% names(fn)) {
+    cf <- mol_mass(form, elements = 'N')
+  } else if ('C' %in% names(fn)) {
+    cf <- mol_mass(form, elements = 'C')
+  } else if ('S' %in% names(fn)) {
+    cf <- mol_mass(form, elements = 'S')
+  } else {
+    cf <- mol_mass(form)
+  }
+
+  return(cf)
 
 }

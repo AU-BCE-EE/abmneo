@@ -29,10 +29,19 @@ clean_output <- function(
 
   # Add concentrations (after cumulative effluent)
   if (addconcs) {
-    dat <- addConcs(dat, pars)
+    dat <- add_concs(dat, pars)
   }
   
   return(dat)
 
 }
 
+# Add concetrations to abm() output
+add_concs <- function(dat, pars) {
+  
+    dat[, paste0(c(pars$grps, pars$subs, pars$sols), '_conc')] <-         dat[,        c(pars$grps, pars$subs, pars$sols)] / dat$slurry_mass
+    dat[, paste0(c(pars$grps, pars$subs, pars$sols), '_eff', '_conc')] <- dat[, paste0(c(pars$grps, pars$subs, pars$sols), '_eff')] / dat$slurry_mass_eff
+
+    return(dat)
+
+}

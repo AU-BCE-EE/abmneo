@@ -153,11 +153,16 @@ abm_core <- function(
     pars <- calc_ka(pars)
     
     # Create default y.eff vector with zeros because washing could occur, and dat needs columns
-    y.eff <- 0 * empty_store(y)$eff
+    y.eff <- 0 * empty_store(y, skip = TRUE, warn = FALSE)$eff
 
     # If there is a removal event, remove slurry before calling up ODE solver
     if (pars$removal) {
-      y <- empty_store(y, resid_mass = pars$resid_mass, resid_enrich = pars$resid_enrich)
+      y <- empty_store(
+        y, 
+	resid_mass = pars$resid_mass, 
+	resid_enrich = pars$resid_enrich,
+	enrich_names = c(pars$grps, pars$subs)
+      )
       y.eff <- y$eff
       y <- y$store
     }

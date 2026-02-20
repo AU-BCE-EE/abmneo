@@ -109,7 +109,7 @@ empty_store <- function(
   resid_mass = 0, 
   resid_enrich = 0, 
   skip = FALSE,
-  enrich_names = c('^xa', '^m[0-9]', '^sr[0-9]', '^RFd$', '^CPs$', '^iNDF$', '^VSd$', '^Cfat$', '^starch$', '^ash$'),
+  enrich_names = NULL,
   ignore_names = c('_emis', '_load', '_cum_', '_conv_', 'cum$'),
   warn = TRUE
 ) {

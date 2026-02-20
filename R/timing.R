@@ -43,7 +43,7 @@ get_schedule <- function(
 
 # Checks and prepares slurry mass series
 # Applies approx_method to slurry_mass
-make_series <- function(
+extract_series <- function(
   structure,
   pars,
   days
@@ -53,6 +53,7 @@ make_series <- function(
   if (structure$type == 'regular') {
 
     # If empty interval is set to 0 or NA the storage is never emptied. 
+    # Set to later than complete simulation
     empty_int <- structure$empty_int
     if(empty_int == 0 || is.na(empty_int)) {
       empty_int <- days + 1
@@ -66,7 +67,6 @@ make_series <- function(
       wash_int <- Inf
       rest_d <- 0
     }
-    wash_rest_int <- wash_int + rest_d
 
     # Continue sorting out intervals
     i <- 0
@@ -88,68 +88,86 @@ make_series <- function(
       }
     }
 
-    # Number of empty or wash intervals
-    n_int <- length(t_int)
-
     # Create dat data frame
-    resid_mass <- structure$resid_depth * pars$area * pars$dens
+    resid_mass <- c(structure$slurry_mass, rep(structure$resid_depth * pars$area * pars$dens, length(t_int) - 1))
     dat <- data.frame(
       time = cumsum(c(0, t_int)), 
       slurry_mass = c(
         structure$slurry_mass,
 	structure$slurry_prod_rate * t_int + resid_mass
       ),
-      resid_mass = resid_mass,
-      removal = TRUE
+      resid_mass = structure$resid_depth * pars$area * pars$dens,
+      removal = TRUE,
+      wash_water = structure$wash_water,
+      rest_days = structure$rest_d,
+      slurry_prod_rate = structure$slurry_prod_rate
     )
 
     # No final removal
     dat[nrow(dat), 'removal'] <- FALSE
 
-    dat$slurry_prod_rate <- structure$slurry_prod_rate
+    return(dat)
+
+  } else {
+
+    # Extract dat
+    dat <- structure$dat
+
+    # Add any missing time 0
+    if (dat[1, 'time'] > 0) {
+      dat <- rbind(c(0, dat$slurry_mass[1]), dat)
+    }
+
+    # For 'mid' option, other variables are copied from previous time
+    if (pars$approx_method == 'mid') {
+      # Get midpoint time
+      ir <- which(- c(0, diff(series[, 'slurry_mass'])) > 0)
+      tt <- (series[ir, 'time']  + series[ir - 1, 'time']) / 2
+      nr <- series[ir, ]
+      nr$time <- tt
+      dat <- rbind(dat, nr)
+      dat <- dat[order(dat$time), ]
+    } 
+
+    # Trim unused times
+    dat <- dat[dat$time <= days, ]
+
+    # Calculate slurry production rate and identify removal events
+    dat <- calc_prod_rem(dat, pars)
 
     return(dat)
 
-    # NTS: Need to return here because calc_prod_rem() will not work for this regular stuff
-    # NTS: Need to get time checks and var_pars though. . 
-    # NTS: Separte?
-
-  } else {
-    # Extract dat
-    dat <- structure$dat
   }
+}
 
-  # Add missing time 0
-  if (dat[1, 'time'] > 0) {
-    dat <- rbind(c(0, dat$slurry_mass[1]), dat)
-  }
+# Additional series processing
+clean_series <- function(
+  series,
+  pars,
+  days
+){
 
   ## Check for the right columns
-  #if (ncol(dat) != 2 || !identical(names(dat), c('time', 'slurry_mass'))) {
-  #  stop('The structure dat element must have two columns: time and slurry_mass.')
+  #if (ncol(series) != 2 || !identical(names(series), c('time', 'slurry_mass'))) {
+  #  stop('The structure series element must have two columns: time and slurry_mass.')
   #}
 
   # Cannot have no slurry present because is used in all concentration calculations
-  dat[dat[, 'slurry_mass'] == 0, 'slurry_mass'] <- 1E-10
+  series[series[, 'slurry_mass'] == 0, 'slurry_mass'] <- 1E-10
 
-  # Add in var_pars data frame if present
+  # Add in var_pars seriesa frame if present
   if (inherits(pars$var, 'data.frame')) {
-    series <- merge(dat, pars$var, by = 'time', all = TRUE)
-  } else {
-    series <- dat
-  }
+    series <- merge(series, pars$var, by = 'time', all = TRUE)
 
-  # Fill in missing values
-  if (pars$fill_method == 'interp') {
-    series <- interpm(series, 'time', names(series)[-1], rule = 2)
-  } else {
-    stop('ctrl_pars element fill_method--only available option is \"interp\".')
-  }
-
-  series <- calc_prod_rem(series, pars)
-
-  # Trim unused times
-  series <- series[series$time <= days, ]
+    # Fill in missing values after merge (if series and var_pars have different times)
+    # But added removal should = FALSE
+    series[is.na(series$removal), 'removal'] <- FALSE
+    if (pars$fill_method == 'interp') {
+      series <- interpm(series, 'time', names(series)[-1], rule = 2)
+    } else {
+      stop('ctrl_pars element fill_method--only available option is \"interp\".')
+    }
+  } 
 
   # Make sure series is sorted by time
   series <- series[order(series$time), ]
@@ -159,33 +177,19 @@ make_series <- function(
     stop('Duplicated times in series object. Check var_pars and structure inputs.')
   }
   
-  # If simulation continues past pars seriesa frame time, extend last row all the way
+  # If simulation continues past pars series time, extend last row all the way
   if (series[nrow(series), 'time'] < days) {
     t_end <- days
     series <- rbind(series, series[nrow(series), ])
     series[nrow(series), 'time'] <- days
-    # But make sure washing is not repeated!
-    if (ncol(series) > 2) {
-      series[nrow(series), 3:ncol(series)] <- 0
-    }
+    # But may need to make sure washing is not repeated somehow!
   }
-
-  # For 'mid' option, other variables are copied from previous time
-  if (pars$approx_method == 'mid') {
-    # Get midpoint time
-    ir <- which(- c(0, diff(series[, 'slurry_mass'])) > 0)
-    tt <- (series[ir, 'time']  + series[ir - 1, 'time']) / 2
-    nr <- series[ir, ]
-    nr$time <- tt
-    series <- rbind(series, nr)
-    series <- series[order(series$time), ]
-  } 
 
   return(series)
 
 }
 
-# Sorts out slurry production values and removal timing
+# Sorts out slurry production values and removal timing for mass series input
 calc_prod_rem <- function(
   series,
   pars

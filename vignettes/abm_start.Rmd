@@ -14,16 +14,10 @@ This demo shows:
 devtools::load_all()
 ```
 
-# Input parameters
+# Default input parameters
 
 We need to set some parameters, first management parameters.
-```{r}
-temp_series <- data.frame(
-  time = c(0, 1, 10, 15, 30), 
-  temp_C = c(10, 20, 25, 15, 10)
-)
-var_pars <- list(var = temp_series)
-```
+Here are some default sets, not always with plausible values.
 
 Now pared-down mng_pars, only those that apply to both types ().
 
@@ -79,6 +73,7 @@ chem_pars <- list(COD_conv = c(CH4 = 1/0.2507))
 # 1. Slurry mass versus production rate inputs
 
 Mass dat for structure only has time and slurry_mass.
+It is no longer a part of `var_pars`.
 
 ```{r}
 mass_series <- data.frame(
@@ -86,7 +81,7 @@ mass_series <- data.frame(
   slurry_mass = c(1000, 7000, 2000, 1500, 3000)
 )
 
-structure <- list(
+structure1 <- list(
   type = 'series',
   dat = mass_series
 )
@@ -99,8 +94,8 @@ Note: not `var_pars` needed.
 ```{r}
 devtools::load_all()
 out1 <- abm(
+  structure = structure1,
   50,
-  structure = structure,
   mng_pars = mng_pars,
   man_pars = man_pars,
   grp_pars = grp_pars,
@@ -108,7 +103,6 @@ out1 <- abm(
   chem_pars = chem_pars
 )
 ```
-Q
 
 ```{r}
 plot(slurry_mass ~ time, data = out1, type = 'l')
@@ -119,7 +113,7 @@ plot(CH4_emis_cum ~ time, data = out1, type = 'l')
 With regular inputs
 
 ```{r}
-structure <- list(
+structure2 <- list(
   type = 'regular',
   slurry_prod_rate = 10000, 
   slurry_mass = 1000,     
@@ -135,7 +129,7 @@ structure <- list(
 devtools::load_all()
 out2 <- abm(
   50,
-  structure = structure,
+  structure = structure2,
   mng_pars = mng_pars,
   man_pars = man_pars,
   grp_pars = grp_pars,
@@ -143,7 +137,6 @@ out2 <- abm(
   chem_pars = chem_pars
 )
 ```
-Q
 
 ```{r}
 out2$slurry_mass
@@ -156,6 +149,56 @@ plot(CH4_emis_rate ~ time, data = out2, type = 'l')
 plot(CH4_emis_cum ~ time, data = out2, type = 'l')
 ```
 
+# 2. Time-variable inputs
+
+Time-variable inputs are now separate from slurry mass series data, and can be combined with both of the above examples.
+
+```{r}
+temp_series <- data.frame(
+  time = c(0, 1, 10, 15, 30), 
+  temp_C = c(10, 20, 25, 15, 10)
+)
+var_pars <- list(var = temp_series)
+```
+
+```{r}
+devtools::load_all()
+out3 <- abm(
+  structure = structure1,
+  50,
+  mng_pars = mng_pars,
+  man_pars = man_pars,
+  grp_pars = grp_pars,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars,
+  var_pars = var_pars
+)
+```
+
+```{r}
+plot(temp_C ~ time, data = out3, type = 'l')
+plot(CH4_emis_rate ~ time, data = out3, type = 'l')
+```
+
+```{r}
+devtools::load_all()
+out4 <- abm(
+  50,
+  structure = structure2,
+  mng_pars = mng_pars,
+  man_pars = man_pars,
+  grp_pars = grp_pars,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars,
+  var_pars = var_pars
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = out4, type = 'l')
+plot(temp_C ~ time, data = out4, type = 'l')
+plot(CH4_emis_rate ~ time, data = out4, type = 'l')
+```
 
 
 

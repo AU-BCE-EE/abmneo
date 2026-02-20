@@ -1,3 +1,4 @@
+
 # Exported abm() function
 abm <- function(
   structure,
@@ -69,7 +70,8 @@ abm <- function(
   } 
 
   # Sort out structure, extending time as needed, checking for required components, and adding in any var_pars
-  series <- make_series(structure, pars, days)
+  series <- extract_series(structure, pars, days)
+  series <- clean_series(series, pars, days)
 
   # Create initial state variable vector
   y <- get_init_state(structure, pars) 

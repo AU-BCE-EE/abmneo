@@ -108,7 +108,7 @@ abm <- function(
     grps = pars$grps, 
     subs = pars$subs, 
     COD_conv = pars$COD_conv, 
-    stoich = pars$stoich, 
+    fstoich = pars$fstoich, 
     rtol = 0.01
   )
 

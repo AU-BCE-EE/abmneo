@@ -34,13 +34,12 @@ pack_pars <- function(
     pars$grps <- unique(c(pars$grps, pars$meths, pars$srs))
   }
 
-  # Fill in default values for grp_pars if keyword name `default` or `all` is used
+  # Fill in default values for grp_pars if keyword name `default` is used
   # Note: Microbial groups are defined by grps element
   # Note: `default` does *not* work with add_pars argument because grps are already defined in defaults
-  # Note: But `all` *does* work
   # expandPars() will also sort out element order and drop excluded elements
   # NTS: Could these vectors of names be set in some kind of defaults?
-  # Note that mstoich is *no* expanded! Too complicated.
+  # Note that mstoich is *not* expanded! Too complicated. So it needs all the elements (rows/columns)
   grp_par_nms <- c("yield", "xa_fresh", "xa_init", "dd_rate", "ksv", "kss", "qhat_opt", "T_opt", "T_min", "T_max")
   sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init")
   pars <- expand_pars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
@@ -55,10 +54,12 @@ pack_pars <- function(
   # NTS: I expect to change to a different approach, only using block below this one with names
   pars$n_mic <- length(pars$grps)
 
-  # Solutes ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Solutes and particle groups in slurry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # CH3COOH is always present
   pars$sols <- unique(c(pars$comps, 'CH3COOH'))
-  pars$conc_fresh <- c(pars$comp_fresh, pars$VFA_fresh)
+  # Grouping for easier rates() calculations
+  pars$conc_fresh <- c(pars$xa_fresh, pars$sub_fresh, pars$VFA_fresh, pars$comp_fresh)
+  pars$conc_init <- c(pars$xa_init, pars$sub_init, pars$VFA_init, pars$comp_init)
 
   # Master species, fill in masters = masters
   mmspec <- pars$sols 
@@ -67,23 +68,23 @@ pack_pars <- function(
   pars$mspec <- pars$mspec[!duplicated(names(pars$mspec))]
 
   # Mass conversion factors ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Need to be above stoich matrix determination (below)
+  # Need to be above fstoich matrix determination (below)
   pars$mcf <- unlist(lapply(c(pars$form, pars$mspec), get_mass_conv))
 
   # Sort out stoichiometry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Fermentation stoichiometry
   # Three possibilities: 1) NULL, 2) "calc", 3) given
   # If missing, assume only VFA is produced
-  if (is.null(pars$stoich)) {
+  if (is.null(pars$fstoich)) {
     # Fill in missing stochiometry
-    pars$stoich <- matrix(
+    pars$fstoich <- matrix(
       rep(1, length(pars$subs)),
       nrow = 1,
       dimnames = list(c('CH3COOH'), c(pars$subs))
     )
-  } else if (all(tolower(pars$stoich) == 'calc')) {
+  } else if (all(tolower(pars$fstoich) == 'calc')) {
     # Or calculated from substrate chemical formulas
-    pars$stoich <- get_stoich(pars)
+    pars$fstoich <- get_stoich(pars)
   }
   # Else given
 

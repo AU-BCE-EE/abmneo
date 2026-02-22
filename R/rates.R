@@ -14,33 +14,28 @@ rates <- function(t, y, parms) {
   # Initialize vectors with derivative components, all with same order of y elements
   inflow <- meth <- hyferm <- 0 * y
 
-  browser()
-  # NTS: Next step for tomorrow: combine all fresh concs. in single par element to reduce code below, why not?
-
   # Inflow from slurry addition
   # First only concentrations are set, and multiplied by inflow in last line
-  inflow[igrp] <- p$xa_fresh
-  inflow[p$subs] <- p$sub_fresh[p$subs]
-  inflow[p$sols] <- p$conc_fresh[p$sols]
-  inflow[c('slurry_mass', 'slurry_load')] <- 1
-  inflow['COD_load'] <- sum(inflow[p$grps], inflow[p$subs] * p$stoich['CH3COOH', p$subs], inflow['CH3COOH'])
-  inflow <- inflow * p$slurry_prod_rate
+  inflow[names(p$conc_fresh)] <- p$conc_fresh * p$slurry_prod_rate
+  inflow[c('slurry_mass', 'slurry_load')] <- 1 * p$slurry_prod_rate
+  inflow['COD_load'] <- sum(inflow[names(p$conc_fresh)]) * p$slurry_prod_rate
 
-  # NTS: This is beautiful! Just cannot handle SO4-2 red (yet?)
   # VFA consumption rates, CH4 production, and growth
+  # First utilization rate
   rut <- p$qhat * y['CH3COOH'] / (y['CH3COOH'] + y['slurry_mass'] * p$kss)
+  # And consumption, growth, production all in one matrix operation
   meth[rownames(p$mstoich)] <- p$mstoich %*% rut
 
   # Hydrolysis of particulate substrates and fermentation
-  hyferm[p$subs] <- - alpha[p$subs] * y[p$subs]
+  hyferm[p$subs] <- - p$alpha[p$subs] * y[p$subs]
   # Production of arbitrary products based on specified fermentation stoichiometry (can omit components)
-  hyferm[rownames(p$stoich)] <- - p$stoich %*% hyferm[colnames(p$stoich)]
+  hyferm[rownames(p$fstoich)] <- - p$fstoich %*% hyferm[colnames(p$fstoich)]
   
    # Add vectors to get derivatives
   # All elements in g/d as COD except 
   #   * slurry_mass (kg/d as fresh slurry mass)
-  #   * CH4 (g/d as CH4 or C?)
-  #   * solutes other than VFA (...)
+  #   * CH4 (g/d as CH4)
+  #   * user-defined solutes other than VFA (as C, N, or S as described in documentation)
   ders <- inflow + meth + hyferm
 
   return(list(ders, c(CH4_emis_rate = meth[['CH4']], temp_C = p$temp_C, pH = p$pH)))

@@ -86,7 +86,7 @@ VFA is hard-wired and so has its own elements.
 The name should be `CH3COOH`.
 
 ```{r}
-man_pars <- list(VFA_fresh = c(CH3COOH = 2), pH = 7, dens = 1000)
+man_pars <- list(VFA_fresh = c(CH3COOH = 2), VFA_init = c(CH3COOH = 0), pH = 7, dens = 1000)
 chem_pars <- list(COD_conv = c(CH4 = 1/0.2507))
 ```
 
@@ -130,7 +130,11 @@ And the fixed inputs like `slurry_prod_rate` that were ignored in these cases ar
 ```{r}
 plot(slurry_mass ~ time, data = out1, type = 'l')
 plot(CH4_emis_rate ~ time, data = out1, type = 'l')
-plot(CH4_emis_cum ~ time, data = out1, type = 'l')
+plot(CH4 ~ time, data = out1, type = 'l')
+plot(m0 ~ time, data = out1, type = 'l')
+plot(CH3COOH ~ time, data = out1, type = 'l')
+plot(VSd_conc ~ time, data = out1, type = 'l')
+plot(m0_conc ~ time, data = out1, type = 'l')
 ```
 
 With regular inputs, `slurry_prod_rate` etc. are now explicitly given.
@@ -960,7 +964,7 @@ sub_pars10 <- list(subs = c('cellulose', 'protein', 'lipids', 'urea'),
                    sub_init = c(lipids = 3, protein = 20, cellulose = 35, urea = 10))
 ```
 
-Production of any component is set in the `stoich` element of the `chem_pars` argument.
+Production of any component is set in the `fstoich` element of the `chem_pars` argument.
 
 
 ```{r}
@@ -986,7 +990,7 @@ Substrate and other component quantities are
 
 So the `CH3COOH` row should only have 1 or 0.
 
-The `stoich` matrix can be calculated from substrate chemical formulas--see next example.
+The `fstoich` matrix can be calculated from substrate chemical formulas--see next example.
                
 ```{r}
 chem_pars10 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
@@ -995,7 +999,7 @@ chem_pars10 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
                                C_xa = 1/0.3753125),
                     specs = c('NH3', 'HSm', 'CH3COOm'),
                     mspec = c(NH3 = 'NH4p', HSm = 'H2S', CH3COOm = 'CH3COOH'),
-                    stoich = smat)
+                    fstoich = smat)
 
 ```
 
@@ -1016,7 +1020,7 @@ plot(urea_conc ~ time, data = out10, type = 'l', ylab = 'Urea or TAN (g/kg)')
 lines(NH4p_conc ~ time, data = out10, col = 'blue')
 ```
 
-It might make more sense to have `stoich` calculated internally.
+It might make more sense to have `fstoich` calculated internally.
 For this, substrate formulas must be provided.
 
 ```{r}
@@ -1060,7 +1064,7 @@ But because of a bit of a programming quirk, we need to provide the master speci
 chem_pars10b <- list(COD_conv = c(CH4 = 1/0.2507),
                     specs = c('NH3'),
                     mspec = c(NH3 = 'NH4p'),
-                    stoich = 'calc')
+                    fstoich = 'calc')
 
 ```
 
@@ -1122,7 +1126,7 @@ chem_pars11 <- list(COD_conv = c(CH4 = 1/0.2507),
                      specs = c('HCO3m'),
                      mspec = c(HCO3m = 'CO2', NH3 = 'NH4p'),
                      lka = c(HCO3m = '-2.778 + -353.5305 -0.06092*temp_K + 21834.37/temp_K + 126.8339*log10(temp_K) -1684915/temp_K^2'),
-                     stoich = 'calc',
+                     fstoich = 'calc',
                      kl = c(CO2 = 0.01) * 86400)
 ```
 
@@ -1212,7 +1216,7 @@ chem_pars12c <- list(COD_conv = c(CH4 = 1/0.2507),
                      specs = c('HCO3m'),
                      mspec = c(HCO3m = 'CO2', NH3 = 'NH4p'),
                      lka = c(HCO3m = '-2.778 + -353.5305 -0.06092*temp_K + 21834.37/temp_K + 126.8339*log10(temp_K) -1684915/temp_K^2'),
-                     stoich = 'calc',
+                     fstoich = 'calc',
                      kl = c(CO2 = 0.01) * 86400)
 ```
 
@@ -1221,11 +1225,11 @@ chem_pars12d <- list(COD_conv = c(CH4 = 1/0.2507),
                      specs = c('HCO3m'),
                      mspec = c(HCO3m = 'CO2', NH3 = 'NH4p'),
                      lka = c(HCO3m = '-2.778 + -353.5305 -0.06092*temp_K + 21834.37/temp_K + 126.8339*log10(temp_K) -1684915/temp_K^2'),
-                     stoich = 'calc',
+                     fstoich = 'calc',
                      kl = c(O2 = 0.1, CO2 = 0.01) * 86400)
 ```
 
-(Hmm, shouldn't `stoich` be part of `sub_pars`?)
+(Hmm, shouldn't `fstoich` be part of `sub_pars`?)
 
 We also need stoichiometry for CO2, so we need a substrate chemical formula.
 

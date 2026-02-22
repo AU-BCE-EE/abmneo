@@ -21,15 +21,13 @@ get_init_state <- function(
   }
   
   y <- c(
-    pars$xa_init * slurry_mass_init,                       # Multiple microbial groups
-    pars$sub_init[pars$subs] * slurry_mass_init,           # Multiple particulate substrates 
-    pars$conc_init * slurry_mass_init,                     # VFA and conservative solutes
+    pars$conc_init * slurry_mass_init,                     # Microbial groups, (multiple) particulate substrates, VFA and conservative solutes
     slurry_mass = slurry_mass_init, 
     CH4 = 0, 
     slurry_load = 0,
     COD_load = 0
   )
-  
+
   return(y)
 
 }

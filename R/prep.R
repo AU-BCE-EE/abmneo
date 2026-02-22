@@ -25,8 +25,7 @@ get_init_state <- function(
     pars$sub_init[pars$subs] * slurry_mass_init,           # Multiple particulate substrates 
     pars$conc_init * slurry_mass_init,                     # VFA and conservative solutes
     slurry_mass = slurry_mass_init, 
-    CH4_emis_cum = 0, 
-    emis,
+    CH4 = 0, 
     slurry_load = 0,
     COD_load = 0
   )

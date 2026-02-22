@@ -1,4 +1,3 @@
-
 # Exported abm() function
 abm <- function(
   structure,

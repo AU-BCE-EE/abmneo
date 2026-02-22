@@ -40,6 +40,7 @@ pack_pars <- function(
   # Note: But `all` *does* work
   # expandPars() will also sort out element order and drop excluded elements
   # NTS: Could these vectors of names be set in some kind of defaults?
+  # Note that mstoich is *no* expanded! Too complicated.
   grp_par_nms <- c("yield", "xa_fresh", "xa_init", "dd_rate", "ksv", "kss", "qhat_opt", "T_opt", "T_min", "T_max")
   sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init")
   pars <- expand_pars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
@@ -159,12 +160,7 @@ expand_pars <- function(
       }
     }
 
-    # 'all' keyword is no longer encouraged, but functionality is still here
-    if (any(p_nms == 'all')) {
-      pars[[i]][elnms] <- pars[[i]]['all']
-    }
-
-    # Fix order, drop default element if present, drop unused names
+   # Fix order, drop default element if present, drop unused names
     pars[[i]] <- pars[[i]][elnms]
     # Check for missing values
     if (any(is.na(pars[[i]]))) {

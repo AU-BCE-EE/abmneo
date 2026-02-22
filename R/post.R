@@ -110,7 +110,7 @@ empty_store <- function(
   resid_enrich = 0, 
   skip = FALSE,
   enrich_names = NULL,
-  ignore_names = c('_emis', '_load', '_cum_', '_conv_', 'cum$'),
+  ignore_names = c('CH4', '_emis', '_load', '_cum_', '_conv_', 'cum$'),
   warn = TRUE
 ) {
 

@@ -15,23 +15,24 @@ rates <- function(t, y, parms) {
   inflow <- meth <- hyferm <- 0 * y
 
   # Inflow from slurry addition
-  # First only concentrations are set, and multiplied by inflow in last line
   inflow[names(p$conc_fresh)] <- p$conc_fresh * p$slurry_prod_rate
   inflow[c('slurry_mass', 'slurry_load')] <- 1 * p$slurry_prod_rate
-  inflow['COD_load'] <- sum(inflow[names(p$conc_fresh)]) * p$slurry_prod_rate
+  inflow['COD_load'] <- sum(inflow[names(p$conc_fresh)])
 
   # VFA consumption rates, CH4 production, and growth
   # First utilization rate
   rut <- p$qhat * y['CH3COOH'] / (y['CH3COOH'] + y['slurry_mass'] * p$kss)
   # And consumption, growth, production all in one matrix operation
-  meth[rownames(p$mstoich)] <- p$mstoich %*% rut
+  meth[rownames(p$mstoich)] <- p$mstoich %*% rut * y['slurry_mass']
+  # Convert CH4 from g COD / d to g C / d
+  meth['CH4'] <- meth['CH4'] / p$COD_conv['CH4']
 
   # Hydrolysis of particulate substrates and fermentation
   hyferm[p$subs] <- - p$alpha[p$subs] * y[p$subs]
   # Production of arbitrary products based on specified fermentation stoichiometry (can omit components)
   hyferm[rownames(p$fstoich)] <- - p$fstoich %*% hyferm[colnames(p$fstoich)]
   
-   # Add vectors to get derivatives
+  # Add vectors to get derivatives
   # All elements in g/d as COD except 
   #   * slurry_mass (kg/d as fresh slurry mass)
   #   * CH4 (g/d as CH4)

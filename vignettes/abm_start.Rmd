@@ -86,7 +86,7 @@ VFA is hard-wired and so has its own elements.
 The name should be `CH3COOH`.
 
 ```{r}
-man_pars <- list(VFA_fresh = c(CH3COOH = 2), VFA_init = c(CH3COOH = 0), pH = 7, dens = 1000)
+man_pars <- list(VFA_fresh = c(CH3COOH = 2), VFA_init = c(CH3COOH = 2), pH = 7, dens = 1000)
 chem_pars <- list(COD_conv = c(CH4 = 1/0.2507))
 ```
 
@@ -135,6 +135,7 @@ plot(m0 ~ time, data = out1, type = 'l')
 plot(CH3COOH ~ time, data = out1, type = 'l')
 plot(VSd_conc ~ time, data = out1, type = 'l')
 plot(m0_conc ~ time, data = out1, type = 'l')
+plot(COD_load ~ time, data = out1, type = 'l')
 ```
 
 With regular inputs, `slurry_prod_rate` etc. are now explicitly given.
@@ -142,8 +143,8 @@ With regular inputs, `slurry_prod_rate` etc. are now explicitly given.
 ```{r}
 structure2 <- list(
   type = 'regular',
-  slurry_prod_rate = 10000, 
-  slurry_mass = 1000,     
+  slurry_prod_rate = 1E4, 
+  slurry_mass = 1E4,     
   resid_depth = 0.1,      
   empty_int = 10,          
   wash_water = 100,            
@@ -164,6 +165,7 @@ out2 <- abm(
   chem_pars = chem_pars
 )
 ```
+Q
 
 ```{r}
 out2$slurry_mass
@@ -173,7 +175,10 @@ out2$slurry_mass_eff
 ```{r}
 plot(slurry_mass ~ time, data = out2, type = 'l')
 plot(CH4_emis_rate ~ time, data = out2, type = 'l')
-plot(CH4_emis_cum ~ time, data = out2, type = 'l')
+plot(CH4 ~ time, data = out2, type = 'l')
+plot(VSd ~ time, data = out2, type = 'l')
+plot(CH3COOH ~ time, data = out2, type = 'l')
+plot(m1 ~ time, data = out2, type = 'l')
 ```
 
 # 2. Time-variable inputs

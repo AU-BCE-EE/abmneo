@@ -52,12 +52,12 @@ But now we have (if I succeed!) microbial stoichiometry instead of the `sr` and 
 
 ```{r}
 mstoich <- matrix(
-  rep(c(-1, 1), 3),
-  nrow = 3,
+  c(-1, -1, -1, 1, 1, 1),
+  nrow = 2,
   byrow = TRUE,
   dimnames = list(
-    c('m0', 'm1', 'm2'),
-    c('CH3COOH', 'CH4')
+    c('CH3COOH', 'CH4'),
+    c('m0', 'm1', 'm2')
   )
 )
 ```

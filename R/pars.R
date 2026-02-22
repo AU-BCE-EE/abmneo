@@ -50,39 +50,10 @@ pack_pars <- function(
   # After above block, this should be redundant
   check_grp_names(pars)
 
-  # O2 kl ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # O2 kl is handled differently from other kl values, so here it becomes a separate pars element
-  if (!is.null(pars$kl) && 'O2' %in% names(pars$kl)) {
-    pars$O2kl <- pars$kl['O2']
-    pars$kl <- pars$kl[names(pars$kl) != 'O2']
-    if (length(pars$kl) == 0) {
-      pars$kl <- NULL
-    }
-  }
-
   # Size-variable elements ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # For size-variable parameters, get number of elements and indices 
   # NTS: I expect to change to a different approach, only using block below this one with names
   pars$n_mic <- length(pars$grps)
-  pars$i_mic <- grep('^sr|^p|^m', pars$grps)
-  pars$i_meth <- grep('^[mp]', pars$grps)
-  pars$i_sr <- grep('^sr', pars$grps)
-  pars$i_aer <- grep('^aer', pars$grps)
-  pars$i_hyd <- grep('^hyd', pars$grps)
-
-  # Get names of variable elements 
-  # Remember pars$grps/pars$mics and pars$subs already exist (set in pars input)
-  pars$meths <- pars$grps[pars$i_meth]
-  pars$srs <- pars$grps[pars$i_sr]
-  pars$aers <- pars$grps[pars$i_aer]
-  pars$hyds <- pars$grps[pars$i_hyd]
-  
-  # Drop sulfate reducers if SO4-2 is not available ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (length(pars$srs) > 0 & 'SO4m2' %in% pars$comps) {
-    pars$sromit <- FALSE 
-  } else {
-    pars$sromit <- TRUE
-  }
 
   # Solutes ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # CH3COOH is always present
@@ -100,6 +71,7 @@ pack_pars <- function(
   pars$mcf <- unlist(lapply(c(pars$form, pars$mspec), get_mass_conv))
 
   # Sort out stoichiometry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Fermentation stoichiometry
   # Three possibilities: 1) NULL, 2) "calc", 3) given
   # If missing, assume only VFA is produced
   if (is.null(pars$stoich)) {
@@ -114,6 +86,9 @@ pack_pars <- function(
     pars$stoich <- get_stoich(pars)
   }
   # Else given
+
+  # Methanogenesis stoichiometry
+  pars$mstoich <- comb_stoich(pars$mstoich, pars$yield)
 
   # Substrates ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars$n_subs <- length(pars$subs)
@@ -312,9 +287,6 @@ calc_temp_pars <- function(pars, y) {
   
   pars$temp_K <- pars$temp_C + 273.15
   
-  # Temperature-dependent derivative vectors
-  pars$alpha <- pars$qhat <- 0 * y
-
   # Hydrolysis rate (vectorized)
   pars$alpha[pars$subs] <- CTM_cpp(pars$temp_K, pars$T_opt_hyd, pars$T_min_hyd, pars$T_max_hyd, pars$hydrol_opt)
 

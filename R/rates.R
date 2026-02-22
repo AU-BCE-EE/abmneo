@@ -11,57 +11,39 @@ rates <- function(t, y, parms) {
   # Determine inhibition reductions
   p <- calc_inhib(p, y)
 
-  # Get indices for microbial groups
-  # Remember order in y and in all pars is identical (it is forced and checked)
-  igrp <- which(p$grps %in% names(y))
-  # And substrate
-  isub <- which(p$subs %in% names(y))
-
   # Initialize vectors with derivative components, all with same order of y elements
-  inflow <- rxn <- hydrol <- 0 * y
+  inflow <- meth <- hyferm <- 0 * y
 
-  # Other (temperature-dependent) derivative vectors, brought in with pars
-  alpha <- p$alpha
-  qhat <- p$qhat
+  browser()
+  # NTS: Next step for tomorrow: combine all fresh concs. in single par element to reduce code below, why not?
 
   # Inflow from slurry addition
   # First only concentrations are set, and multiplied by inflow in last line
   inflow[igrp] <- p$xa_fresh
-  inflow[isub] <- p$sub_fresh[isub]
+  inflow[p$subs] <- p$sub_fresh[p$subs]
   inflow[p$sols] <- p$conc_fresh[p$sols]
   inflow[c('slurry_mass', 'slurry_load')] <- 1
-  inflow['COD_load'] <- sum(inflow[p$grps], inflow[isub] * p$stoich['CH3COOH', isub], inflow['CH3COOH'])
+  inflow['COD_load'] <- sum(inflow[p$grps], inflow[p$subs] * p$stoich['CH3COOH', p$subs], inflow['CH3COOH'])
   inflow <- inflow * p$slurry_prod_rate
 
-  # VFA consumption rates (g/d) and growth
-  # Rate of substrate utilization
-  # For speed in indexing, use integer indices not names
-  for (i in igrp) {
-    # Extract group's stoichiometry
-    st <- p$mstoich[i, ]
-    # Utilization rate
-    ri <- which(names(st[st == -1]) == names(y))
-    ut <- qhat[i] * y[i] * prod(y[ri]/y['slurry_mass']) / (p$ksv[i] + prod(y[ri]/y['slurry_mass'])) * y['slurry_mass']
-    # Growth minus death
-    rxn[i] <- p$yield[i] * ut - p$dd_rate * y[i]
-    # NTS: Death is lost--need to have a substrate pool for it
-    # Substrate consumption and product formation 
-    rxn[names(st)] <- st * ut + rxn[names(st)]
-  }
+  # NTS: This is beautiful! Just cannot handle SO4-2 red (yet?)
+  # VFA consumption rates, CH4 production, and growth
+  rut <- p$qhat * y['CH3COOH'] / (y['CH3COOH'] + y['slurry_mass'] * p$kss)
+  meth[rownames(p$mstoich)] <- p$mstoich %*% rut
 
   # Hydrolysis of particulate substrates and fermentation
-  hydrol[isub] <- - alpha[isub] * y[isub]
+  hyferm[p$subs] <- - alpha[p$subs] * y[p$subs]
   # Production of arbitrary products based on specified fermentation stoichiometry (can omit components)
-  hydrol[rownames(p$stoich)] <- - p$stoich %*% hydrol[colnames(p$stoich)]
+  hyferm[rownames(p$stoich)] <- - p$stoich %*% hyferm[colnames(p$stoich)]
   
    # Add vectors to get derivatives
   # All elements in g/d as COD except 
   #   * slurry_mass (kg/d as fresh slurry mass)
   #   * CH4 (g/d as CH4 or C?)
   #   * solutes other than VFA (...)
-  ders <- inflow + rxn + hydrol
+  ders <- inflow + meth + hyferm
 
-  return(list(ders, c(CH4_emis_rate = rxn[['CH4']], temp_C = p$temp_C, pH = p$pH)))
+  return(list(ders, c(CH4_emis_rate = meth[['CH4']], temp_C = p$temp_C, pH = p$pH)))
 
 }
 

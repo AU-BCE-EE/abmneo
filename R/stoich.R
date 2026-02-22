@@ -427,3 +427,16 @@ check_COD <- function(dat,
   return(invisible(rbal))
 
 }
+
+comb_stoich <- function(mstoich, yield) {
+
+  # Yield matrix
+  ym <- diag(yield, ncol(mstoich), ncol(mstoich))
+  rownames(ym) <- names(yield)
+  combstoich <- rbind(mstoich, ym)
+  # Reduce CH4 by yield
+  combstoich['CH4', ] <- combstoich['CH4', ] - yield
+
+  return(combstoich)
+
+}

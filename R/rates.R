@@ -21,6 +21,29 @@ rates <- function(t, y, parms) {
 
   # VFA consumption rates, CH4 production, and growth
   # First utilization rate
+  browser()
+  p$mstoich
+  i = 1
+  j = 1
+  rut <- 0 * p$qhat
+
+  # Option 1
+  rut <- p$qhat * y['CH3COOH'] / (y['CH3COOH'] + y['slurry_mass'] * p$kss)
+
+  # Option 2
+  for (i in seq_len(ncol(p$mstoich))) {
+    for (j in seq_len(nrow(p$mstoich[, i, drop = FALSE]))) {
+      ss <- p$mstoich[j, i, drop = FALSE]
+      if (ss < 0) {
+        grp <- colnames(ss)
+        rct <- rownames(ss)
+        rut[grp] <- (y[rct] / (y[rct] + y['slurry_mass'] * p$ksmat[j, i]) * rut[grp]
+      }
+    }
+    rut[grp] <- qhat[grp] * rut[grp]
+  }
+
+  # Option 1
   rut <- p$qhat * y['CH3COOH'] / (y['CH3COOH'] + y['slurry_mass'] * p$kss)
   # And consumption, growth, production all in one matrix operation
   meth[rownames(p$mstoich)] <- p$mstoich %*% rut * y['slurry_mass']

@@ -12,43 +12,34 @@ rates <- function(t, y, parms) {
   p <- calc_inhib(p, y)
 
   # Initialize vectors with derivative components, all with same order of y elements
-  inflow <- meth <- hyferm <- 0 * y
+  inflow <- metab <- hyferm <- 0 * y
 
   # Inflow from slurry addition
   inflow[names(p$conc_fresh)] <- p$conc_fresh * p$slurry_prod_rate
   inflow[c('slurry_mass', 'slurry_load')] <- 1 * p$slurry_prod_rate
   inflow['COD_load'] <- sum(inflow[names(p$conc_fresh)])
 
-  # VFA consumption rates, CH4 production, and growth
-  # First utilization rate
-  browser()
-  p$mstoich
-  i = 1
-  j = 1
-  rut <- 0 * p$qhat
+  # Substrate matrix for utilization rate
+  sm <- matrix(y[rownames(p$mstoich)], 
+               nrow = nrow(p$mstoich), 
+               ncol = ncol(p$mstoich), 
+               byrow = FALSE)
 
-  # Option 1
-  rut <- p$qhat * y['CH3COOH'] / (y['CH3COOH'] + y['slurry_mass'] * p$kss)
+  # Monod term
+  monod <- sm / (sm + y['slurry_mass'] * p$ksmat)
+  # Force to 1 for non-substrates
+  monod[p$mstoich >= 0] <- 1
+  # Product across multiple substrates
+  monodprod <- apply(monod, 2, prod)
 
-  # Option 2
-  for (i in seq_len(ncol(p$mstoich))) {
-    for (j in seq_len(nrow(p$mstoich[, i, drop = FALSE]))) {
-      ss <- p$mstoich[j, i, drop = FALSE]
-      if (ss < 0) {
-        grp <- colnames(ss)
-        rct <- rownames(ss)
-        rut[grp] <- (y[rct] / (y[rct] + y['slurry_mass'] * p$ksmat[j, i]) * rut[grp]
-      }
-    }
-    rut[grp] <- qhat[grp] * rut[grp]
-  }
+  # Utilization rate 
+  rut <- p$qhat * monodprod
 
-  # Option 1
-  rut <- p$qhat * y['CH3COOH'] / (y['CH3COOH'] + y['slurry_mass'] * p$kss)
   # And consumption, growth, production all in one matrix operation
-  meth[rownames(p$mstoich)] <- p$mstoich %*% rut * y['slurry_mass']
+  metab[rownames(p$mstoich)] <- p$mstoich %*% rut * y['slurry_mass']
+
   # Convert CH4 from g COD / d to g C / d
-  meth['CH4'] <- meth['CH4'] / p$COD_conv['CH4']
+  metab['CH4'] <- metab['CH4'] / p$COD_conv['CH4']
 
   # Hydrolysis of particulate substrates and fermentation
   hyferm[p$subs] <- - p$alpha[p$subs] * y[p$subs]
@@ -60,9 +51,9 @@ rates <- function(t, y, parms) {
   #   * slurry_mass (kg/d as fresh slurry mass)
   #   * CH4 (g/d as CH4)
   #   * user-defined solutes other than VFA (as C, N, or S as described in documentation)
-  ders <- inflow + meth + hyferm
+  ders <- inflow + metab + hyferm
 
-  return(list(ders, c(CH4_emis_rate = meth[['CH4']], temp_C = p$temp_C, pH = p$pH)))
+  return(list(ders, c(CH4_emis_rate = metab[['CH4']], temp_C = p$temp_C, pH = p$pH)))
 
 }
 

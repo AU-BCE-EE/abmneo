@@ -440,3 +440,12 @@ comb_stoich <- function(mstoich, yield) {
   return(combstoich)
 
 }
+
+fix_ksmat <- function(ksmat, mstoich) {
+
+  ks <- 0 * mstoich + 1e10
+  ks[rownames(ksmat), colnames(ksmat)] <- ksmat
+
+  return(ks)
+
+}

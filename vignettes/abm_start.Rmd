@@ -26,7 +26,7 @@ mng_pars <- list(
   storage_depth = 2,     
   area = 100,              
   temp_C = 20,
-  resid_enrich = 1
+  resid_enrich = 0.2 
 )
 ```
 
@@ -48,7 +48,7 @@ sub_pars <- list(
 ```
 
 Microbial parameters are similar to other ABM versions, but inhibition is set separately now (and not shown in this simple example).
-But now we have (if I succeed!) microbial stoichiometry instead of the `sr` and maybe other "special cases" that greatly complicate the code.
+But now we have microbial stoichiometry instead of the "special cases" that greatly complicate the code.
 
 ```{r}
 mstoich <- matrix(

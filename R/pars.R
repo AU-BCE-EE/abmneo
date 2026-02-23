@@ -289,11 +289,46 @@ calc_temp_pars <- function(pars, y) {
   pars$temp_K <- pars$temp_C + 273.15
   
   # Hydrolysis rate (vectorized)
-  pars$alpha[pars$subs] <- CTM_cpp(pars$temp_K, pars$T_opt_hyd, pars$T_min_hyd, pars$T_max_hyd, pars$hydrol_opt)
+  pars$alpha[pars$subs] <- CTM(pars$temp_K, pars$T_opt_hyd, pars$T_min_hyd, pars$T_max_hyd, pars$hydrol_opt)
 
   # Microbial substrate utilization rate (vectorized calculation)
-  pars$qhat[pars$grps] <- CTM_cpp(pars$temp_K, pars$T_opt, pars$T_min, pars$T_max, pars$qhat_opt)
+  pars$qhat[pars$grps] <- CTM(pars$temp_K, pars$T_opt, pars$T_min, pars$T_max, pars$qhat_opt)
 
   return(pars)
 
+}
+
+# CTM function
+CTM <- function(temp_K, t_opt, t_min, t_max, y_opt) {
+
+  # Check lengths
+  if (length(temp_K) != 1) {
+    stop('Length of temp_K must be 1')
+  }
+  if (!all.equal(length(t_opt), length(t_min), length(t_max), length(y_opt))) {
+    stop('Length of t_opt, t_min, t_max, and y_opt must be identical')
+  }
+
+  # When temp_K outside bounds y = 0
+  y <- numeric(length(t_opt))
+  in_range <- temp_K[1] > t_min & temp_K[1] < t_max
+  
+  if (any(in_range)) {
+
+    # Select which formula to use
+    use_first <- (t_opt - t_min) < (t_max - t_min) / 2
+    
+    # First formula
+    y1 <- y_opt * ((temp_K[1] - t_min) * (temp_K[1] - t_max)^2) /
+      ((t_opt - t_max) * ((t_opt - t_max) * (temp_K[1] - t_opt) - (t_opt - t_min) * (t_opt + t_max - 2*temp_K[1])))
+    
+    # Second formula
+    y2 <- y_opt * ((temp_K[1] - t_max) * (temp_K[1] - t_min)^2) /
+      ((t_opt - t_min) * ((t_opt - t_min) * (temp_K[1] - t_opt) - (t_opt - t_max) * (t_opt + t_min - 2*temp_K[1])))
+    
+    # Combine using ifelse and enforce in-range
+    y[in_range] <- pmax(0, ifelse(use_first, y1, y2)[in_range])
+  }
+  
+  return(y)
 }

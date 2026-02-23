@@ -1,4 +1,3 @@
 import(deSolve)
 export(abm)
 useDynLib(ABM)
-importFrom(Rcpp, sourceCpp)

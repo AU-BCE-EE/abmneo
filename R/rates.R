@@ -58,12 +58,7 @@ rates <- function(t, y, parms) {
 }
 
 # Copy time-variable parameters into their normal par position for an interval
-update_var_pars <- function(
-  series,
-  pars, 
-  y, 
-  i
-) {
+update_var_pars <- function(series, pars, y, i) {
 
   vdat <- series[, names(series) != 'time', drop = FALSE]
 

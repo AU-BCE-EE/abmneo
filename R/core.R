@@ -152,15 +152,17 @@ abm_core <- function(
     pars <- calc_ka(pars)
     
     # Create default y.eff vector with zeros because washing could occur, and dat needs columns
-    y.eff <- 0 * empty_store(y, skip = TRUE, warn = FALSE)$eff
+    y.eff <- 0 * empty_store(y, skip = TRUE, ignore_names = unique(c(pars$gases, '_emis', '_load', '_cum_', '_conv_', 'cum$')), warn = FALSE)$eff
 
     # If there is a removal event, remove slurry before calling up ODE solver
+    # Gases are not removed (their state is cumulative emission)
     if (pars$removal) {
       y <- empty_store(
         y, 
 	resid_mass = pars$resid_mass, 
 	resid_enrich = pars$resid_enrich,
-	enrich_names = c(pars$grps, pars$subs)
+	enrich_names = c(pars$grps, pars$subs),
+	ignore_names =  unique(c(pars$gases, '_emis', '_load', '_cum_', '_conv_', 'cum$'))
       )
       y.eff <- y$eff
       y <- y$store

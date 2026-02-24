@@ -413,9 +413,9 @@ check_COD <- function(dat,
   last <- unlist(dat[nrow(dat), ])
 
   CODin <- sum(last[['COD_load']], first[grps], first[subs] * fstoich['CH3COOH', subs], first[['CH3COOH']])
-  CODeff <- sum(last[paste0(subs, '_eff')] + last[['CH3COOH_eff']])
+  CODeff <- sum(last[paste0(subs, '_eff')] * fstoich['CH3COOH', subs]) + last[['CH3COOH_eff']]
   CODemis <- last[['CH4']] * COD_conv[['CH4']]
-  CODrem <- sum(last[grps], last[subs], last[['CH3COOH']])
+  CODrem <- sum(last[grps], last[subs] * fstoich['CH3COOH', subs], last[['CH3COOH']])
   bal <- CODin - CODeff - CODemis - CODrem
   rbal <- bal / CODin
 
@@ -434,8 +434,10 @@ comb_stoich <- function(mstoich, yield) {
   ym <- diag(yield, ncol(mstoich), ncol(mstoich))
   rownames(ym) <- names(yield)
   combstoich <- rbind(mstoich, ym)
+
   # Reduce CH4 by yield
-  combstoich['CH4', ] <- combstoich['CH4', ] - yield
+  # NTS: This only works for COD-based substrates, and only one
+  combstoich[combstoich == 1] <- (combstoich - matrix(yield, ncol = ncol(combstoich), nrow = nrow(combstoich), byrow = FALSE))[combstoich == 1]
 
   return(combstoich)
 

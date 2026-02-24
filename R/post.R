@@ -39,8 +39,14 @@ clean_output <- function(
 # Add concetrations to abm() output
 add_concs <- function(dat, pars) {
   
-    dat[, paste0(c(pars$grps, pars$subs, pars$sols), '_conc')] <-         dat[,        c(pars$grps, pars$subs, pars$sols)] / dat$slurry_mass
-    dat[, paste0(c(pars$grps, pars$subs, pars$sols), '_eff', '_conc')] <- dat[, paste0(c(pars$grps, pars$subs, pars$sols), '_eff')] / dat$slurry_mass_eff
+    # Which components?
+    wc <- c(pars$grps, pars$subs, pars$sols)
+    # Not gases
+    wc <- wc[!wc %in% pars$gases]
+
+    # And then add conc columns
+    dat[, paste0(wc, '_conc')] <-     dat[,                 wc] / dat$slurry_mass
+    dat[, paste0(wc, '_eff_conc')] <- dat[, paste0(wc, '_eff')] / dat$slurry_mass_eff
 
     return(dat)
 
@@ -110,14 +116,19 @@ empty_store <- function(
   resid_enrich = 0, 
   skip = FALSE,
   enrich_names = NULL,
-  ignore_names = c('CH4', '_emis', '_load', '_cum_', '_conv_', 'cum$'),
+  ignore_names = NULL,
   warn = TRUE
 ) {
 
   y <- unlist(y)
   slurry_mass <- y['slurry_mass']
 
-  which.ignore <- grepl(paste(ignore_names, collapse = '|'), names(y))
+  if (!is.null(ignore_names)) {
+    which.ignore <- grepl(paste(ignore_names, collapse = '|'), names(y))
+  } else {
+    which.ignore <- rep(FALSE, length(y))
+  }
+
 
   if (slurry_mass > resid_mass & !skip) {
     # Masses before emptying

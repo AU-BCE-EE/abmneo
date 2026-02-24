@@ -111,7 +111,7 @@ The chem_pars list now specifies which components are emitted gases and which ar
 (All substrates are enriched--perhaps this should be an input too.)
 
 ```{r}
-chem_pars <- list(COD_conv = c(CH4 = 1/0.2507), gases = c('CH4'))
+chem_pars <- list(COD_conv = c(CH4 = 3.01), gases = c('CH4'))
 ```
 
 # 1. Slurry mass series versus regular inputs
@@ -394,7 +394,6 @@ out6 <- abm(
   chem_pars = chem_pars,
 )
 ```
-Q
 
 ```{r}
 plot(slurry_mass ~ time, data = out6, type = 'l')
@@ -409,7 +408,126 @@ plot(CH3COOH_conc ~ time, data = out4, type = 'l')
 lines(CH3COOH_conc ~ time, data = out6, type = 'l', col = 'red')
 ```
 
-This other chemical component 
+Notice that the sulfate reduction is not balanced.
+Neither is methanogenesis, for that matter.
+Additional products can be added pretty easily (and would be included in default parameter sets presumably).
+
+Let's add H2S and CO2.
+Note that the coefficient on CO2 is g C, and g S on H2S and SO4.
+
+```{r}
+mstoich3 <- matrix(
+  c(-1,  -1,  -1,  -1,
+     0,   0,   0,  -0.5,
+     1.5, 1.5, 1.5, 3,
+     0,   0,   0,   0.5,
+     1,   1,   1,   0),
+  nrow = 5,
+  byrow = TRUE,
+  dimnames = list(
+    c('CH3COOH', 'SO4', 'CO2', 'H2S', 'CH4'),
+    c('m0', 'm1', 'm2', 'sr1')
+  )
+)
+
+mstoich3
+```
+
+```{r}
+grp_pars3 <- list(
+  grps = c('m0', 'm1', 'm2', 'sr1'),
+  yield = c(default = 0.05),
+  xa_fresh = c(default = 0.05),
+  xa_init = c(default = 0.05),
+  dd_rate = c(default = 0.02),
+  ksv = c(default = 1),
+  qhat_opt = c(m0 = 1, m1 = 1, m2 = 2, sr1 = 2),
+  T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 25),
+  T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),
+  T_max = c(m0 = 25, m1 = 25, m2 = 38, sr1 = 40),
+  ksmat = ksmat2,
+  mstoich = mstoich3
+)
+```
+
+Now we need more components.
+
+```{r}
+man_pars3 <- list(VFA_fresh = c(CH3COOH = 2), 
+		  VFA_init = c(CH3COOH = 2),
+		  comps = c('SO4', 'CO2', 'H2S'),
+                  comp_fresh = c(SO4 = 10, CO2 = 1, H2S = 0), 
+                  comp_init = c(SO4 = 10, CO2 = 1, H2S = 0), 
+                  pH = 7, 
+		  dens = 1000)
+```
+
+And we should specify that H2S and CO2 are gases, otherwise they accumulate like solutes.
+
+```{r}
+chem_pars2 <- list(COD_conv = c(CH4 = 3.01), gases = c('CH4', 'CO2', 'H2S'))
+```
+
+```{r}
+devtools::load_all()
+out7 <- abm(
+  50,
+  structure = structure2,
+  mng_pars = mng_pars,
+  man_pars = man_pars3,
+  grp_pars = grp_pars3,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars2,
+)
+```
+
+```{r}
+plot(CO2 ~ time, data = out7, type = 'l', col = 'blue')
+lines(CH4 ~ time, data = out7, type = 'l')
+lines(CH4 ~ time, data = out6, type = 'l', col = 'orange', lty = 2)
+lines(H2S ~ time, data = out7, type = 'l', col = 'yellow')
+plot(SO4_conc ~ time, data = out7, type = 'l')
+plot(sr1 ~ time, data = out7, type = 'l')
+plot(m1 ~ time, data = out7, type = 'l')
+plot(CH3COOH_conc ~ time, data = out4, type = 'l')
+lines(CH3COOH_conc ~ time, data = out7, type = 'l', col = 'red')
+```
+
+Repeat without any sulfate for sulfate reducers.
+
+```{r}
+man_pars4 <- list(VFA_fresh = c(CH3COOH = 2), 
+		  VFA_init = c(CH3COOH = 2),
+		  comps = c('SO4', 'CO2', 'H2S'),
+                  comp_fresh = c(SO4 = 0, CO2 = 1, H2S = 0), 
+                  comp_init = c(SO4 = 0, CO2 = 1, H2S = 0), 
+                  pH = 7, 
+		  dens = 1000)
+```
+
+
+```{r}
+devtools::load_all()
+out8 <- abm(
+  50,
+  structure = structure2,
+  mng_pars = mng_pars,
+  man_pars = man_pars4,
+  grp_pars = grp_pars3,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars2,
+)
+```
+Q
+
+```{r}
+plot(CH4 ~ time, data = out8, type = 'l')
+lines(CO2 ~ time, data = out8, type = 'l', col = 'blue')
+lines(CH4 ~ time, data = out6, type = 'l', col = 'orange', lty = 2)
+lines(H2S ~ time, data = out8, type = 'l', col = 'yellow')
+```
+
+
 Stoichiometry is all sorted out based on the chemical formula in `forms`, including how much VFA (if any) is produced and whether there is N mineralization (but then TAN needs to be added as a solute).
 
 

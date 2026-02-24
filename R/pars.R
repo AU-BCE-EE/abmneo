@@ -88,7 +88,7 @@ pack_pars <- function(
   }
   # Else given
 
-  # Methanogenesis stoichiometry
+  # Metabolic stoichiometry (add microbial yield as rows and subtract from product formation)
   pars$mstoich <- comb_stoich(pars$mstoich, pars$yield)
 
   # Extend ks matrix if not full (typically not)

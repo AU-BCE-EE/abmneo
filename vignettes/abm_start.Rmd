@@ -275,8 +275,8 @@ sub_pars2 <- list(
   T_min_hyd = c(default = 0),
   T_max_hyd = c(default = 90),
   hydrol_opt = c(slow = 0.01, mid = 0.1, fast = 1),
-  sub_fresh = c(slow = 1, mid = 1, fast = 300),
-  sub_init = c(slow = 1, mid = 1, fast = 300)
+  sub_fresh = c(slow = 20, mid = 20, fast = 20),
+  sub_init = c(slow = 20, mid = 20, fast = 20)
 )
 ```
 Q
@@ -284,7 +284,7 @@ Q
 ```{r}
 devtools::load_all()
 out5 <- abm(
-  11,
+  50,
   structure = structure2,
   mng_pars = mng_pars,
   man_pars = man_pars,
@@ -293,11 +293,11 @@ out5 <- abm(
   chem_pars = chem_pars
 )
 ```
-Q
 
 ```{r}
 plot(fast_conc ~ time, data = out5, type = 'l', ylim = c(0, 100))
 lines(slow_conc ~ time, data = out5, col = 'red')
+lines(CH3COOH_conc ~ time, data = out5, col = 'blue')
 
 plot(fast ~ time, data = out5, type = 'l', ylim = c(0, 5e6))
 lines(slow ~ time, data = out5, col = 'red')
@@ -308,9 +308,10 @@ This is the simplest way to specify substrates.
 When entered in this way, there is no stoichiometry *per se*, but each g substrate COD produces 1 g CH3COOH intermediate.
 
 # 4. Sulfate reduction and other metabolic pathways
+The microbial metabolism code now used is completely flexibile with respect to reactants and products.
 Sulfate reduction is not hard-coded but can easily and very explicitly be specified with the new approach.
 We need the appropriate stoichiometry.
-Masses are
+Masses are specified as:
 
 1. COD mass, or if COD = 0,
 2. N mass, or if N = 0,
@@ -319,7 +320,7 @@ Masses are
 5. total mass
 
 So for SO4-2, we want the the mass of S divided by the COD of acetate, i.e., 32 / 64 = 0.5.
-
+(We might think about flexibility in how stoichiometry is defined, e.g., allow user to input moles, but it is probably better to fix it.)
 
 ```{r}
 mstoich2 <- matrix(
@@ -393,6 +394,7 @@ out6 <- abm(
   chem_pars = chem_pars,
 )
 ```
+Q
 
 ```{r}
 names(out6)

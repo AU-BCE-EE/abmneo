@@ -430,14 +430,15 @@ check_COD <- function(dat,
 
 comb_stoich <- function(mstoich, yield) {
 
+  # Subtract microbial yields from product formation
+  # Note that this is not simply subtraction because some products may not be in COD units!
+  msc <- mstoich
+  msc[msc > 0] <- (msc * matrix(1 - yield, nrow = nrow(msc), ncol = length(yield), byrow = TRUE))[msc > 0]
+
   # Yield matrix
-  ym <- diag(yield, ncol(mstoich), ncol(mstoich))
+  ym <- diag(yield, ncol(msc), ncol(msc))
   rownames(ym) <- names(yield)
   combstoich <- rbind(mstoich, ym)
-
-  # Reduce CH4 by yield
-  # NTS: This only works for COD-based substrates, and only one
-  combstoich[combstoich == 1] <- (combstoich - matrix(yield, ncol = ncol(combstoich), nrow = nrow(combstoich), byrow = FALSE))[combstoich == 1]
 
   return(combstoich)
 

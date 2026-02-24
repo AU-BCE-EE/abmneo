@@ -397,7 +397,6 @@ out6 <- abm(
 Q
 
 ```{r}
-names(out6)
 plot(slurry_mass ~ time, data = out6, type = 'l')
 plot(temp_C ~ time, data = out6, type = 'l')
 plot(CH4_emis_rate ~ time, data = out4, type = 'l')

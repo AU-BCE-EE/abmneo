@@ -103,8 +103,8 @@ extract_series <- function(
       slurry_prod_rate = structure$slurry_prod_rate
     )
 
-    # No final removal
-    dat[nrow(dat), 'removal'] <- FALSE
+    # No intial (time 0) and no final removal
+    dat[c(1, nrow(dat)), 'removal'] <- FALSE
 
     return(dat)
 

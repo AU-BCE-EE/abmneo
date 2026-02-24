@@ -91,8 +91,7 @@ calc_inhib <- function(pars, y) {
     concs <- pars$conc_sp[colnames(pars$ilwr)]
     pars$ired <- inhib(pars$ilwr, pars$iupr, concs)
   } else {
-    pars$ired <- rep(1, length(pars$grps))
-    names(pars$ired) <- pars$grps
+    pars$ired <- 0 * pars$qhat_opt + 1
   }
 
   return(pars)

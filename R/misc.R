@@ -29,3 +29,64 @@ interpm <- function(dat, x, ys, by = NA, ...) {
 logistic <- function(x) exp(x)/(1 + exp(x))
 
 logit <- function(p) log(p/(1 - p))
+
+fill_down <- function(x) {
+  if (!anyNA(x)) return(x)
+  
+  idx <- !is.na(x)
+  if (!any(idx)) return(x)  # all NA column
+  
+  x[!idx] <- x[idx][cumsum(idx)][!idx]
+
+  return(x)
+}
+
+fill_down_list <- function(x) {
+  last <- NULL
+
+  for (i in seq_along(x)) {
+    if (any(is.na(x[[i]]))) {
+      x[[i]] <- last
+    } else {
+      last <- x[[i]]
+    }
+  }
+
+  return(x)
+}
+
+fill_down_df <- function(df) {
+  for (nm in names(df)) {
+    if (is.atomic(df[[nm]])) {
+      df[[nm]] <- fill_down(df[[nm]])
+    } else {
+      df[[nm]] <- fill_down_list(df[[nm]])
+    }
+  }
+
+  return(df)
+
+}
+
+#fill_down_df <- function(df) {
+#
+#browser()
+#i = 10
+#x1 = df[, 1]
+#class(x1)
+#x = df[, i]
+#x
+#length(x)
+#  x[[idx]][[cumsum(idx)]][[!idx]]
+#
+#class(x[1])
+#y = x[idx][cumsum(idx)][!idx]
+#class(y[1])
+#y[1]
+#class(x)
+#  for (i in seq_len(ncol(df))) {
+#    df[, i] <- fill_down(df[, i])
+#  }
+#
+#  return(df)
+#}

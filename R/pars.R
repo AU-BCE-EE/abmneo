@@ -173,10 +173,10 @@ combine_var_pars <- function(var_pars) {
         ll[[j]] <- x
       }
       var_pars$var[[nv]] <- ll
-      # Take only the var element (but note that var_pars is still a list--see [] not [[]])
-      # And var_pars must remain a list (see single brackets) to avoid duplicate par elements from combining into par
-      var_pars <- var_pars['var']
     }
+    # Take only the var element (but note that var_pars is still a list--see [] not [[]]) because all other info from other elements are now in it
+    # And var_pars must remain a list (see single brackets) to avoid duplicate par elements from combining into par
+    var_pars <- var_pars['var']
   }
 
   # Check for time and at least one other column name

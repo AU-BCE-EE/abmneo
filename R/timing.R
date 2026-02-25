@@ -89,7 +89,9 @@ extract_series <- function(
     }
 
     # Create dat data frame
+    # First resid mass, where first row is end of first interval
     resid_mass <- c(structure$slurry_mass, rep(structure$resid_depth * pars$area * pars$dens, length(t_int) - 1))
+    # dat has an additional (time 0) row
     dat <- data.frame(
       time = cumsum(c(0, t_int)), 
       slurry_mass = c(
@@ -162,10 +164,18 @@ clean_series <- function(
     # Fill in missing values after merge (if series and var_pars have different times)
     # But added removal should = FALSE
     series[is.na(series$removal), 'removal'] <- FALSE
+
     if (pars$fill_method == 'interp') {
-      series <- interpm(series, 'time', names(series)[-1], rule = 2)
-    } else {
-      stop('ctrl_pars element fill_method--only available option is \"interp\".')
+      if (any(sapply(series, class) == 'list')) {
+        warning('ctrl_pars element fill_method \"interp\" cannot be used with list elements, so reverting to \"forward\"')
+        pars$fill_method <- 'forward'
+      } else {
+        series <- interpm(series, 'time', names(series)[-1], rule = 2)
+      }
+    } 
+
+    if (pars$fill_method == 'forward') {
+       series <- fill_down_df(series)
     }
   } 
 

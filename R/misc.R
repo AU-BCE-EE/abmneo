@@ -30,6 +30,8 @@ logistic <- function(x) exp(x)/(1 + exp(x))
 
 logit <- function(p) log(p/(1 - p))
 
+# Fill values down, replacing missing values
+# Suggestion from ChatGPT with a tweak (x[cumsum... -> x[idx][cumsum...)
 fill_down <- function(x) {
   if (!anyNA(x)) return(x)
   
@@ -41,6 +43,8 @@ fill_down <- function(x) {
   return(x)
 }
 
+# When a column is a list of named vectors, e.g., for qhat_opt or even sub_fresh (could be length-one vectors)
+# Another ChatGPT suggestion with tweaks
 fill_down_list <- function(x) {
   last <- NULL
 

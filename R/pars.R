@@ -159,20 +159,19 @@ combine_var_pars <- function(var_pars) {
     for (i in 2:length(var_pars)) {
       dv <- var_pars[[i]]
       nv <- names(var_pars)[[i]]
-      if (nrow(dv) != nrow(var_pars$var)) {
-        stop('var_pars has multiple elements with different sizes.')
-      }
-      if (!all(dv$time == var_pars$var$time)) {
-        stop('Multiple elements in var_pars have different time values in first column.')
-      }
       ll <- list()
-      for (j in 1:nrow(var_pars$var)) {
+      # Collapse any multiple columns into one column
+      for (j in 1:nrow(dv)) {
         # It is challenging to get list into each element using indexing
         x <- as.numeric(dv[j, -1, drop = FALSE])
         names(x) <- names(dv)[-1]
         ll[[j]] <- x
       }
-      var_pars$var[[nv]] <- ll
+      # Put combined columns into a new data frame with time
+      dd <- dv[, 1, drop = FALSE]
+      dd[[nv]] <- ll
+      # And merge (any NAs will be fixed in clean_series())
+      var_pars$var <- merge(var_pars$var, dd, by = 'time', all = TRUE)
     }
     # Take only the var element (but note that var_pars is still a list--see [] not [[]]) because all other info from other elements are now in it
     # And var_pars must remain a list (see single brackets) to avoid duplicate par elements from combining into par
@@ -187,6 +186,7 @@ combine_var_pars <- function(var_pars) {
   return(var_pars)
 
 }
+
 
 
 fix_add_pars <- function(pars, add_pars) {

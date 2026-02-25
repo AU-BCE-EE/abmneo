@@ -1,5 +1,5 @@
 ---
-title: 'Demo of `abm()` function in abmneo'
+title: 'Demo of `abmneo()` function in abmneo'
 output: pdf_document
 author: Sasha D. Hafner
 date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
@@ -78,8 +78,6 @@ ksmat
 
 ```
 
-
-
 ```{r}
 grp_pars <- list(
   grps = c('m0', 'm1', 'm2'),
@@ -115,7 +113,7 @@ chem_pars <- list(COD_conv = c(CH4 = 3.01), gases = c('CH4'))
 ```
 
 # 1. Slurry mass series versus regular inputs
-When it comes to how slurry level and the fill/empty schedule is entered, we now distinguish between *regular* inputs (as in repeating/consistent, as in earlier versions of `abm()`) and *series* inputs, where the schedule is inferred from time series data on slurry mass (what was called time-variable in earlier versions of `abm()`).
+When it comes to how slurry level and the fill/empty schedule is entered, we now distinguish between *regular* inputs (as in repeating/consistent, as in earlier versions of `abmneo()`) and *series* inputs, where the schedule is inferred from time series data on slurry mass (what was called time-variable in earlier versions of `abmneo()`).
 These are specified in the `structure` argument (to be renamed. . .  maybe simply `mass`???).
 Mass dat for structure only has time and slurry_mass.
 It is no longer a part of `var_pars`--the two are now independent (externally).
@@ -136,7 +134,7 @@ plot(slurry_mass ~ time, data = structure1$dat, type = 'o')
 
 ```{r}
 devtools::load_all()
-out1 <- abm(
+out1 <- abmneo(
   structure = structure1,
   50,
   mng_pars = mng_pars,
@@ -181,7 +179,7 @@ structure2 <- list(
 
 ```{r}
 devtools::load_all()
-out2 <- abm(
+out2 <- abmneo(
   50,
   structure = structure2,
   mng_pars = mng_pars,
@@ -223,7 +221,7 @@ Use with series data.
 
 ```{r}
 devtools::load_all()
-out3 <- abm(
+out3 <- abmneo(
   structure = structure1,
   50,
   mng_pars = mng_pars,
@@ -244,7 +242,7 @@ Or regular inputs.
 
 ```{r}
 devtools::load_all()
-out4 <- abm(
+out4 <- abmneo(
   50,
   structure = structure2,
   mng_pars = mng_pars,
@@ -282,7 +280,7 @@ Q
 
 ```{r}
 devtools::load_all()
-out5 <- abm(
+out5 <- abmneo(
   50,
   structure = structure2,
   mng_pars = mng_pars,
@@ -383,7 +381,7 @@ man_pars2 <- list(VFA_fresh = c(CH3COOH = 2),
 
 ```{r}
 devtools::load_all()
-out6 <- abm(
+out6 <- abmneo(
   50,
   structure = structure2,
   mng_pars = mng_pars,
@@ -471,7 +469,7 @@ Remember that all this could be added to default parameter sets!
 
 ```{r}
 devtools::load_all()
-out7 <- abm(
+out7 <- abmneo(
   50,
   structure = structure2,
   mng_pars = mng_pars,
@@ -509,7 +507,7 @@ man_pars4 <- list(VFA_fresh = c(CH3COOH = 2),
 
 ```{r}
 devtools::load_all()
-out8 <- abm(
+out8 <- abmneo(
   50,
   structure = structure2,
   mng_pars = mng_pars,
@@ -569,7 +567,7 @@ var_pars2 <- list(var = var_dat)
 
 ```{r}
 devtools::load_all()
-out9 <- abm(
+out9 <- abmneo(
   50,
   structure = structure2,
   mng_pars = mng_pars,
@@ -627,7 +625,7 @@ The data frames are merged and missing values are interpolated or filled forward
 
 ```{r}
 devtools::load_all()
-out10 <- abm(
+out10 <- abmneo(
   structure = structure2,
   50,
   mng_pars = mng_pars,
@@ -649,6 +647,102 @@ plot(CH3COOH_conc ~ time, data = out5, type = 'l')
 
 That is a lot of flexibility, I think.
 
+# X. The startup argument
+
+Works as before.
+This example is based on out2
+
+```{r}
+structure3 <- list(
+  type = 'regular',
+  slurry_prod_rate = 1E4, 
+  slurry_mass = 5E4,     
+  resid_depth = 0.5,      
+  empty_int = 30,          
+  wash_water = 100,            
+  wash_int = NA,
+  rest_d = 1
+)
+```
+
+Reduce initial methanogen concentrations and set fresh to zero.
+
+```{r}
+grp_pars4 <- list(
+  grps = c('m0', 'm1', 'm2'),
+  yield = c(default = 0.05),
+  xa_fresh = c(default = 0.01),
+  xa_init = c(default = 0.01),
+  dd_rate = c(default = 0.02),
+  ksv = c(default = 1),
+  qhat_opt = c(m0 = 1, m1 = 1, m2 = 2),
+  T_opt = c(m0 = 18, m1 = 18, m2 = 28),
+  T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41),
+  T_max = c(m0 = 25, m1 = 25, m2 = 38),
+  ksmat = ksmat,
+  mstoich = mstoich
+)
+```
+
+
+
+```{r}
+devtools::load_all()
+out11_0 <- abmneo(
+  90,
+  delta_t = 0.1,
+  structure = structure3,
+  mng_pars = mng_pars,
+  man_pars = man_pars,
+  grp_pars = grp_pars4,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars,
+  startup = 0
+)
+
+out11_1 <- abmneo(
+  90,
+  delta_t = 0.1,
+  structure = structure3,
+  mng_pars = mng_pars,
+  man_pars = man_pars,
+  grp_pars = grp_pars4,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars,
+  startup = 1
+)
+
+out11_2 <- abmneo(
+  90,
+  delta_t = 0.1,
+  structure = structure3,
+  mng_pars = mng_pars,
+  man_pars = man_pars,
+  grp_pars = grp_pars4,
+  sub_pars = sub_pars,
+  chem_pars = chem_pars,
+  startup = 2
+)
+
+```
+
+```{r}
+out11_0$slurry_mass
+out11_0$CH4_emis_rate
+plot(slurry_mass ~ time, data = out11_0, type = 'l')
+plot(CH4_emis_rate ~ time, data = out11_0, type = 'l')
+lines(CH4_emis_rate ~ time, data = out11_1, col = 'red')
+lines(CH4_emis_rate ~ time, data = out11_2, col = 'blue')
+plot(CH4 ~ time, data = out11_0, type = 'l')
+plot(VSd ~ time, data = out11_0, type = 'l')
+plot(m0_conc ~ time, data = out11_0, type = 'l')
+lines(m0_conc ~ time, data = out11_1, type = 'l', col = 'red')
+plot(m1_conc ~ time, data = out11_0, type = 'l')
+plot(m2_conc ~ time, data = out11_0, type = 'l')
+plot(CH3COOH_conc ~ time, data = out11_0, type = 'l')
+```
+
+
 # Next. Hydrogenotrophic methanogens with CO2 and H2
 Possible but not super logical -- we won't have a lot of H2 production without consumption
 
@@ -669,7 +763,7 @@ Note that `CH3COOH` is still special--it has a fixed name in the code and is not
 
 ```{r}
 devtools::load_all()
-out6a <- abm(365,
+out6a <- abmneo(365,
             mng_pars = mng_pars,
             man_pars = man_pars6,
             grp_pars = grp_pars,
@@ -722,7 +816,7 @@ mng_pars6 = list(slurry_prod_rate = 10000,
 ```
 
 ```{r}
-out6b <- abm(365,
+out6b <- abmneo(365,
             mng_pars = mng_pars6,
             man_pars = man_pars6,
             grp_pars = grp_pars,
@@ -761,7 +855,7 @@ grp_pars6c <- list(grps = c('m0', 'm1', 'm2'),
 
 ```{r}
 devtools::load_all()
-out6c <- abm(365,
+out6c <- abmneo(365,
             mng_pars = mng_pars6,
             man_pars = man_pars6c,
             grp_pars = grp_pars6c,
@@ -825,7 +919,7 @@ Only 2 species are supported for any component (master species and one more).
 
 ```{r}
 devtools::load_all()
-out7 <- abm(365,
+out7 <- abmneo(365,
             mng_pars = mng_pars,
             man_pars = man_pars6,
             grp_pars = grp_pars,
@@ -902,7 +996,7 @@ chem_pars8 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 
 
 ```{r}
-out8 <- abm(365,
+out8 <- abmneo(365,
             mng_pars = mng_pars,
             man_pars = man_pars7,
             grp_pars = grp_pars,
@@ -948,7 +1042,7 @@ chem_pars9 <- list(COD_conv = c(CH4 = 1/0.2507),
 
 ```{r}
 devtools::load_all()
-out9a <- abm(365,
+out9a <- abmneo(365,
              mng_pars = mng_pars,
              man_pars = man_pars9,
              grp_pars = grp_pars,
@@ -1009,7 +1103,7 @@ chem_pars9b <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 
 ```{r}
 devtools::load_all()
-out9b <- abm(365,
+out9b <- abmneo(365,
              mng_pars = mng_pars9b,
              man_pars = man_pars9,
              grp_pars = grp_pars,
@@ -1026,7 +1120,7 @@ plot(NH4p_conc ~ time, data = out9b, type = 'l')
 ```
 
 # 9. COD balance
-There is now a `checkCOD()` function that runs on `abm()` results before returning them.
+There is now a `checkCOD()` function that runs on `abmneo()` results before returning them.
 For now the tolerance is fixed at 1%.
 Some of the examples above do not meet that criterion for some reason.
 At least one shows a real problem that needs to be identified.
@@ -1049,7 +1143,7 @@ chem_pars10 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 ```
 
 ```{r}
-out10 <- abm(365,
+out10 <- abmneo(365,
             mng_pars = mng_pars,
             man_pars = man_pars9,
             grp_pars = grp_pars,
@@ -1128,7 +1222,7 @@ chem_pars10 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 
 ```{r}
 devtools::load_all()
-out10 <- abm(365,
+out10 <- abmneo(365,
             mng_pars = mng_pars,
             man_pars = man_pars10,
             grp_pars = grp_pars,
@@ -1193,7 +1287,7 @@ chem_pars10b <- list(COD_conv = c(CH4 = 1/0.2507),
 
 ```{r}
 devtools::load_all()
-out10b <- abm(365,
+out10b <- abmneo(365,
             mng_pars = mng_pars,
             man_pars = man_pars10b,
             grp_pars = grp_pars,
@@ -1255,7 +1349,7 @@ chem_pars11 <- list(COD_conv = c(CH4 = 1/0.2507),
 
 ```{r}
 devtools::load_all()
-out11 <- abm(365,
+out11 <- abmneo(365,
             mng_pars = mng_pars,
             man_pars = man_pars11,
             grp_pars = grp_pars,
@@ -1297,7 +1391,7 @@ chem_pars12b <- list(COD_conv = c(CH4 = 1/0.2507),
 
 ```{r}
 devtools::load_all()
-out12a <- abm(365,
+out12a <- abmneo(365,
              mng_pars = mng_pars,
              man_pars = man_pars,
              grp_pars = grp_pars,
@@ -1309,7 +1403,7 @@ out12a <- abm(365,
 
 ```{r}
 devtools::load_all()
-out12b <- abm(365,
+out12b <- abmneo(365,
              mng_pars = mng_pars,
              man_pars = man_pars,
              grp_pars = grp_pars,
@@ -1370,7 +1464,7 @@ sub_pars12 <- list(subs = c('VSd'),
 
 ```{r}
 devtools::load_all()
-out12c <- abm(365,
+out12c <- abmneo(365,
              mng_pars = mng_pars,
              man_pars = man_pars12,
              grp_pars = grp_pars,
@@ -1382,7 +1476,7 @@ out12c <- abm(365,
 
 ```{r}
 devtools::load_all()
-out12d <- abm(365,
+out12d <- abmneo(365,
              mng_pars = mng_pars,
              man_pars = man_pars12,
              grp_pars = grp_pars,

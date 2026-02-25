@@ -33,7 +33,7 @@ rates <- function(t, y, parms) {
   monodprod <- apply(monod, 2, prod)
 
   # Utilization rate 
-  rut <- p$qhat * monodprod
+  rut <- p$qhat * monodprod * y[p$grps] / y['slurry_mass']
 
   # And consumption, growth, production all in one matrix operation
   metab[rownames(p$mstoich)] <- p$mstoich %*% rut * y['slurry_mass']

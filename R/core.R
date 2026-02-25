@@ -1,5 +1,5 @@
 # Exported abm() function
-abm <- function(
+abmneo <- function(
   structure,
   days = 365,
   delta_t = 1,

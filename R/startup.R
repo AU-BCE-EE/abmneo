@@ -2,6 +2,7 @@
 # Argument list should exactly match abm()
 
 abm_startup <- function(
+  structure,
   days,
   delta_t,
   times,
@@ -24,7 +25,8 @@ abm_startup <- function(
     } 
     
     # Call abm() with arguments given in outside call except for startup
-    out <- abm(
+    out <- abmneo(
+      structure = structure,
       days = days,
       delta_t = delta_t,
       times = times,
@@ -50,7 +52,7 @@ starting_pars <- function(pars, starting) {
   pars$conc_init['CH3COOH'] <- as.numeric(starting[nrow(starting), 'CH3COOH_conc'])
   pars$sub_init[pars$subs] <- as.numeric(starting[nrow(starting), paste0(pars$subs, '_conc')])
   # Set slurry_mass as well?
-  # NTS: Set comp solutes also?
+  # NTS: Set comp solutes also? Yes!
 
   return(pars)
   

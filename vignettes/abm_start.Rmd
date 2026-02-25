@@ -600,8 +600,8 @@ sub_fresh_dat = data.frame(time = c(0, 5, 10, 15, 30),
 and a sudden increase in sulfate, 
 
 ```{r}
-comp_fresh_dat = data.frame(time = c(0, 5, 10, 15, 30), 
-                       SO4 = c(0, 0, 0, 5, 5))
+comp_fresh_dat = data.frame(time = c(0, 15, 30), 
+                       SO4 = c(0, 5, 5))
 ```
 
 or even a change in microbial parameters,
@@ -638,8 +638,6 @@ out10 <- abm(
   var_pars = var_pars3
 )
 ```
-Q
-traceback()
 
 ```{r}
 plot(slurry_mass ~ time, data = out10, type = 'l')
@@ -649,7 +647,10 @@ plot(SO4_conc ~ time, data = out10, type = 'l')
 plot(CH3COOH_conc ~ time, data = out5, type = 'l')
 ```
 
-Incredible flexibility, I think.
+That is a lot of flexibility, I think.
+
+# Next. Hydrogenotrophic methanogens with CO2 and H2
+Possible but not super logical -- we won't have a lot of H2 production without consumption
 
 # 6. Flexible solutes and sulfate reduction
 Any conservative solute can be added in `man_pars`, using any names.

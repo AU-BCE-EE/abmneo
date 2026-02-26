@@ -414,7 +414,7 @@ check_COD <- function(dat,
 
   CODin <- sum(last[['COD_load']], first[grps], first[subs] * fstoich['CH3COOH', subs], first[['CH3COOH']])
   CODeff <- sum(last[paste0(subs, '_eff')] * fstoich['CH3COOH', subs]) + last[['CH3COOH_eff']]
-  CODemis <- last[['CH4']] / COD_conv[['CH4']]
+  CODemis <- last[['CH4']] * COD_conv[['CH4']]
   CODrem <- sum(last[grps], last[subs] * fstoich['CH3COOH', subs], last[['CH3COOH']])
   bal <- CODin - CODeff - CODemis - CODrem
   rbal <- bal / CODin

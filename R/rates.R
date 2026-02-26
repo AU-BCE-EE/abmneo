@@ -39,7 +39,7 @@ rates <- function(t, y, parms) {
   metab[rownames(p$mstoich)] <- p$mstoich %*% rut * y['slurry_mass']
 
   # Convert CH4 from g COD / d to g C / d
-  metab['CH4'] <- metab['CH4'] * p$COD_conv['CH4']
+  metab['CH4'] <- metab['CH4'] / p$COD_conv['CH4']
 
   # Hydrolysis of particulate substrates and fermentation
   hyferm[p$subs] <- - p$alpha[p$subs] * y[p$subs]

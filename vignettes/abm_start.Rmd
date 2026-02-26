@@ -109,8 +109,16 @@ The chem_pars list now specifies which components are emitted gases and which ar
 (All substrates are enriched--perhaps this should be an input too.)
 
 ```{r}
-chem_pars <- list(COD_conv = c(CH4 = 3.01), gases = c('CH4'))
+chem_pars <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4'))
 ```
+
+Conversion factor from:
+
+```
+> calcCOD('CH4') * molMass('CH4') / molMass('C')
+[1] 5.328893
+```
+
 
 # 1. Slurry mass series versus regular inputs
 When it comes to how slurry level and the fill/empty schedule is entered, we now distinguish between *regular* inputs (as in repeating/consistent, as in earlier versions of `abmneo()`) and *series* inputs, where the schedule is inferred from time series data on slurry mass (what was called time-variable in earlier versions of `abmneo()`).

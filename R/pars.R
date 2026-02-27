@@ -4,7 +4,6 @@
 pack_pars <- function(
   mng_pars,
   man_pars,
-  init_pars,
   grp_pars,
   sub_pars,
   chem_pars,
@@ -21,7 +20,7 @@ pack_pars <- function(
   }
 
   # Combine pars to make extraction and pass to rates() easier ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  pars <- c(mng_pars, man_pars, init_pars, grp_pars, sub_pars, chem_pars, inhib_pars, ctrl_pars, var_pars)
+  pars <- c(mng_pars, man_pars, grp_pars, sub_pars, chem_pars, inhib_pars, ctrl_pars, var_pars)
 
   # Sort out add_pars and similar parameter inputs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars <- fix_add_pars(pars, add_pars)

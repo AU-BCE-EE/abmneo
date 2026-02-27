@@ -6,7 +6,6 @@ abmneo <- function(
   times = NULL,
   mng_pars = NULL,
   man_pars = NULL,
-  init_pars = list(conc_init =  c(man_pars$comp_fresh, man_pars$VFA_fresh)),
   grp_pars = NULL,
   sub_pars = NULL,
   chem_pars = NULL,
@@ -35,7 +34,6 @@ abmneo <- function(
     pars <- pack_pars(
       mng_pars = mng_pars,
       man_pars = man_pars,
-      init_pars = init_pars,
       grp_pars = grp_pars,
       sub_pars = sub_pars,
       chem_pars = chem_pars,

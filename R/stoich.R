@@ -428,7 +428,21 @@ check_COD <- function(dat,
 
 }
 
-comb_stoich <- function(mstoich, yield) {
+comb_fstoich <- function(fstoich, subs) {
+
+  # Short name
+  fsc <- fstoich
+
+  # Substrate matrix
+  sm <- diag(-1, ncol(fsc), ncol(fsc))
+  rownames(sm) <- colnames(fsc)
+  combstoich <- rbind(fsc, sm)
+
+  return(combstoich)
+
+}
+
+comb_mstoich <- function(mstoich, yield) {
 
   # Subtract microbial yields from product formation
   # Note that this is not simply subtraction because some products may not be in COD units!

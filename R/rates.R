@@ -41,15 +41,14 @@ rates <- function(t, y, parms) {
   # Convert CH4 from g COD / d to g C / d
   metab['CH4'] <- metab['CH4'] / p$COD_conv['CH4']
 
-  # Hydrolysis of particulate substrates and fermentation
-  hyferm[p$subs] <- - p$alpha[p$subs] * y[p$subs]
-  # Production of arbitrary products based on specified fermentation stoichiometry (can omit components)
-  hyferm[rownames(p$fstoich)] <- - p$fstoich %*% hyferm[colnames(p$fstoich)]
-  
+  # Hydrolysis and fermentation of particulate substrates
+  # Consumption and production all in one line, including arbitrary products based on specified fermentation stoichiometry
+  hyferm[rownames(p$fstoich)] <- p$fstoich %*% (p$alpha[p$subs] * y[p$subs])
+
   # Add vectors to get derivatives
   # All elements in g/d as COD except 
   #   * slurry_mass (kg/d as fresh slurry mass)
-  #   * CH4 (g/d as CH4)
+  #   * CH4 (g/d as CH4-C)
   #   * user-defined solutes other than VFA (as C, N, or S as described in documentation)
   ders <- inflow + metab + hyferm
 

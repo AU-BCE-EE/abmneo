@@ -89,8 +89,11 @@ pack_pars <- function(
   }
   # Else given
 
-  # Metabolic stoichiometry (add microbial yield as rows and subtract from product formation)
-  pars$mstoich <- comb_stoich(pars$mstoich, pars$yield)
+  # Add substrates (consumption) to fstoich matrix as rows
+  pars$fstoich <- comb_fstoich(pars$fstoich, pars$subs)
+
+  # Add microbial yield to mstoich matrix as rows and subtract from product formation)
+  pars$mstoich <- comb_mstoich(pars$mstoich, pars$yield)
 
   # Extend ks matrix if not full (typically not)
   pars$ksmat <- fix_ksmat(pars$ksmat, pars$mstoich)

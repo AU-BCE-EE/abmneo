@@ -19,18 +19,7 @@ devtools::load_all()
 We need to set some parameters, first management parameters.
 Here are some default sets, not always with plausible values.
 
-Now pared-down mng_pars, only those that apply to both types ().
-
-```{r}
-mng_pars <- list(
-  storage_depth = 2,     
-  area = 100,              
-  temp_C = 20,
-  resid_enrich = 0.2 
-)
-```
-
-Next substrate parameters, a new argument.
+First substrate parameters, a new argument compared to ABM().
 This defines substrates.
 We could have any number with any names.
 Note that hydrolysis uses CTM again (like anything here, that could be changed).
@@ -133,20 +122,23 @@ mass_series <- data.frame(
   slurry_mass = c(1000, 7000, 2000, 1500, 3000)
 )
 
-structure1 <- list(
+storage1 <- list(
   type = 'series',
-  dat = mass_series
+  dat = mass_series,
+  storage_depth = 2,     
+  area = 100,              
+  temp_C = 20,
+  resid_enrich = 0.2 
 )
 
-plot(slurry_mass ~ time, data = structure1$dat, type = 'o')
+plot(slurry_mass ~ time, data = storage1$dat, type = 'o')
 ```
 
 ```{r}
 devtools::load_all()
 out1 <- abmneo(
-  storage = structure1,
+  storage = storage1,
   50,
-  mng_pars = mng_pars,
   man_pars = man_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
@@ -172,9 +164,13 @@ plot(COD_load ~ time, data = out1, type = 'l')
 With regular inputs, `slurry_prod_rate` etc. are now explicitly given.
 
 ```{r}
-structure2 <- list(
+storage2 <- list(
   type = 'regular',
   slurry_prod_rate = 1E4, 
+  storage_depth = 2,     
+  area = 100,              
+  temp_C = 20,
+  resid_enrich = 0.2 
   slurry_mass = 1E4,     
   resid_depth = 0.1,      
   empty_int = 10,          
@@ -188,8 +184,7 @@ structure2 <- list(
 devtools::load_all()
 out2 <- abmneo(
   50,
-  storage = structure2,
-  mng_pars = mng_pars,
+  storage = storage2,
   man_pars = man_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
@@ -229,9 +224,8 @@ Use with series data.
 ```{r}
 devtools::load_all()
 out3 <- abmneo(
-  storage = structure1,
+  storage = storage1,
   50,
-  mng_pars = mng_pars,
   man_pars = man_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
@@ -251,8 +245,7 @@ Or regular inputs.
 devtools::load_all()
 out4 <- abmneo(
   50,
-  storage = structure2,
-  mng_pars = mng_pars,
+  storage = storage2,
   man_pars = man_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
@@ -289,8 +282,7 @@ Q
 devtools::load_all()
 out5 <- abmneo(
   50,
-  storage = structure2,
-  mng_pars = mng_pars,
+  storage = storage2,
   man_pars = man_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars2,
@@ -390,8 +382,7 @@ man_pars2 <- list(VFA_fresh = c(CH3COOH = 2),
 devtools::load_all()
 out6 <- abmneo(
   50,
-  storage = structure2,
-  mng_pars = mng_pars,
+  storage = storage2,
   man_pars = man_pars2,
   grp_pars = grp_pars2,
   sub_pars = sub_pars,
@@ -478,8 +469,7 @@ Remember that all this could be added to default parameter sets!
 devtools::load_all()
 out7 <- abmneo(
   50,
-  storage = structure2,
-  mng_pars = mng_pars,
+  storage = storage2,
   man_pars = man_pars3,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
@@ -516,8 +506,7 @@ man_pars4 <- list(VFA_fresh = c(CH3COOH = 2),
 devtools::load_all()
 out8 <- abmneo(
   50,
-  storage = structure2,
-  mng_pars = mng_pars,
+  storage = storage2,
   man_pars = man_pars4,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
@@ -539,7 +528,7 @@ Stoichiometry is all sorted out based on the chemical formula in `forms`, includ
 
 
 
-#mass_structure = list(
+#mass_storage = list(
 #  type = 'series',
 #  data = 
 #
@@ -576,8 +565,7 @@ var_pars2 <- list(var = var_dat)
 devtools::load_all()
 out9 <- abmneo(
   50,
-  storage = structure2,
-  mng_pars = mng_pars,
+  storage = storage2,
   man_pars = man_pars3,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
@@ -633,9 +621,8 @@ The data frames are merged and missing values are interpolated or filled forward
 ```{r}
 devtools::load_all()
 out10 <- abmneo(
-  storage = structure2,
+  storage = storage2,
   50,
-  mng_pars = mng_pars,
   man_pars = man_pars3,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
@@ -660,7 +647,7 @@ Works as before.
 This example is based on out2
 
 ```{r}
-structure3 <- list(
+storage3 <- list(
   type = 'regular',
   slurry_prod_rate = 1E4, 
   slurry_mass = 5E4,     
@@ -696,8 +683,7 @@ devtools::load_all()
 out11_1 <- abmneo(
   90,
   delta_t = 0.1,
-  storage = structure3,
-  mng_pars = mng_pars,
+  storage = storage3,
   man_pars = man_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
@@ -711,8 +697,7 @@ out11_1 <- abmneo(
 out11_0 <- abmneo(
   90,
   delta_t = 0.1,
-  storage = structure3,
-  mng_pars = mng_pars,
+  storage = storage3,
   man_pars = man_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
@@ -724,8 +709,7 @@ devtools::load_all()
 out11_1 <- abmneo(
   90,
   delta_t = 0.1,
-  storage = structure3,
-  mng_pars = mng_pars,
+  storage = storage3,
   man_pars = man_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
@@ -736,8 +720,7 @@ out11_1 <- abmneo(
 out11_2 <- abmneo(
   90,
   delta_t = 0.1,
-  storage = structure3,
-  mng_pars = mng_pars,
+  storage = storage3,
   man_pars = man_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
@@ -748,8 +731,7 @@ out11_2 <- abmneo(
 out11_3 <- abmneo(
   90,
   delta_t = 0.1,
-  storage = structure3,
-  mng_pars = mng_pars,
+  storage = storage3,
   man_pars = man_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,

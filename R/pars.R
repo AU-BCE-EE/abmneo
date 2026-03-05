@@ -2,7 +2,7 @@
 # Sorts out parameters and packages them all together in the output list
 # This is a central function that does a lot and is (unfortunately) complicated
 pack_pars <- function(
-  mng_pars,
+  storage,
   man_pars,
   grp_pars,
   sub_pars,
@@ -20,7 +20,9 @@ pack_pars <- function(
   }
 
   # Combine pars to make extraction and pass to rates() easier ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  pars <- c(mng_pars, man_pars, grp_pars, sub_pars, chem_pars, inhib_pars, ctrl_pars, var_pars)
+  # First extract out those pars that come through storage argument
+  stor_pars <- storage[! names(storage) %in% c('type', 'dat')]
+  pars <- c(stor_pars, man_pars, grp_pars, sub_pars, chem_pars, inhib_pars, ctrl_pars, var_pars)
 
   # Sort out add_pars and similar parameter inputs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars <- fix_add_pars(pars, add_pars)

@@ -14,7 +14,7 @@ Sasha D. Hafner (<https://au.dk/sasha.hafner@bce.au.dk>) and Frederik Dalby (<ht
 
 # Installation and getting started
 This R package can be installed using `devtools::install_github("AU-BCE-EE/abmneo", build_vignettes = TRUE)`.
-Load the package with `library(ABM)`, and open up the vignette with `vignette("abmneo_start")`.
+Load the package with `library(abmneo)`, and open up the vignette with `vignette("abmneo_start")`.
 
 If you have trouble installing abmneo or devtools, make sure that you are working with the latest version of R. If you have updated R but still have trouble, please contact us or submit a new issue, explaining the problem.
 

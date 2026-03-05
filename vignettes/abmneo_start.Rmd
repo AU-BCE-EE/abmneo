@@ -105,8 +105,9 @@ A name is needed, and is `CH3COOH` here (and hard-coded for now).
 man_pars <- list(VFA_fresh = c(CH3COOH = 2), VFA_init = c(CH3COOH = 2), pH = 7, dens = 1000)
 ```
 
-The chem_pars list now specifies which components are emitted gases and which are otherwise solutes.
+The chem_pars list now specifies which components are emitted as gases and which are otherwise solutes.
 (All substrates are enriched--perhaps this should be an input too.)
+Gases have no association with the slurry like solutes or substrates--their production is taken as emission and cumulative values are tracked.
 
 ```{r}
 chem_pars <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4'))
@@ -115,7 +116,7 @@ chem_pars <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4'))
 Conversion factor from:
 
 ```{r}
-#> calcCOD('CH4') * molMass('CH4') / molMass('C')
+#> biogas::calcCOD('CH4') * molMass('CH4') / molMass('C')
 #[1] 5.328893
 ```
 
@@ -153,11 +154,9 @@ out1 <- abmneo(
 )
 names(out1)
 ```
-traceback()
-Q
 
-No `var_pars` needed.
-And the fixed inputs like `slurry_prod_rate` that were ignored in these cases are no longer expected.
+Unlike `ABM()`, no `var_pars` is needed.
+And the fixed inputs like `slurry_prod_rate` that were ignored in these cases with `ABM()` are no longer expected.
 
 ```{r}
 plot(slurry_mass ~ time, data = out1, type = 'l')

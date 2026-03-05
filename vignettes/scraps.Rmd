@@ -1,7 +1,7 @@
 
 
 # 6. Flexible solutes and sulfate reduction
-Any conservative solute can be added in `man_pars`, using any names.
+Any conservative solute can be added in `inf_pars`, using any names.
 I am moving toward using a "master species" approach, so it makes sense to use the chemical formula of the primary species, with `p` or `m` for a charge symbol.
 The `comp` part of the name below is for "component".
 
@@ -19,7 +19,7 @@ Note that `CH3COOH` is still special--it has a fixed name in the code and is not
 devtools::load_all()
 out6a <- abmneo(365,
             mng_pars = mng_pars,
-            man_pars = man_pars6,
+            inf_pars = man_pars6,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars,
@@ -72,7 +72,7 @@ mng_pars6 = list(slurry_prod_rate = 10000,
 ```{r}
 out6b <- abmneo(365,
             mng_pars = mng_pars6,
-            man_pars = man_pars6,
+            inf_pars = man_pars6,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars,
@@ -111,7 +111,7 @@ grp_pars6c <- list(grps = c('m0', 'm1', 'm2'),
 devtools::load_all()
 out6c <- abmneo(365,
             mng_pars = mng_pars6,
-            man_pars = man_pars6c,
+            inf_pars = man_pars6c,
             grp_pars = grp_pars6c,
             mic_pars = mic_pars,
             sub_pars = sub_pars,
@@ -175,7 +175,7 @@ Only 2 species are supported for any component (master species and one more).
 devtools::load_all()
 out7 <- abmneo(365,
             mng_pars = mng_pars,
-            man_pars = man_pars6,
+            inf_pars = man_pars6,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars,
@@ -252,7 +252,7 @@ chem_pars8 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 ```{r}
 out8 <- abmneo(365,
             mng_pars = mng_pars,
-            man_pars = man_pars7,
+            inf_pars = man_pars7,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars,
@@ -298,7 +298,7 @@ chem_pars9 <- list(COD_conv = c(CH4 = 1/0.2507),
 devtools::load_all()
 out9a <- abmneo(365,
              mng_pars = mng_pars,
-             man_pars = man_pars9,
+             inf_pars = man_pars9,
              grp_pars = grp_pars,
              mic_pars = mic_pars,
              sub_pars = sub_pars,
@@ -359,7 +359,7 @@ chem_pars9b <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 devtools::load_all()
 out9b <- abmneo(365,
              mng_pars = mng_pars9b,
-             man_pars = man_pars9,
+             inf_pars = man_pars9,
              grp_pars = grp_pars,
              mic_pars = mic_pars,
              sub_pars = sub_pars,
@@ -399,7 +399,7 @@ chem_pars10 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 ```{r}
 out10 <- abmneo(365,
             mng_pars = mng_pars,
-            man_pars = man_pars9,
+            inf_pars = man_pars9,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars,
@@ -411,7 +411,7 @@ out10 <- abmneo(365,
 
 # 10. Stoichiometry and nitrogen mineralization
 
-Now substrates can produce any amount of arbitrary components (defined in `man_pars`, possibly volatilized, possibly involved in speciation in inhibition) through hydrolysis and fermentation to VFA.
+Now substrates can produce any amount of arbitrary components (defined in `inf_pars`, possibly volatilized, possibly involved in speciation in inhibition) through hydrolysis and fermentation to VFA.
 
 ```{r}
 man_pars10 <- list(comps = c('H2S', 'SO4', 'NH4p'),
@@ -478,7 +478,7 @@ chem_pars10 <- list(COD_conv = c(CH4 = 1/0.2507, xa = 1/0.7069561,
 devtools::load_all()
 out10 <- abmneo(365,
             mng_pars = mng_pars,
-            man_pars = man_pars10,
+            inf_pars = man_pars10,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars10,
@@ -543,7 +543,7 @@ chem_pars10b <- list(COD_conv = c(CH4 = 1/0.2507),
 devtools::load_all()
 out10b <- abmneo(365,
             mng_pars = mng_pars,
-            man_pars = man_pars10b,
+            inf_pars = man_pars10b,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars10b,
@@ -605,7 +605,7 @@ chem_pars11 <- list(COD_conv = c(CH4 = 1/0.2507),
 devtools::load_all()
 out11 <- abmneo(365,
             mng_pars = mng_pars,
-            man_pars = man_pars11,
+            inf_pars = man_pars11,
             grp_pars = grp_pars,
             mic_pars = mic_pars,
             sub_pars = sub_pars11,
@@ -647,7 +647,7 @@ chem_pars12b <- list(COD_conv = c(CH4 = 1/0.2507),
 devtools::load_all()
 out12a <- abmneo(365,
              mng_pars = mng_pars,
-             man_pars = man_pars,
+             inf_pars = inf_pars,
              grp_pars = grp_pars,
              mic_pars = mic_pars,
              sub_pars = sub_pars,
@@ -659,7 +659,7 @@ out12a <- abmneo(365,
 devtools::load_all()
 out12b <- abmneo(365,
              mng_pars = mng_pars,
-             man_pars = man_pars,
+             inf_pars = inf_pars,
              grp_pars = grp_pars,
              mic_pars = mic_pars,
              sub_pars = sub_pars,
@@ -720,7 +720,7 @@ sub_pars12 <- list(subs = c('VSd'),
 devtools::load_all()
 out12c <- abmneo(365,
              mng_pars = mng_pars,
-             man_pars = man_pars12,
+             inf_pars = man_pars12,
              grp_pars = grp_pars,
              mic_pars = mic_pars,
              sub_pars = sub_pars12,
@@ -732,7 +732,7 @@ out12c <- abmneo(365,
 devtools::load_all()
 out12d <- abmneo(365,
              mng_pars = mng_pars,
-             man_pars = man_pars12,
+             inf_pars = man_pars12,
              grp_pars = grp_pars,
              mic_pars = mic_pars,
              sub_pars = sub_pars12,

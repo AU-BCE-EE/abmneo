@@ -4,7 +4,7 @@ abmneo <- function(
   days = 365,
   delta_t = 1,
   times = NULL,
-  man_pars = NULL,
+  inf_pars = NULL,
   grp_pars = NULL,
   sub_pars = NULL,
   chem_pars = NULL,
@@ -32,7 +32,7 @@ abmneo <- function(
   if (is.null(pars)) {
     pars <- pack_pars(
       storage = storage,
-      man_pars = man_pars,
+      inf_pars = inf_pars,
       grp_pars = grp_pars,
       sub_pars = sub_pars,
       chem_pars = chem_pars,

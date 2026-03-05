@@ -91,7 +91,7 @@ VFA is hard-coded as an intermediate and has its own elements.
 A name is needed, and is `CH3COOH` here (and hard-coded for now).
 
 ```{r}
-man_pars <- list(VFA_fresh = c(CH3COOH = 2), VFA_init = c(CH3COOH = 2), pH = 7, dens = 1000)
+inf_pars <- list(VFA_fresh = c(CH3COOH = 2), VFA_init = c(CH3COOH = 2), pH = 7, dens = 1000)
 ```
 
 The chem_pars list now specifies which components are emitted as gases and which are otherwise solutes.
@@ -139,7 +139,7 @@ devtools::load_all()
 out1 <- abmneo(
   storage = storage1,
   50,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
   chem_pars = chem_pars
@@ -185,7 +185,7 @@ devtools::load_all()
 out2 <- abmneo(
   50,
   storage = storage2,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
   chem_pars = chem_pars
@@ -226,7 +226,7 @@ devtools::load_all()
 out3 <- abmneo(
   storage = storage1,
   50,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
   chem_pars = chem_pars,
@@ -246,7 +246,7 @@ devtools::load_all()
 out4 <- abmneo(
   50,
   storage = storage2,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
   chem_pars = chem_pars,
@@ -283,7 +283,7 @@ devtools::load_all()
 out5 <- abmneo(
   50,
   storage = storage2,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars2,
   chem_pars = chem_pars
@@ -383,7 +383,7 @@ devtools::load_all()
 out6 <- abmneo(
   50,
   storage = storage2,
-  man_pars = man_pars2,
+  inf_pars = man_pars2,
   grp_pars = grp_pars2,
   sub_pars = sub_pars,
   chem_pars = chem_pars,
@@ -470,7 +470,7 @@ devtools::load_all()
 out7 <- abmneo(
   50,
   storage = storage2,
-  man_pars = man_pars3,
+  inf_pars = man_pars3,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
   chem_pars = chem_pars2,
@@ -507,7 +507,7 @@ devtools::load_all()
 out8 <- abmneo(
   50,
   storage = storage2,
-  man_pars = man_pars4,
+  inf_pars = man_pars4,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
   chem_pars = chem_pars2,
@@ -566,7 +566,7 @@ devtools::load_all()
 out9 <- abmneo(
   50,
   storage = storage2,
-  man_pars = man_pars3,
+  inf_pars = man_pars3,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
   chem_pars = chem_pars2,
@@ -623,7 +623,7 @@ devtools::load_all()
 out10 <- abmneo(
   storage = storage2,
   50,
-  man_pars = man_pars3,
+  inf_pars = man_pars3,
   grp_pars = grp_pars3,
   sub_pars = sub_pars,
   chem_pars = chem_pars2,
@@ -684,7 +684,7 @@ out11_1 <- abmneo(
   90,
   delta_t = 0.1,
   storage = storage3,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
   chem_pars = chem_pars,
@@ -698,7 +698,7 @@ out11_0 <- abmneo(
   90,
   delta_t = 0.1,
   storage = storage3,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
   chem_pars = chem_pars,
@@ -710,7 +710,7 @@ out11_1 <- abmneo(
   90,
   delta_t = 0.1,
   storage = storage3,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
   chem_pars = chem_pars,
@@ -721,7 +721,7 @@ out11_2 <- abmneo(
   90,
   delta_t = 0.1,
   storage = storage3,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
   chem_pars = chem_pars,
@@ -732,7 +732,7 @@ out11_3 <- abmneo(
   90,
   delta_t = 0.1,
   storage = storage3,
-  man_pars = man_pars,
+  inf_pars = inf_pars,
   grp_pars = grp_pars4,
   sub_pars = sub_pars,
   chem_pars = chem_pars,

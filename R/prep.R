@@ -3,14 +3,14 @@
 
 # Create initial state variable vector
 get_init_state <- function(
-  structure, 
+  storage, 
   pars
 ) {
  
-  if (structure$type == 'series') {
-    slurry_mass_init <- structure$dat[1, 'slurry_mass']
+  if (storage$type == 'series') {
+    slurry_mass_init <- storage$dat[1, 'slurry_mass']
   } else {
-    slurry_mass_init <- structure$slurry_mass
+    slurry_mass_init <- storage$slurry_mass
   }
 
   if (!is.null(pars$kl)) {

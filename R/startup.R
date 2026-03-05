@@ -2,7 +2,7 @@
 # Argument list should exactly match abm()
 
 abm_startup <- function(
-  structure,
+  storage,
   days,
   delta_t,
   times,
@@ -26,7 +26,7 @@ abm_startup <- function(
     
     # Call abm() with arguments given in outside call except for startup
     out <- abmneo(
-      structure = structure,
+      storage = storage,
       days = days,
       delta_t = delta_t,
       times = times,

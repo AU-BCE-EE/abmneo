@@ -1,6 +1,6 @@
 # Exported abm() function
 abmneo <- function(
-  structure,
+  storage,
   days = 365,
   delta_t = 1,
   times = NULL,
@@ -54,7 +54,7 @@ abmneo <- function(
   if (startup > 0) {
     cat('\nStartup run ')
     out <- abm_startup(
-      structure = structure,
+      storage = storage,
       days = days,
       delta_t = delta_t,
       times = times,
@@ -66,12 +66,12 @@ abmneo <- function(
     return(out)
   } 
 
-  # Sort out structure, extending time as needed, checking for required components, and adding in any var_pars
-  series <- extract_series(structure, pars, days)
+  # Sort out storage, extending time as needed, checking for required components, and adding in any var_pars
+  series <- extract_series(storage, pars, days)
   series <- clean_series(series, pars, days)
 
   # Create initial state variable vector
-  y <- get_init_state(structure, pars) 
+  y <- get_init_state(storage, pars) 
 
   # Get timing of intervals (list of times)
   schedule <- get_schedule(

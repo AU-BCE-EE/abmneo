@@ -44,25 +44,25 @@ get_schedule <- function(
 # Checks and prepares slurry mass series
 # Applies approx_method to slurry_mass
 extract_series <- function(
-  structure,
+  storage,
   pars,
   days
 ) {
 
   # If inputs are for regular schedule, create var data frame
-  if (structure$type == 'regular') {
+  if (storage$type == 'regular') {
 
     # If empty interval is set to 0 or NA the storage is never emptied. 
     # Set to later than complete simulation
-    empty_int <- structure$empty_int
+    empty_int <- storage$empty_int
     if(empty_int == 0 || is.na(empty_int)) {
       empty_int <- days + 1
     }
     
     # Figure out time intervals for loop
-    if (!is.na(structure$wash_int) && structure$wash_water > 0) {  
-      wash_int <- structure$wash_int
-      rest_d <- structure$rest_d
+    if (!is.na(storage$wash_int) && storage$wash_water > 0) {  
+      wash_int <- storage$wash_int
+      rest_d <- storage$rest_d
     } else {
       wash_int <- Inf
       rest_d <- 0
@@ -90,19 +90,19 @@ extract_series <- function(
 
     # Create dat data frame
     # First resid mass, where first row is end of first interval
-    resid_mass <- c(structure$slurry_mass, rep(structure$resid_depth * pars$area * pars$dens, length(t_int) - 1))
+    resid_mass <- c(storage$slurry_mass, rep(storage$resid_depth * pars$area * pars$dens, length(t_int) - 1))
     # dat has an additional (time 0) row
     dat <- data.frame(
       time = cumsum(c(0, t_int)), 
       slurry_mass = c(
-        structure$slurry_mass,
-	structure$slurry_prod_rate * t_int + resid_mass
+        storage$slurry_mass,
+	storage$slurry_prod_rate * t_int + resid_mass
       ),
-      resid_mass = structure$resid_depth * pars$area * pars$dens,
+      resid_mass = storage$resid_depth * pars$area * pars$dens,
       removal = TRUE,
-      wash_water = structure$wash_water,
-      rest_days = structure$rest_d,
-      slurry_prod_rate = structure$slurry_prod_rate
+      wash_water = storage$wash_water,
+      rest_days = storage$rest_d,
+      slurry_prod_rate = storage$slurry_prod_rate
     )
 
     # No intial (time 0) and no final removal
@@ -113,7 +113,7 @@ extract_series <- function(
   } else {
 
     # Extract dat
-    dat <- structure$dat
+    dat <- storage$dat
 
     # Add any missing time 0
     if (dat[1, 'time'] > 0) {
@@ -151,7 +151,7 @@ clean_series <- function(
 
   ## Check for the right columns
   #if (ncol(series) != 2 || !identical(names(series), c('time', 'slurry_mass'))) {
-  #  stop('The structure series element must have two columns: time and slurry_mass.')
+  #  stop('The storage series element must have two columns: time and slurry_mass.')
   #}
 
   # Cannot have no slurry present because is used in all concentration calculations
@@ -184,7 +184,7 @@ clean_series <- function(
 
   # Check for duplicated times or other problems
   if (any(duplicated(series$time))) {
-    stop('Duplicated times in series object. Check var_pars and structure inputs.')
+    stop('Duplicated times in series object. Check var_pars and storage inputs.')
   }
   
   # If simulation continues past pars series time, extend last row all the way

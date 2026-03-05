@@ -68,10 +68,6 @@ pack_pars <- function(
   pars$mspec <- c(pars$mspec, mmspec)
   pars$mspec <- pars$mspec[!duplicated(names(pars$mspec))]
 
-  # Mass conversion factors ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Need to be above fstoich matrix determination (below)
-  pars$mcf <- unlist(lapply(c(pars$form, pars$mspec), get_mass_conv))
-
   # Sort out stoichiometry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Fermentation stoichiometry
   # Three possibilities: 1) NULL, 2) "calc", 3) given
@@ -83,10 +79,7 @@ pack_pars <- function(
       nrow = 1,
       dimnames = list(c('CH3COOH'), c(pars$subs))
     )
-  } else if (all(tolower(pars$fstoich) == 'calc')) {
-    # Or calculated from substrate chemical formulas
-    pars$fstoich <- get_stoich(pars)
-  }
+  } 
   # Else given
 
   # Add substrates (consumption) to fstoich matrix as rows

@@ -413,9 +413,9 @@ Let's add H2S and CO2.
 Note that the coefficient on CO2 is g C, and g S on H2S and SO4.
 
 ```{r}
-calc_COD('CH4')
-mol_mass('C') 
-12/64
+#calc_COD('CH4')
+#mol_mass('C') 
+#12/64
 ```
 
 ```{r}
@@ -658,6 +658,10 @@ This example is based on out2
 storage3 <- list(
   type = 'regular',
   slurry_prod_rate = 1E4, 
+  storage_depth = 2,     
+  area = 100,              
+  temp_C = 20,
+  resid_enrich = 0.2,
   slurry_mass = 5E4,     
   resid_depth = 0.5,      
   empty_int = 30,          
@@ -784,9 +788,9 @@ Here we'll include CO2 (of dubious value in my opinion).
 The get_fstoich() helper function can help to create the matrix.
 
 ```{r}
-sub_forms <- c(cellulose = 'C6H10O5', protein = 'C4 H6.1 O1.2 N', lipids = 'C57 H104 O6')
-source('../R/supp.R')
-get_fstoich(sub_forms)
+#sub_forms <- c(cellulose = 'C6H10O5', protein = 'C4 H6.1 O1.2 N', lipids = 'C57 H104 O6')
+#source('../R/supp.R')
+#get_fstoich(sub_forms)
 ```
 
 It automatically converts to the correct units.

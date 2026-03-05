@@ -1,3 +1,2 @@
 import(deSolve)
 export(abmneo)
-useDynLib(ABM)

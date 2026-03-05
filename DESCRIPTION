@@ -1,4 +1,4 @@
-Package: ABM
+Package: abmneo
 Type: Package
 Title: Simulate Anaerobic Biodegradation
 Version: 0.1

@@ -40,7 +40,7 @@ pack_pars <- function(
   # expandPars() will also sort out element order and drop excluded elements
   # NTS: Could these vectors of names be set in some kind of defaults?
   # Note that mstoich is *not* expanded! Too complicated. So it needs all the elements (rows/columns)
-  grp_par_nms <- c("yield", "xa_fresh", "xa_init", "dd_rate", "ksv", "kss", "qhat_opt", "T_opt", "T_min", "T_max")
+  grp_par_nms <- c("yield", "xa_fresh", "xa_init", "dd_rate", "qhat_opt", "T_opt", "T_min", "T_max")
   sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init")
   pars <- expand_pars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
   pars <- expand_pars(pars = pars, elnms = pars$subs, parnms = sub_par_nms)

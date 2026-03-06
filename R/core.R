@@ -8,11 +8,7 @@ abmneo <- function(
   grp_pars = NULL,
   sub_pars = NULL,
   chem_pars = NULL,
-  inhib_pars = NULL,
-  mt_pars = NULL,
   ctrl_pars = list(
-    respir = TRUE,
-    pH_inhib = FALSE, 
     approx_method = 'early',
     fill_method = 'interp',
     par_key = '\\.',
@@ -36,7 +32,6 @@ abmneo <- function(
       grp_pars = grp_pars,
       sub_pars = sub_pars,
       chem_pars = chem_pars,
-      inhib_pars = inhib_pars,
       ctrl_pars = ctrl_pars,
       var_pars = var_pars,
       add_pars = add_pars,
@@ -145,9 +140,6 @@ abm_core <- function(
     # Also adds 2 temperature-dependent derivative vectors
     pars <- update_var_pars(series, pars, y, i - 1)
 
-    # Calculate log Ka for speciation
-    pars <- calc_ka(pars)
-    
     # Create default y.eff vector with zeros because washing could occur, and dat needs columns
     y.eff <- 0 * empty_store(y, skip = TRUE, ignore_names = unique(c(pars$gases, '_emis', '_load', '_cum_', '_conv_', 'cum$')), warn = FALSE)$eff
 

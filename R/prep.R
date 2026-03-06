@@ -13,13 +13,6 @@ get_init_state <- function(
     slurry_mass_init <- storage$slurry_mass
   }
 
-  if (!is.null(pars$kl)) {
-    emis <- pars$kl * 0
-    names(emis) <- paste0(names(emis), '_emis_cum')
-  } else {
-    emis <- NULL
-  }
-  
   y <- c(
     pars$conc_init * slurry_mass_init,                     # Microbial groups, (multiple) particulate substrates, VFA and conservative solutes
     slurry_mass = slurry_mass_init, 

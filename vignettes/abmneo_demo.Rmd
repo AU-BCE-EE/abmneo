@@ -1,12 +1,62 @@
 ---
-title: 'Demo of `abmneo()` function in abmneo'
+title: 'Demo of `abmneo()` function'
 output: pdf_document
 author: Sasha D. Hafner
 date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
 ---
 
-# Overview
-This demo shows:
+# What's different?
+The abmneo package was meant to address some issues with ABM:
+
+1. complexity (some deliberate, some not),
+2. hard-coded behavior and special cases,
+3. number of dependencies,
+4. lack of verification,
+5. size of codebase, 
+6. use of Rcpp, and
+7. model speed.
+
+On 1, the flexibility of ABM and the number of processes was all deliberate.
+These are not inherently bad things, but they did complicate the model and especially the code, making it difficult to understand, which *is* bad.
+Complexity also makes code verification, debugging, and maintenance difficult.
+At some point in the future, as dependencies change (see point 3 as well), it can become too difficult.
+
+Hard-coded behavior and special cases, such as the distinctions between methanogens and sulfate reducers, with their element names indicating what they were and which code should be used for them in `rates()` and probably elsewhere makes for complex, inefficient, and fragile code.
+By fragile (a word I picked up from Claude) I mean likely to cause errors depending on inputs.
+Inhibition and respiration are two other areas where there was hard-coded behavior and special cases.
+
+Dependencies (3) is actually not much of an issue.
+I did not like ABM depending on the dplyr package, especially because I have seen that tidyverse packages are unstable (I mean they have changed rapidly).
+And the stats package functions were not a big deal.
+Rcpp is dicsussed below--that is significant, I think.
+
+Verification is something that has really worried me.
+ABM (and abmneo) is complex enough that mistakes in mass balance or elsewhere are quite likely.
+So verification is important.
+
+The size of the codebase (another term from Claude) alone also contributes to difficulty in understanding the package, and it seems like the possibility of holding most of even just the most important parts of the code in a developer's mind is impossible.
+I gave up trying to follow the logic on more than one occassion.
+
+Using Rcpp was of course done for speed, but it complicates the package with respect to debugging and development in general, and increases the requires for installation.
+If it could be avoided without a speed penalty, wonderful.
+
+Of course speed has always been an issue.
+My hope was to not make it worse.
+
+So, how is abmneo different?
+I think I made significant progress on most of those points:
+
+1. model and codebase are both much simpler,
+2. eliminated most hard-coding; even microbial groups can have any metabolic pathways and any names,
+3. deSolve is the only dependency,
+4. COD balance is built in (could still be improved/extended),
+5. size of the codebase is about half as large (2688 lines vs. 1393) and the `rates()` function in particular is shorter and clearer (563 vs. 50!),
+6. Rcpp is no longer used, but
+7. the `abmneo()` function *seems* quite fast.
+
+Some of these changes are clear improvements (thinking about how microbial groups are handled now).
+Many others mean fewer features and processes.
+These are summarized in the demos below.
 
 # Prep
 
@@ -14,34 +64,30 @@ This demo shows:
 devtools::load_all()
 ```
 
-# Default input parameters
-
-We need to set some parameters, first management parameters.
-Here are some default sets, not always with plausible values.
-
+# Some default parameters
 First substrate parameters, a new argument compared to ABM().
 This defines substrates.
-We could have any number with any names.
-Note that hydrolysis uses CTM again (like anything here, that could be changed).
+We could have any number with any names but will just use the old `VSd` here.
+Note that hydrolysis uses CTM again.
 
 ```{r}
-sub_pars <- list(
+sub_pig_ref <- list(
   subs = c('VSd'),
   T_opt_hyd = c(VSd = 60),
   T_min_hyd = c(VSd = 0),
   T_max_hyd = c(VSd = 90),
   hydrol_opt = c(VSd = 0.1),
-  sub_fresh = c(VSd = 50),
-  sub_init = c(VSd = 50)
+  sub_fresh = c(VSd = 60),
+  sub_init = c(VSd = 60)
 )
 ```
 
-Microbial parameters are similar to other ABM versions, but inhibition is set separately now (and not included in this simple example).
-But now we have microbial stoichiometry instead of the "special cases" that greatly complicate the code.
-The ks par is now in a matrix, which could have more than one row (e.g., with sulfate reduction).
+Microbial parameters are similar to other ABM versions.
+But now we have microbial stoichiometry instead of the "special cases" that complicate the code.
+The ks par is now in a matrix, which could have more than one row when there are multiple substrates in a reaction (e.g., with sulfate reduction).
 
 ```{r}
-mstoich <- matrix(
+mstoich_ref <- matrix(
   c(-1, -1, -1, 1, 1, 1),
   nrow = 2,
   byrow = TRUE,
@@ -51,9 +97,9 @@ mstoich <- matrix(
   )
 )
 
-mstoich
+mstoich_ref
 
-ksmat <- matrix(
+ksmat_ref <- matrix(
   c(0.5, 0.5, 0.5),
   nrow = 1,
   byrow = TRUE,
@@ -63,150 +109,146 @@ ksmat <- matrix(
   )
 )
 
-ksmat
-
+ksmat_ref
 ```
 
+With a COD basis for substrates and CH4 internally, stoichiometric coefficients are usually simple, as above.
+These matrices are put into `grp_pars` along with recognizable elements.
+Note that CTM is used for all termperature responses.
+
 ```{r}
-grp_pars <- list(
+grp_ref <- list(
   grps = c('m0', 'm1', 'm2'),
   yield = c(default = 0.05),
   xa_fresh = c(default = 0.05),
   xa_init = c(default = 0.05),
   dd_rate = c(default = 0.02),
-  ksv = c(default = 1),
-  qhat_opt = c(m0 = 1, m1 = 1, m2 = 2),
-  T_opt = c(m0 = 18, m1 = 18, m2 = 28),
-  T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41),
+  qhat_opt = c(m0 = 0.5, m1 = 1, m2 = 1),
+  T_opt = c(m0 = 10, m1 = 18, m2 = 28),
+  T_min = c(m0 = 0, m1 = 5, m2 = 10),
   T_max = c(m0 = 25, m1 = 25, m2 = 38),
-  ksmat = ksmat,
-  mstoich = mstoich
+  ksmat = ksmat_ref,
+  mstoich = mstoich_ref
 )
 ```
 
 The `dd_rate` parameter is for "death and decay".
 
-These last two arguments are similar to other versions.
-VFA is hard-coded as an intermediate and has its own elements.
-A name is needed, and is `VFA` here (and hard-coded for now).
+These last two parameter lists here are similar to other versions.
+VFA is hard-coded as an intermediate.
+The name `VFA` is used internally and in output.
+No name is set here in the elements.
+This `inf_pars` holds what is left of the original `man_pars`.
+The name is for *inf*low, meant to be more generic than manure.
 
 ```{r}
-inf_pars <- list(VFA_fresh = 2, VFA_init = 2, pH = 7, dens = 1000)
+inf_ref <- list(VFA_fresh = 2, VFA_init = 2, pH = 7, dens = 1000)
 ```
 
 The chem_pars list now specifies which components are emitted as gases and which are otherwise solutes.
-(All substrates are enriched--perhaps this should be an input too.)
-Gases have no association with the slurry like solutes or substrates--their production is taken as emission and cumulative values are tracked.
+Gases have no association with the slurry like solutes or substrates do--their production is taken as emission and cumulative values are tracked.
 
 ```{r}
-chem_pars <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4'))
+chem_ref <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4'))
 ```
 
-Conversion factor from:
-
-```{r}
-#> biogas::calcCOD('CH4') * molMass('CH4') / molMass('C')
-#[1] 5.328893
-```
+Conversion factor from: `calc_COD('CH4') / mol_mass('C')` from the `mic-stoich` repo.
+It is g COD / g CH4-C.
 
 
 # 1. Slurry mass series versus regular inputs
 When it comes to how slurry level and the fill/empty schedule is entered, we now distinguish between *regular* inputs (as in repeating/consistent, as in earlier versions of `abmneo()`) and *series* inputs, where the schedule is inferred from time series data on slurry mass (what was called time-variable in earlier versions of `abmneo()`).
-These are specified in the `storage` argument (to be renamed. . .  maybe simply `mass`???).
-Mass dat for storage only has time and slurry_mass.
-It is no longer a part of `var_pars`--the two are now independent (externally).
+These are specified in the `storage` argument.
+The name indicates that this argument describes the storage structure.
+The slurry mass data frame for storage only has time and slurry_mass.
+It is no longer a part of `var_pars`--the two are now independent (at least externally).
+
+We'll work on a single pig scale here with some normal outdoor tank levels from a spreadsheet calculator from Peter Kai.
 
 ```{r}
-mass_series <- data.frame(
-  time = c(0, 1, 10, 15, 30), 
-  slurry_mass = c(1000, 7000, 2000, 1500, 3000)
-)
+mass_series <- read.csv('level_pig_od_ref.csv') 
+plot(slurry_mass ~ time, data = mass_series, type = 'o')
 
-storage1 <- list(
+stor_ser_ref <- list(
   type = 'series',
   dat = mass_series,
   storage_depth = 2,     
-  area = 100,              
-  temp_C = 20,
+  area = 0.7,              
+  temp_C = 18,
   resid_enrich = 0.2 
 )
-
-plot(slurry_mass ~ time, data = storage1$dat, type = 'o')
-```
-
-```{r}
-devtools::load_all()
-out1 <- abmneo(
-  storage = storage1,
-  50,
-  inf_pars = inf_pars,
-  grp_pars = grp_pars,
-  sub_pars = sub_pars,
-  chem_pars = chem_pars
-)
-names(out1)
 ```
 
 Unlike `ABM()`, no `var_pars` is needed.
 And the fixed inputs like `slurry_prod_rate` that were ignored in these cases with `ABM()` are no longer expected.
+(But the `storage` argument expects these when `type = 'regular'`.)
 
 ```{r}
-plot(slurry_mass ~ time, data = out1, type = 'l')
-plot(CH4_emis_rate ~ time, data = out1, type = 'l')
-plot(CH4 ~ time, data = out1, type = 'l')
-plot(m0 ~ time, data = out1, type = 'l')
-plot(VFA ~ time, data = out1, type = 'l')
-plot(VFA_conc ~ time, data = out1, type = 'l')
-plot(VSd_conc ~ time, data = out1, type = 'l')
-plot(m0_conc ~ time, data = out1, type = 'l')
-plot(COD_load ~ time, data = out1, type = 'l')
+outpodr <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_pig_ref,
+  chem_pars = chem_ref
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodr, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpodr, type = 'l')
+plot(CH4 ~ time, data = outpodr, type = 'l')
+matplot(outpodr$time, outpodr[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA ~ time, data = outpodr, type = 'l')
+plot(VFA_conc ~ time, data = outpodr, type = 'l')
+plot(VSd_conc ~ time, data = outpodr, type = 'l')
+plot(COD_load ~ time, data = outpodr, type = 'l')
 ```
 
 With regular inputs, `slurry_prod_rate` etc. are now explicitly given.
+This is also for one pig, with a 28 d batch period.
 
 ```{r}
-storage2 <- list(
+stor_reg_ref <- list(
   type = 'regular',
-  slurry_prod_rate = 1E4, 
+  slurry_prod_rate = 5, 
   storage_depth = 2,     
-  area = 100,              
+  area = 0.65,              
   temp_C = 20,
   resid_enrich = 0.2,
-  slurry_mass = 1E4,     
+  slurry_mass = 0.1,     
   resid_depth = 0.1,      
-  empty_int = 10,          
-  wash_water = 100,            
-  wash_int = NA,
+  empty_int = 28,          
+  wash_water = 0,            
+  wash_int = 90,
   rest_d = 1
 )
 ```
 
 ```{r}
-devtools::load_all()
-out2 <- abmneo(
-  50,
-  storage = storage2,
-  inf_pars = inf_pars,
-  grp_pars = grp_pars,
-  sub_pars = sub_pars,
-  chem_pars = chem_pars
+outpinr <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_pig_ref,
+  chem_pars = chem_ref
 )
 ```
-Q
+
+(Will get an error when starting with 0 slurry_mass)
 
 ```{r}
-out2$slurry_mass
-out2$slurry_mass_eff
-```
-
-```{r}
-plot(slurry_mass ~ time, data = out2, type = 'l')
-plot(CH4_emis_rate ~ time, data = out2, type = 'l')
-plot(CH4 ~ time, data = out2, type = 'l')
-plot(VSd ~ time, data = out2, type = 'l')
-plot(VFA ~ time, data = out2, type = 'l')
-plot(VFA_conc ~ time, data = out2, type = 'l')
-plot(m1 ~ time, data = out2, type = 'l')
+plot(slurry_mass ~ time, data = outpinr, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+plot(CH4 ~ time, data = outpinr, type = 'l')
+matplot(outpinr$time, outpinr[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA ~ time, data = outpinr, type = 'l')
+plot(VFA_conc ~ time, data = outpinr, type = 'l')
+plot(VSd_conc ~ time, data = outpinr, type = 'l')
+plot(COD_load ~ time, data = outpinr, type = 'l')
 ```
 
 # 2. Time-variable inputs
@@ -360,7 +402,6 @@ grp_pars2 <- list(
   xa_fresh = c(default = 0.05),
   xa_init = c(default = 0.05),
   dd_rate = c(default = 0.02),
-  ksv = c(default = 1),
   qhat_opt = c(m0 = 1, m1 = 1, m2 = 2, sr1 = 2),
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 25),
   T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),
@@ -445,7 +486,6 @@ grp_pars3 <- list(
   xa_fresh = c(default = 0.05),
   xa_init = c(default = 0.05),
   dd_rate = c(default = 0.02),
-  ksv = c(default = 1),
   qhat_opt = c(m0 = 1, m1 = 1, m2 = 2, sr1 = 2),
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 25),
   T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),
@@ -682,7 +722,6 @@ grp_pars4 <- list(
   xa_fresh = c(default = 0.01),
   xa_init = c(default = 0.01),
   dd_rate = c(default = 0.02),
-  ksv = c(default = 1),
   qhat_opt = c(m0 = 1, m1 = 1, m2 = 2),
   T_opt = c(m0 = 18, m1 = 18, m2 = 28),
   T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41),
@@ -838,7 +877,6 @@ grp_pars4 <- list(
   xa_fresh = c(default = 0.05),
   xa_init = c(default = 0.05),
   dd_rate = c(default = 0.02),
-  ksv = c(default = 1),
   qhat_opt = c(m0 = 1, m1 = 1, m2 = 2, sr1 = 2),
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 25),
   T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),

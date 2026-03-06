@@ -1,30 +1,5 @@
 # Stoichometry functions
 
-# Get mass conversion factor to go from moles of component to mass COD, N, C, S, or total, in that order
-get_mass_conv <- function(form) {
-
-  # Remove p and m (+/-)
-  form <- gsub('p$|m$', '', form)
-  
-  cod <- calc_COD(form)
-  fn <- read_formula(form)
-  
-  if (cod > 0) {
-    cf <- cod
-  } else if ('N' %in% names(fn)) {
-    cf <- mol_mass(form, elements = 'N')
-  } else if ('C' %in% names(fn)) {
-    cf <- mol_mass(form, elements = 'C')
-  } else if ('S' %in% names(fn)) {
-    cf <- mol_mass(form, elements = 'S')
-  } else {
-    cf <- mol_mass(form)
-  }
-
-  return(cf)
-
-}
-
 # Check COD balance
 check_COD <- function(dat, 
                      grps,

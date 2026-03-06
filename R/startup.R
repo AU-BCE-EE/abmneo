@@ -52,7 +52,7 @@ starting_pars <- function(pars, starting) {
   # Remember xa_init and other stuff is grouped into conc_init, so next line not needed
   # Potential source of confusion!
   #pars$xa_init[pars$grps] <- as.numeric(starting[nrow(starting), paste0(pars$grps, '_conc')])
-  pars$conc_init['CH3COOH'] <- as.numeric(starting[nrow(starting), 'CH3COOH_conc'])
+  pars$conc_init['VFA'] <- as.numeric(starting[nrow(starting), 'VFA_conc'])
   pars$sub_init[pars$subs] <- as.numeric(starting[nrow(starting), paste0(pars$subs, '_conc')])
   # Set slurry_mass as well?
   # NTS: Set comp solutes also? Yes!

@@ -46,7 +46,7 @@ mstoich <- matrix(
   nrow = 2,
   byrow = TRUE,
   dimnames = list(
-    c('CH3COOH', 'CH4'),
+    c('VFA', 'CH4'),
     c('m0', 'm1', 'm2')
   )
 )
@@ -58,7 +58,7 @@ ksmat <- matrix(
   nrow = 1,
   byrow = TRUE,
   dimnames = list(
-    c('CH3COOH'),
+    c('VFA'),
     c('m0', 'm1', 'm2')
   )
 )
@@ -88,10 +88,10 @@ The `dd_rate` parameter is for "death and decay".
 
 These last two arguments are similar to other versions.
 VFA is hard-coded as an intermediate and has its own elements.
-A name is needed, and is `CH3COOH` here (and hard-coded for now).
+A name is needed, and is `VFA` here (and hard-coded for now).
 
 ```{r}
-inf_pars <- list(VFA_fresh = c(CH3COOH = 2), VFA_init = c(CH3COOH = 2), pH = 7, dens = 1000)
+inf_pars <- list(VFA_fresh = 2, VFA_init = 2, pH = 7, dens = 1000)
 ```
 
 The chem_pars list now specifies which components are emitted as gases and which are otherwise solutes.
@@ -155,7 +155,8 @@ plot(slurry_mass ~ time, data = out1, type = 'l')
 plot(CH4_emis_rate ~ time, data = out1, type = 'l')
 plot(CH4 ~ time, data = out1, type = 'l')
 plot(m0 ~ time, data = out1, type = 'l')
-plot(CH3COOH ~ time, data = out1, type = 'l')
+plot(VFA ~ time, data = out1, type = 'l')
+plot(VFA_conc ~ time, data = out1, type = 'l')
 plot(VSd_conc ~ time, data = out1, type = 'l')
 plot(m0_conc ~ time, data = out1, type = 'l')
 plot(COD_load ~ time, data = out1, type = 'l')
@@ -203,7 +204,8 @@ plot(slurry_mass ~ time, data = out2, type = 'l')
 plot(CH4_emis_rate ~ time, data = out2, type = 'l')
 plot(CH4 ~ time, data = out2, type = 'l')
 plot(VSd ~ time, data = out2, type = 'l')
-plot(CH3COOH ~ time, data = out2, type = 'l')
+plot(VFA ~ time, data = out2, type = 'l')
+plot(VFA_conc ~ time, data = out2, type = 'l')
 plot(m1 ~ time, data = out2, type = 'l')
 ```
 
@@ -293,17 +295,17 @@ out5 <- abmneo(
 ```{r}
 plot(fast_conc ~ time, data = out5, type = 'l', ylim = c(0, 100))
 lines(slow_conc ~ time, data = out5, col = 'red')
-lines(CH3COOH_conc ~ time, data = out5, col = 'blue')
+lines(VFA_conc ~ time, data = out5, col = 'blue')
 
 plot(fast ~ time, data = out5, type = 'l', ylim = c(0, 5e6))
 lines(slow ~ time, data = out5, col = 'red')
-lines(CH3COOH ~ time, data = out5, col = 'blue')
+lines(VFA ~ time, data = out5, col = 'blue')
 
 plot(CH4 ~ time, data = out5, col = 'orange')
 ```
 
 This is the simplest way to specify substrates.
-When entered in this way, there is no stoichiometry *per se*, but each g substrate COD produces 1 g CH3COOH intermediate.
+When entered in this way, there is no stoichiometry *per se*, but each g substrate COD produces 1 g VFA intermediate.
 
 # 4. Sulfate reduction and other metabolic pathways
 The microbial metabolism code now used is completely flexibile with respect to reactants and products.
@@ -328,7 +330,7 @@ mstoich2 <- matrix(
   nrow = 3,
   byrow = TRUE,
   dimnames = list(
-    c('CH3COOH', 'SO4', 'CH4'),
+    c('VFA', 'SO4', 'CH4'),
     c('m0', 'm1', 'm2', 'sr1')
   )
 )
@@ -341,7 +343,7 @@ ksmat2 <- matrix(
   nrow = 2,
   byrow = TRUE,
   dimnames = list(
-    c('CH3COOH', 'SO4'),
+    c('VFA', 'SO4'),
     c('m0', 'm1', 'm2',  'sr1')
   )
 )
@@ -371,8 +373,8 @@ grp_pars2 <- list(
 Sulfate needs to be added as a component.
 
 ```{r}
-inf_pars2 <- list(VFA_fresh = c(CH3COOH = 2), 
-		  VFA_init = c(CH3COOH = 2),
+inf_pars2 <- list(VFA_fresh = 2, 
+		  VFA_init = 2,
 		  comps = c('SO4'),
                   comp_fresh = c(SO4 = 10), 
                   comp_init = c(SO4 = 10), 
@@ -401,8 +403,8 @@ plot(CH4 ~ time, data = out6, type = 'l')
 plot(SO4_conc ~ time, data = out6, type = 'l')
 plot(sr1 ~ time, data = out6, type = 'l')
 plot(m1 ~ time, data = out6, type = 'l')
-plot(CH3COOH_conc ~ time, data = out4, type = 'l')
-lines(CH3COOH_conc ~ time, data = out6, type = 'l', col = 'red')
+plot(VFA_conc ~ time, data = out4, type = 'l')
+lines(VFA_conc ~ time, data = out6, type = 'l', col = 'red')
 ```
 
 Notice that the sulfate reduction reaction is not balanced.
@@ -428,7 +430,7 @@ mstoich3 <- matrix(
   nrow = 5,
   byrow = TRUE,
   dimnames = list(
-    c('CH3COOH', 'SO4', 'CO2', 'H2S', 'CH4'),
+    c('VFA', 'SO4', 'CO2', 'H2S', 'CH4'),
     c('m0', 'm1', 'm2', 'sr1')
   )
 )
@@ -456,8 +458,8 @@ grp_pars3 <- list(
 Now we need more components.
 
 ```{r}
-inf_pars3 <- list(VFA_fresh = c(CH3COOH = 2), 
-		  VFA_init = c(CH3COOH = 2),
+inf_pars3 <- list(VFA_fresh =  2, 
+		  VFA_init = 2,
 		  comps = c('SO4', 'CO2', 'H2S'),
                   comp_fresh = c(SO4 = 10, CO2 = 1, H2S = 0), 
                   comp_init = c(SO4 = 10, CO2 = 1, H2S = 0), 
@@ -493,15 +495,15 @@ lines(H2S ~ time, data = out7, type = 'l', col = 'yellow')
 plot(SO4_conc ~ time, data = out7, type = 'l')
 plot(sr1 ~ time, data = out7, type = 'l')
 plot(m1 ~ time, data = out7, type = 'l')
-plot(CH3COOH_conc ~ time, data = out4, type = 'l')
-lines(CH3COOH_conc ~ time, data = out7, type = 'l', col = 'red')
+plot(VFA_conc ~ time, data = out4, type = 'l')
+lines(VFA_conc ~ time, data = out7, type = 'l', col = 'red')
 ```
 
 Repeat without any sulfate for sulfate reducers.
 
 ```{r}
-inf_pars4 <- list(VFA_fresh = c(CH3COOH = 2), 
-		  VFA_init = c(CH3COOH = 2),
+inf_pars4 <- list(VFA_fresh = 2, 
+		  VFA_init = 2,
 		  comps = c('SO4', 'CO2', 'H2S'),
                   comp_fresh = c(SO4 = 0, CO2 = 1, H2S = 0), 
                   comp_init = c(SO4 = 0, CO2 = 1, H2S = 0), 
@@ -644,7 +646,7 @@ plot(slurry_mass ~ time, data = out10, type = 'l')
 plot(CH4_emis_rate ~ time, data = out10, type = 'l')
 plot(VSd_conc ~ time, data = out10, type = 'l')
 plot(SO4_conc ~ time, data = out10, type = 'l')
-plot(CH3COOH_conc ~ time, data = out5, type = 'l')
+plot(VFA_conc ~ time, data = out5, type = 'l')
 ```
 
 That is a lot of flexibility, I think.
@@ -774,7 +776,7 @@ plot(m0_conc ~ time, data = out11_0, type = 'l')
 lines(m0_conc ~ time, data = out11_1, type = 'l', col = 'red')
 plot(m1_conc ~ time, data = out11_0, type = 'l')
 plot(m2_conc ~ time, data = out11_0, type = 'l')
-plot(CH3COOH_conc ~ time, data = out11_0, type = 'l')
+plot(VFA_conc ~ time, data = out11_0, type = 'l')
 ```
 
 
@@ -801,7 +803,7 @@ fsmat <- matrix(c(0, -0.0157, -0.1079,
                nrow = 2,
                byrow = TRUE,
                dimnames = list(
-                 c('CO2', 'CH3COOH'),
+                 c('CO2', 'VFA'),
                  c('cellulose', 'protein', 'lipids')))
 
 fsmat

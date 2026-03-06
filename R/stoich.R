@@ -37,10 +37,10 @@ check_COD <- function(dat,
   first <- unlist(dat[1, ])
   last <- unlist(dat[nrow(dat), ])
 
-  CODin <- sum(last[['COD_load']], first[grps], first[subs] * fstoich['CH3COOH', subs], first[['CH3COOH']])
-  CODeff <- sum(last[paste0(subs, '_eff')] * fstoich['CH3COOH', subs]) + last[['CH3COOH_eff']]
+  CODin <- sum(last[['COD_load']], first[grps], first[subs] * fstoich['VFA', subs], first[['VFA']])
+  CODeff <- sum(last[paste0(subs, '_eff')] * fstoich['VFA', subs]) + last[['VFA_eff']]
   CODemis <- last[['CH4']] * COD_conv[['CH4']]
-  CODrem <- sum(last[grps], last[subs] * fstoich['CH3COOH', subs], last[['CH3COOH']])
+  CODrem <- sum(last[grps], last[subs] * fstoich['VFA', subs], last[['VFA']])
   bal <- CODin - CODeff - CODemis - CODrem
   rbal <- bal / CODin
 

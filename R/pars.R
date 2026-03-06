@@ -56,8 +56,10 @@ pack_pars <- function(
   pars$n_mic <- length(pars$grps)
 
   # Solutes and particle groups in slurry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # CH3COOH is always present
-  pars$sols <- unique(c(pars$comps, 'CH3COOH'))
+  # VFA intermediate is always present; force name regardless of user input
+  names(pars$VFA_fresh) <- 'VFA'
+  names(pars$VFA_init) <- 'VFA'
+  pars$sols <- unique(c(pars$comps, 'VFA'))
   # Grouping for easier rates() calculations
   pars$conc_fresh <- c(pars$xa_fresh, pars$sub_fresh, pars$VFA_fresh, pars$comp_fresh)
   pars$conc_init <- c(pars$xa_init, pars$sub_init, pars$VFA_init, pars$comp_init)
@@ -77,7 +79,7 @@ pack_pars <- function(
     pars$fstoich <- matrix(
       rep(1, length(pars$subs)),
       nrow = 1,
-      dimnames = list(c('CH3COOH'), c(pars$subs))
+      dimnames = list(c('VFA'), c(pars$subs))
     )
   } 
   # Else given

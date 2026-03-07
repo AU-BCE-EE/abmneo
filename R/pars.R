@@ -26,14 +26,6 @@ pack_pars <- function(
   # Sort out add_pars and similar parameter inputs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars <- fix_add_pars(pars, add_pars)
 
-  # Multiple microbial groups ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # NTS: need to sort out how this works with above mess for add_pars with grps
-  if (is.null(pars$meths)) {
-    pars$meths <- pars$grps[! pars$grps %in% pars$srs]
-  } else {
-    pars$grps <- unique(c(pars$grps, pars$meths, pars$srs))
-  }
-
   # Check pars - NTS needs to be done!
   # * series dat must have only time and slurry_mass
   # * order of all grp pars must match

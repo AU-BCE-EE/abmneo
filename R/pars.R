@@ -218,7 +218,10 @@ fix_add_pars <- function(pars, add_pars) {
     }
     # Add in pars (or replace existing elements unless it is time series data added)
     for (i in names(add_pars)) {
-      if (!is.data.frame(add_pars[[i]]) && length(pars[[i]]) > 1) {
+      if (inherits(add_pars[[i]], 'matrix')) {
+	# For stoichiometry matrices
+        pars[[i]] <- add_pars[[i]]
+      } else if (!is.data.frame(add_pars[[i]]) && length(pars[[i]]) > 1) {
         pars[[i]][names(add_pars[[i]])] <- unlist(add_pars[[i]])
       } else {
         def <- pars[[i]]['all']

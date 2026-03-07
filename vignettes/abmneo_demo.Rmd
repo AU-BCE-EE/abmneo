@@ -77,8 +77,8 @@ sub_pig_ref <- list(
   T_min_hyd = c(VSd = 0),
   T_max_hyd = c(VSd = 90),
   hydrol_opt = c(VSd = 0.1),
-  sub_fresh = c(VSd = 60),
-  sub_init = c(VSd = 60)
+  sub_fresh = c(VSd = 30),
+  sub_init = c(VSd = 30)
 )
 ```
 
@@ -253,14 +253,38 @@ plot(COD_load ~ time, data = outpinr, type = 'l')
 
 # 2. Time-variable inputs
 Time-variable inputs (now separate from slurry mass series data) can be combined with both of the above examples.
-First create the var_pars object.
+Let's use it in the outdoor storage data (series).
 
 ```{r}
-temp_series <- data.frame(
-  time = c(0, 1, 10, 15, 30), 
-  temp_C = c(10, 20, 25, 15, 10)
+temp_dat <- data.frame(time = seq(0, 365, length.out = 12))
+temp_dat$temp_C <- 10 + 10 * sin((temp_dat$time - 100) / 365 * 2 * pi)
+plot(temp_C ~ time, data = temp_dat, type = 'o')
+```
+
+```{r}
+devtools::load_all()
+outpodv <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_pig_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat)
 )
-var_pars <- list(var = temp_series)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodv, type = 'l')
+plot(temp_C ~ time, data = outpodv, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpodr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpodv, type = 'l', col = 'blue')
+plot(CH4 ~ time, data = outpodr, type = 'l')
+lines(CH4 ~ time, data = outpodv, type = 'l', col = 'blue')
+matplot(outpodv$time, outpodv[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA_conc ~ time, data = outpodv, type = 'l')
+plot(VSd_conc ~ time, data = outpodv, type = 'l')
 ```
 
 Use with series data.

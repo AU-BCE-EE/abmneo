@@ -34,6 +34,11 @@ pack_pars <- function(
     pars$grps <- unique(c(pars$grps, pars$meths, pars$srs))
   }
 
+  # Check pars - NTS needs to be done!
+  # * series dat must have only time and slurry_mass
+  # * order of all grp pars must match
+  # * 
+
   # Fill in default values for grp_pars if keyword name `default` is used
   # Note: Microbial groups are defined by grps element
   # Note: `default` does *not* work with add_pars argument because grps are already defined in defaults

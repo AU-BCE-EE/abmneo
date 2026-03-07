@@ -26,8 +26,8 @@ By fragile (a word I picked up from Claude) I mean likely to cause errors depend
 Inhibition and respiration are two other areas where there was hard-coded behavior and special cases.
 
 Dependencies (3) is actually not much of an issue.
-I did not like ABM depending on the dplyr package, especially because I have seen that tidyverse packages are unstable (I mean they have changed rapidly).
-And the stats package functions were not a big deal.
+We had stats, dplyr (not a big fan), and of course Rcpp.
+If we can avoid them, why not?
 Rcpp is dicsussed below--that is significant, I think.
 
 Verification is something that has really worried me.
@@ -71,7 +71,7 @@ We could have any number with any names but will just use the old `VSd` here.
 Note that hydrolysis uses CTM again.
 
 ```{r}
-sub_pig_ref <- list(
+sub_ref <- list(
   subs = c('VSd'),
   T_opt_hyd = c(VSd = 60),
   T_min_hyd = c(VSd = 0),
@@ -139,7 +139,7 @@ VFA is hard-coded as an intermediate.
 The name `VFA` is used internally and in output.
 No name is set here in the elements.
 This `inf_pars` holds what is left of the original `man_pars`.
-The name is for *inf*low, meant to be more generic than manure.
+The name is for *inf* low, meant to be more generic than manure.
 
 ```{r}
 inf_ref <- list(VFA_fresh = 2, VFA_init = 2, pH = 7, dens = 1000)
@@ -189,7 +189,7 @@ outpodr <- abmneo(
   365,
   inf_pars = inf_ref,
   grp_pars = grp_ref,
-  sub_pars = sub_pig_ref,
+  sub_pars = sub_ref,
   chem_pars = chem_ref
 )
 ```
@@ -232,7 +232,7 @@ outpinr <- abmneo(
   365,
   inf_pars = inf_ref,
   grp_pars = grp_ref,
-  sub_pars = sub_pig_ref,
+  sub_pars = sub_ref,
   chem_pars = chem_ref
 )
 ```
@@ -253,7 +253,7 @@ plot(COD_load ~ time, data = outpinr, type = 'l')
 
 # 2. Time-variable inputs
 Time-variable inputs (now separate from slurry mass series data) can be combined with both of the above examples.
-Let's use it in the outdoor storage data (series).
+Let's use it in the outdoor storage data (series type `storage`).
 
 ```{r}
 temp_dat <- data.frame(time = seq(0, 365, length.out = 12))
@@ -268,7 +268,7 @@ outpodv <- abmneo(
   365,
   inf_pars = inf_ref,
   grp_pars = grp_ref,
-  sub_pars = sub_pig_ref,
+  sub_pars = sub_ref,
   chem_pars = chem_ref,
   var_pars = list(var = temp_dat)
 )
@@ -287,109 +287,88 @@ plot(VFA_conc ~ time, data = outpodv, type = 'l')
 plot(VSd_conc ~ time, data = outpodv, type = 'l')
 ```
 
-Use with series data.
-
-```{r}
-devtools::load_all()
-out3 <- abmneo(
-  storage = storage1,
-  50,
-  inf_pars = inf_pars,
-  grp_pars = grp_pars,
-  sub_pars = sub_pars,
-  chem_pars = chem_pars,
-  var_pars = var_pars
-)
-```
-
-```{r}
-plot(temp_C ~ time, data = out3, type = 'l')
-plot(CH4_emis_rate ~ time, data = out3, type = 'l')
-```
-
 Or regular inputs.
 
 ```{r}
-devtools::load_all()
-out4 <- abmneo(
-  50,
-  storage = storage2,
-  inf_pars = inf_pars,
-  grp_pars = grp_pars,
-  sub_pars = sub_pars,
-  chem_pars = chem_pars,
-  var_pars = var_pars
+outpinv <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat)
 )
 ```
 
 ```{r}
-plot(slurry_mass ~ time, data = out4, type = 'l')
-plot(temp_C ~ time, data = out4, type = 'l')
-plot(CH4_emis_rate ~ time, data = out4, type = 'l')
+plot(slurry_mass ~ time, data = outpinv, type = 'l')
+plot(temp_C ~ time, data = outpinv, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinv, type = 'l', col = 'blue')
+plot(CH4 ~ time, data = outpinr, type = 'l')
+lines(CH4 ~ time, data = outpinv, type = 'l', col = 'blue')
+matplot(outpinv$time, outpinv[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA_conc ~ time, data = outpinv, type = 'l')
+plot(VSd_conc ~ time, data = outpinv, type = 'l')
 ```
 
 # 3. Flexible substrates
 
 Above only a single particulate substrate was used.
-But any, with arbitrary names, can be defined.
+But any substrates, with arbitrary names and stoichiometry can be defined.
 
 ```{r}
-sub_pars2 <- list(
+sub_smf <- list(
   subs = c('slow', 'mid', 'fast'),
   T_opt_hyd = c(default = 60),
   T_min_hyd = c(default = 0),
   T_max_hyd = c(default = 90),
   hydrol_opt = c(slow = 0.01, mid = 0.1, fast = 1),
-  sub_fresh = c(slow = 20, mid = 20, fast = 20),
-  sub_init = c(slow = 20, mid = 20, fast = 20)
-)
-```
-Q
-
-```{r}
-devtools::load_all()
-out5 <- abmneo(
-  50,
-  storage = storage2,
-  inf_pars = inf_pars,
-  grp_pars = grp_pars,
-  sub_pars = sub_pars2,
-  chem_pars = chem_pars
+  sub_fresh = c(slow = 10, mid = 10, fast = 10),
+  sub_init = c(slow = 10, mid = 10, fast = 10)
 )
 ```
 
 ```{r}
-plot(fast_conc ~ time, data = out5, type = 'l', ylim = c(0, 100))
-lines(slow_conc ~ time, data = out5, col = 'red')
-lines(VFA_conc ~ time, data = out5, col = 'blue')
-
-plot(fast ~ time, data = out5, type = 'l', ylim = c(0, 5e6))
-lines(slow ~ time, data = out5, col = 'red')
-lines(VFA ~ time, data = out5, col = 'blue')
-
-plot(CH4 ~ time, data = out5, col = 'orange')
+outpodf <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_smf,
+  chem_pars = chem_ref
+)
 ```
 
-This is the simplest way to specify substrates.
+```{r}
+plot(slurry_mass ~ time, data = outpodf, type = 'l')
+plot(slow_conc ~ time, data = outpodf, type = 'l', ylim = c(0, 10))
+lines(mid_conc ~ time, data = outpodf, col = 'blue')
+lines(fast_conc ~ time, data = outpodf, col = 'red')
+```
+
+This is the simple way to specify substrates.
 When entered in this way, there is no stoichiometry *per se*, but each g substrate COD produces 1 g VFA intermediate.
 
 # 4. Sulfate reduction and other metabolic pathways
-The microbial metabolism code now used is completely flexibile with respect to reactants and products.
+The microbial metabolism code (whatever happens after VFA intermediate is formed) now used is completely flexibile with respect to reactants and products.
 Sulfate reduction is not hard-coded but can easily and very explicitly be specified with the new approach.
 We need the appropriate stoichiometry.
-Masses are specified as:
+Masses/coefficients are specified as:
 
-1. COD mass, or if COD = 0,
-2. N mass, or if N = 0,
-3. C mass, or if C = 0,
-4. S mass, or if S = 0,
-5. total mass
+1. COD mass, or if COD = 0, then
+2. N mass, or if N = 0, then
+3. C mass, or if C = 0, then
+4. S mass, or if S = 0, then
+5. total mass.
 
 So for SO4-2, we want the the mass of S divided by the COD of acetate, i.e., 32 / 64 = 0.5.
 (We might think about flexibility in how stoichiometry is defined, e.g., allow user to input moles, but it is probably better to fix it.)
 
 ```{r}
-mstoich2 <- matrix(
+mstoich_sr <- matrix(
   c(-1, -1, -1, -1,
      0,  0,  0, -0.5,
      1,  1,  1,  0),
@@ -401,9 +380,9 @@ mstoich2 <- matrix(
   )
 )
 
-mstoich2
+mstoich_sr
 
-ksmat2 <- matrix(
+ksmat_sr <- matrix(
   c(0.5, 0.5, 0.5, 0.5,
     NA,   NA,  NA, 0.5),
   nrow = 2,
@@ -414,13 +393,13 @@ ksmat2 <- matrix(
   )
 )
 
-ksmat2
+ksmat_sr
 ```
 
 Put these in a grp_pars list.
 
 ```{r}
-grp_pars2 <- list(
+grp_sr <- list(
   grps = c('m0', 'm1', 'm2', 'sr1'),
   yield = c(default = 0.05),
   xa_fresh = c(default = 0.05),
@@ -430,15 +409,15 @@ grp_pars2 <- list(
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 25),
   T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),
   T_max = c(m0 = 25, m1 = 25, m2 = 38, sr1 = 40),
-  ksmat = ksmat2,
-  mstoich = mstoich2
+  ksmat = ksmat_sr,
+  mstoich = mstoich_sr
 )
 ```
 
 Sulfate needs to be added as a component.
 
 ```{r}
-inf_pars2 <- list(VFA_fresh = 2, 
+inf_sr <- list(VFA_fresh = 2, 
 		  VFA_init = 2,
 		  comps = c('SO4'),
                   comp_fresh = c(SO4 = 10), 
@@ -447,34 +426,31 @@ inf_pars2 <- list(VFA_fresh = 2,
 		  dens = 1000)
 ```
 
+Because it is a solute, we don't need to change the `chem_pars` contents (to indicated that it is a gas).
+
 ```{r}
-devtools::load_all()
-out6 <- abmneo(
-  50,
-  storage = storage2,
-  inf_pars = inf_pars2,
-  grp_pars = grp_pars2,
-  sub_pars = sub_pars,
-  chem_pars = chem_pars,
+outpodsr <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_sr,
+  grp_pars = grp_sr,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref
 )
 ```
 
 ```{r}
-plot(slurry_mass ~ time, data = out6, type = 'l')
-plot(temp_C ~ time, data = out6, type = 'l')
-plot(CH4_emis_rate ~ time, data = out4, type = 'l')
-lines(CH4_emis_rate ~ time, data = out6, type = 'l', col = 'red')
-plot(CH4 ~ time, data = out6, type = 'l')
-plot(SO4_conc ~ time, data = out6, type = 'l')
-plot(sr1 ~ time, data = out6, type = 'l')
-plot(m1 ~ time, data = out6, type = 'l')
-plot(VFA_conc ~ time, data = out4, type = 'l')
-lines(VFA_conc ~ time, data = out6, type = 'l', col = 'red')
+plot(slurry_mass ~ time, data = outpodsr, type = 'l')
+matplot(outpodsr$time, outpodsr[, nn <- c('m0','m1','m2', 'sr1')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VSd_conc ~ time, data = outpodsr, type = 'l')
+plot(VFA_conc ~ time, data = outpodsr, type = 'l')
+plot(SO4_conc ~ time, data = outpodsr, type = 'l')
 ```
 
 Notice that the sulfate reduction reaction is not balanced.
 Neither is methanogenesis, for that matter.
-Additional products can be added pretty easily (and would be included in default parameter sets presumably).
+Additional arbitrary chemical products can be added easily (and would be included in default parameter sets presumably).
 
 Let's add H2S and CO2.
 Note that the coefficient on CO2 is g C, and g S on H2S and SO4.
@@ -486,7 +462,7 @@ Note that the coefficient on CO2 is g C, and g S on H2S and SO4.
 ```
 
 ```{r}
-mstoich3 <- matrix(
+mstoich_src <- matrix(
   c(-1,    -1,    -1,    -1,
      0,     0,     0,    -0.5,
      0.187, 0.187, 0.187, 0.4,
@@ -500,11 +476,13 @@ mstoich3 <- matrix(
   )
 )
 
-mstoich3
+mstoich_src
 ```
 
+Only that matrix needs to change.
+
 ```{r}
-grp_pars3 <- list(
+grp_pars_src <- list(
   grps = c('m0', 'm1', 'm2', 'sr1'),
   yield = c(default = 0.05),
   xa_fresh = c(default = 0.05),
@@ -514,15 +492,15 @@ grp_pars3 <- list(
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 25),
   T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),
   T_max = c(m0 = 25, m1 = 25, m2 = 38, sr1 = 40),
-  ksmat = ksmat2,
-  mstoich = mstoich3
+  ksmat = ksmat_sr,
+  mstoich = mstoich_src
 )
 ```
 
 Now we need more components.
 
 ```{r}
-inf_pars3 <- list(VFA_fresh =  2, 
+inf_pars_src <- list(VFA_fresh =  2, 
 		  VFA_init = 2,
 		  comps = c('SO4', 'CO2', 'H2S'),
                   comp_fresh = c(SO4 = 10, CO2 = 1, H2S = 0), 
@@ -534,7 +512,7 @@ inf_pars3 <- list(VFA_fresh =  2,
 And we should specify that H2S and CO2 are gases, otherwise they accumulate like solutes.
 
 ```{r}
-chem_pars2 <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4', 'CO2', 'H2S'))
+chem_pars_src <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4', 'CO2', 'H2S'))
 ```
 
 Remember that all this could be added to default parameter sets!

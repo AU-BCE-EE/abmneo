@@ -5,6 +5,9 @@ author: Sasha D. Hafner
 date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
 ---
 
+# Overview
+This demo is meant to explain the features of the package prior to its release.
+
 # What's different?
 The abmneo package was meant to address some issues with ABM:
 
@@ -28,16 +31,16 @@ Inhibition and respiration are two other areas where there was hard-coded behavi
 Dependencies (3) is actually not much of an issue.
 We had stats, dplyr (not a big fan), and of course Rcpp.
 If we can avoid them, why not?
-Rcpp is dicsussed below--that is significant, I think.
+Rcpp is discussed below--that is significant, I think.
 
 Verification is something that has really worried me.
 ABM (and abmneo) is complex enough that mistakes in mass balance or elsewhere are quite likely.
 So verification is important.
 
 The size of the codebase (another term from Claude) alone also contributes to difficulty in understanding the package, and it seems like the possibility of holding most of even just the most important parts of the code in a developer's mind is impossible.
-I gave up trying to follow the logic on more than one occassion.
+I gave up trying to follow the logic on more than one occasion.
 
-Using Rcpp was of course done for speed, but it complicates the package with respect to debugging and development in general, and increases the requires for installation.
+Using Rcpp was of course done for speed, but it complicates the package with respect to debugging and development in general, and increases the requirements for installation.
 If it could be avoided without a speed penalty, wonderful.
 
 Of course speed has always been an issue.
@@ -139,7 +142,7 @@ VFA is hard-coded as an intermediate.
 The name `VFA` is used internally and in output.
 No name is set here in the elements.
 This `inf_pars` holds what is left of the original `man_pars`.
-The name is for *inf* low, meant to be more generic than manure.
+The name is for *inflow*, meant to be more generic than manure.
 
 ```{r}
 inf_ref <- list(VFA_fresh = 2, VFA_init = 2, pH = 7, dens = 1000)
@@ -316,7 +319,7 @@ plot(VSd_conc ~ time, data = outpinv, type = 'l')
 
 Note the "steps" in the time-variable inputs.
 There is no longer active interpolation.
-This was a deliberate changed aimed at simplification of the code and an increase in flexibility (no special cases, i.e., make interpolation functions for x and y inputs, and almost any inputs can vary over time now).
+This was a deliberate change aimed at simplification of the code and an increase in flexibility (no special cases, i.e., make interpolation functions for x and y inputs, and almost any inputs can vary over time now).
 There is almost certainly a speed improvement.
 Users can go for a finer resolution in the input, but there will be a (small?) speed penalty.
 
@@ -361,7 +364,7 @@ The alternative is to define stoichiometry.
 That is described below.
 
 # Sulfate reduction and other metabolic pathways
-The microbial metabolism code (whatever happens after VFA intermediate is formed) now used is completely flexibile with respect to reactants and products.
+The microbial metabolism code (whatever happens after VFA intermediate is formed) now used is completely flexible with respect to reactants and products.
 Sulfate reduction is not hard-coded but can easily and very explicitly be specified with the new approach.
 We need the appropriate stoichiometry.
 Masses/coefficients are specified as:
@@ -461,21 +464,80 @@ Neither is methanogenesis, for that matter.
 Additional arbitrary chemical products can be added easily (and would be included in default parameter sets presumably).
 
 Let's add H2S and CO2.
-Note that the coefficient on CO2 is g C, and g S on H2S and SO4.
+The micstoich package can help sort out stoichiometry easily.
 
 ```{r}
-#calc_COD('CH4')
-#mol_mass('C') 
-12 / 64
+library(micstoich)
+r1 <- micstoich(donor = 'CH3COOH', acceptor = 'SO4-2', product = 'H2S')
+r1
+```
+
+But these are molar, and we need COD etc. based coefficients.
+We need the coefficient on CO2 in g C, and g S on H2S and SO4.
+
+First, combine H2S and HS- (see <https://github.com/AU-BCE-EE/micstoich/issues/2>).
+
+```{r}
+r1['H2S'] <- r1['H2S'] + r1['HS-']
+r1 <- r1[names(r1) != 'HS-']
+r1
+```
+
+```{r}
+r1mc <- r1
+for (i in seq_along(r1)) {
+  mc <- micstoich:::massconv(names(r1)[i])
+  r1mc[i] <- mc * r1[i]
+}
+r1mc
+```
+
+Let's check some of them (I don't trust them yet).
+
+```{r}
+calcCOD('SO4-2')
+molmass('S')
+0.1250 * 32.1
+```
+
+OK.
+
+```{r}
+calcCOD('CH3COOH') * 0.125
+```
+
+OK.
+
+Now CO2.
+
+```{r}
+0.25 * 12
+```
+
+OK.
+
+But note that SO4-2 and H2S have different bases!
+
+```{r}
+calcCOD('H2S')
+```
+
+We need to discuss this issue.
+
+
+Then convert to 1 g VFA COD basis.
+
+```{r}
+r1mc / r1mc[1]
 ```
 
 ```{r}
 mstoich_src <- matrix(
-  c(-1,    -1,    -1,    -1,
-     0,     0,     0,    -0.5,
-     0.187, 0.187, 0.187, 0.4,
-     0,     0,     0,     0.5,
-     1,     1,     1,     0),
+  c(-1,    -1,    -1,     -1,
+     0,     0,     0,     -0.5016,
+     0.187, 0.187, 0.187, -0.3753,
+     0,     0,     0,      0.25,
+     1,     1,     1,      0),
   nrow = 5,
   byrow = TRUE,
   dimnames = list(
@@ -519,7 +581,10 @@ outpodsrc <- abmneo(
 )
 ```
 
-(Adding gases CO2 and H2S in add_pars didn't work.)
+Notice that the COD balance is off now. 
+SO4-2 consumes it.
+
+(Also note that adding gases CO2 and H2S in add_pars didn't work--look into this.)
 
 Remember that all this could be added to default parameter sets!
 
@@ -530,7 +595,7 @@ lines(H2S ~ time, data = outpodsrc, type = 'l', col = 'orange')
 plot(SO4_conc ~ time, data = outpodsrc, type = 'l', ylim = c(0, 30))
 lines(VFA_conc ~ time, data = outpodsrc, col = 'blue')
 lines(VSd_conc ~ time, data = outpodsrc, col = 'red')
-matplot(outpodr$time, outpodsrc[, nn <- c('m0', 'm1', 'm2', 'sr1')], col = cc <- c('red', 'gray', 'blue', 'orange'), lty = 1:length(nn), type = 'l')
+matplot(outpodsrc$time, outpodsrc[, nn <- c('m0', 'm1', 'm2', 'sr1')], col = cc <- c('red', 'gray', 'blue', 'orange'), lty = 1:length(nn), type = 'l')
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 ```
 
@@ -556,7 +621,7 @@ lines(H2S ~ time, data = outpodsrn, type = 'l', col = 'orange')
 plot(SO4_conc ~ time, data = outpodsrn, type = 'l', ylim = c(0, 30))
 lines(VFA_conc ~ time, data = outpodsrn, col = 'blue')
 lines(VSd_conc ~ time, data = outpodsrn, col = 'red')
-matplot(outpodr$time, outpodsrn[, nn <- c('m0', 'm1', 'm2', 'sr1')], col = cc <- c('red', 'gray', 'blue', 'orange'), lty = 1:length(nn), type = 'l')
+matplot(outpodsrn$time, outpodsrn[, nn <- c('m0', 'm1', 'm2', 'sr1')], col = cc <- c('red', 'gray', 'blue', 'orange'), lty = 1:length(nn), type = 'l')
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 ```
 

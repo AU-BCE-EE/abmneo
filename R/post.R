@@ -33,6 +33,9 @@ clean_output <- function(
     dat <- add_concs(dat, pars)
   }
   
+  # Add average emission rate
+  dat$CH4_emis_rate_ave <- c(NA, diff(dat$CH4) / diff(dat$time))
+
   return(dat)
 
 }

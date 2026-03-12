@@ -29,7 +29,8 @@ pack_pars <- function(
   # Check pars - NTS needs to be done!
   # * series dat must have only time and slurry_mass
   # * order of all grp pars must match
-  # * 
+  # * check that all reactants in mstoich have a ksmat value, otherwise we get zero metabolism for that grp 
+  # 
 
   # Check for identical dimensions in inhibition pars
   if (!is.null(pars$ic0) && !isTRUE(all.equal(dimnames(pars$ic0), dimnames(pars$ic100)))) {

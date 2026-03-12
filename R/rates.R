@@ -23,6 +23,9 @@ rates <- function(t, y, parms) {
                ncol = ncol(p$mstoich), 
                byrow = FALSE)
 
+  # Names for debugging
+  #dimnames(sm) <- dimnames(p$mstoich)
+
   # Monod term
   monod <- sm / (sm + y['slurry_mass'] * p$ksmat)
   # Force to 1 for non-substrates

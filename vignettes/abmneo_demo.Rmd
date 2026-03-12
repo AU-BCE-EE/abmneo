@@ -325,12 +325,16 @@ Users can go for a finer resolution in the input, but there will be a (small?) s
 
 NEW
 
+We might recommend that output resolution should match input resolution when inputs vary over time.
+That can be done using `times`.
+
+Q
 ```{r}
 devtools::load_all()
 outpinvt <- abmneo(
   storage = stor_reg_ref,
   365,
-  times = temp_dat[['time']],
+  times = temp_dat$time,
   inf_pars = inf_ref,
   grp_pars = grp_ref,
   sub_pars = sub_ref,
@@ -339,14 +343,19 @@ outpinvt <- abmneo(
 )
 ```
 
+With this approach, instantaneous emission rate is not very meaningful.
+The purple line makes more sense.
 
 ```{r}
 plot(slurry_mass ~ time, data = outpinvt, type = 'o')
 plot(temp_C ~ time, data = outpinvt, type = 'o')
 plot(temp_C ~ time, data = outpinvt, type = 's')
-plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l', col = 'gray70')
 lines(CH4_emis_rate ~ time, data = outpinv, type = 'l', col = 'blue')
 lines(CH4_emis_rate ~ time, data = outpinvt, type = 'o', col = 'red')
+lines(CH4_emis_rate_ave ~ time, data = outpinvt, type = 'S', col = 'purple', lwd = 2)
+
 plot(CH4 ~ time, data = outpinr, type = 'l')
 lines(CH4 ~ time, data = outpinvt, type = 'l', col = 'blue')
 matplot(outpinvt$time, outpinvt[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
@@ -562,14 +571,14 @@ We need to discuss this issue.
 Then convert to 1 g VFA COD basis.
 
 ```{r}
-r1mc / r1mc[1]
+r1mc / -r1mc[1]
 ```
 
 ```{r}
 mstoich_src <- matrix(
   c(-1,    -1,    -1,     -1,
      0,     0,     0,     -0.5016,
-     0.187, 0.187, 0.187, -0.3753,
+     0.187, 0.187, 0.187,  0.3753,
      0,     0,     0,      0.25,
      1,     1,     1,      0),
   nrow = 5,

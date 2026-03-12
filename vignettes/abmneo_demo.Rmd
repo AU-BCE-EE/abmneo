@@ -765,7 +765,11 @@ matplot(outpins$time, outpins[, nn <- c('m0_conc','m1_conc','m2_conc')], col = '
 matplot(outpinr$time, outpinr[, nn <- c('m0_conc','m1_conc','m2_conc')], col = 'black', lty = 1:length(nn), type = 'l')
 ```
 
-# Inhibition
+# Inhibition NEW
+
+Now we have inhibition.
+I went for the IC0/IC100 approach.
+And I thought of a clever way to have inhibition at both low and high inhibitor levels (needed for at least pH) that fit into this approach very well.
 
 ```{r}
 ic0 <- matrix(
@@ -794,9 +798,11 @@ ic100 <- matrix(
 
 
 ic0
-ic0
 ic100
 ```
+
+Notice how pH is entered twice and reversed?
+These inhibition parameter matrices go into the `grp_pars` list.
 
 ```{r}
 grp_inhib <- list(
@@ -816,7 +822,7 @@ grp_inhib <- list(
 )
 ```
 
-Some pH data for inhibition
+Here are some pH data for inhibition
 
 ```{r}
 pH_dat <- data.frame(
@@ -825,9 +831,10 @@ pH_dat <- data.frame(
 )
 ```
 
+Below we'll run with and without inhibition, and time.
+I worked hard to make the slowdown as small as possible (and Claude Code had some good suggestions).
+
 With inhibition.
-Q
-traceback()
 ```{r}
 devtools::load_all()
 system.time(
@@ -865,9 +872,6 @@ plot(CH4_emis_rate ~ time, data = outpinni, type = 'l')
 lines(CH4_emis_rate ~ time, data = outpinin, col = 'red')
 plot(VFA_conc ~ time, data = outpinin, type = 'l')
 ```
-
-
-
 
 
 # Other functionality

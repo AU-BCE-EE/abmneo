@@ -46,8 +46,10 @@ add_concs <- function(dat, pars) {
     wc <- wc[!wc %in% pars$gases]
 
     # And then add conc columns
-    dat[, paste0(wc, '_conc')] <-     dat[,                 wc] / dat$slurry_mass
-    dat[, paste0(wc, '_eff_conc')] <- dat[, paste0(wc, '_eff')] / dat$slurry_mass_eff
+    dat[, paste0(wc, '_conc')] <- dat[, wc] / dat$slurry_mass
+    if (any(grepl('_eff', names(dat)))) {
+      dat[, paste0(wc, '_eff_conc')] <- dat[, paste0(wc, '_eff')] / dat$slurry_mass_eff
+    }
 
     return(dat)
 

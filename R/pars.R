@@ -327,3 +327,38 @@ CTM <- function(temp_K, t_opt, t_min, t_max, y_opt) {
   
   return(y)
 }
+
+# Inhibition
+update_inhib <- function(pars, y) {
+ 
+  # Inhibition parameters
+  ic0 <- pars$ic0
+  ic100 <- pars$ic100
+  # Slope
+  ics <- 1 / (ic100 - ic0)
+
+  # Check for identical dimensions
+  # NTS: Move this to packPars() or before that and check all pars there?
+  if (!all.equal(dimnames(ic0), dimnames(ic100))) {
+    stop('ic0 and ic100 row or column names must be identical but are not.')
+  }
+
+  # Get inhibitors
+  x <- as.numeric(c(pars, y)[rownames(ic0)])
+  xm <- matrix(rep(x, ncol(ic0)), nrow = length(x))
+  # Add names for debugging
+  dimnames(xm) <- dimnames(ic0)
+
+  # Inhibition matrix, xm > 0 is inhibition 
+  im <- ics * (xm - ic0) 
+  im[im < 0] <- 0
+  im[im > 1] <- 1
+  im <- 1 - im
+
+  # Apply to qhat_opt
+  pars$qhat_opt[colnames(im)] <- pars$qhat_opt[colnames(im)] * apply(im, 2, prod)
+
+  # And return
+  return(pars)
+ 
+}

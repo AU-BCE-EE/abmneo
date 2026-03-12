@@ -162,6 +162,11 @@ abm_core <- function(
     # Need some care with times to make sure t_call is last one in case it is not multiple of delta_t
     tt <- schedule[[i]]
 
+    # Update any inhibition effects
+    # Get concentrations for inhibition
+    yc <- add_concs(data.frame(t(y)), pars)
+    pars <- update_inhib(pars, yc)
+
     # Call up ODE solver
     out <- deSolve::lsoda(y = y, 
                           times = tt, 

@@ -323,6 +323,40 @@ This was a deliberate change aimed at simplification of the code and an increase
 There is almost certainly a speed improvement.
 Users can go for a finer resolution in the input, but there will be a (small?) speed penalty.
 
+NEW
+
+```{r}
+devtools::load_all()
+outpinvt <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  times = temp_dat[['time']],
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat)
+)
+```
+
+
+```{r}
+plot(slurry_mass ~ time, data = outpinvt, type = 'o')
+plot(temp_C ~ time, data = outpinvt, type = 'o')
+plot(temp_C ~ time, data = outpinvt, type = 's')
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinv, type = 'l', col = 'blue')
+lines(CH4_emis_rate ~ time, data = outpinvt, type = 'o', col = 'red')
+plot(CH4 ~ time, data = outpinr, type = 'l')
+lines(CH4 ~ time, data = outpinvt, type = 'l', col = 'blue')
+matplot(outpinvt$time, outpinvt[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA_conc ~ time, data = outpinvt, type = 'l')
+plot(VSd_conc ~ time, data = outpinvt, type = 'l')
+```
+
+
+
 # Flexible substrates
 
 Above only a single particulate substrate was used.
@@ -731,6 +765,106 @@ matplot(outpins$time, outpins[, nn <- c('m0_conc','m1_conc','m2_conc')], col = '
 matplot(outpinr$time, outpinr[, nn <- c('m0_conc','m1_conc','m2_conc')], col = 'black', lty = 1:length(nn), type = 'l')
 ```
 
+# Inhibition
+
+```{r}
+ic0 <- matrix(
+  c(3, 3, 3,
+    8, 8, 8,
+    6, 6, 6),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA_conc', 'pH', 'pH'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+ic100 <- matrix(
+  c(10, 10, 10,
+    9, 9, 9,
+    5, 5, 5),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA_conc', 'pH', 'pH'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+
+ic0
+ic0
+ic100
+```
+
+```{r}
+grp_inhib <- list(
+  grps = c('m0', 'm1', 'm2'),
+  yield = c(default = 0.05),
+  xa_fresh = c(default = 0.05),
+  xa_init = c(default = 0.05),
+  dd_rate = c(default = 0.02),
+  qhat_opt = c(m0 = 0.5, m1 = 1, m2 = 1),
+  T_opt = c(m0 = 10, m1 = 18, m2 = 28),
+  T_min = c(m0 = 0, m1 = 5, m2 = 10),
+  T_max = c(m0 = 25, m1 = 25, m2 = 38),
+  ksmat = ksmat_ref,
+  mstoich = mstoich_ref,
+  ic0 = ic0,
+  ic100 = ic100
+)
+```
+
+Some pH data for inhibition
+
+```{r}
+pH_dat <- data.frame(
+  time = c(0, 30, 100, 200, 250), 
+  pH = c(7, 6.5, 5, 5, 5)
+)
+```
+
+With inhibition.
+
+```{r}
+devtools::load_all()
+outpinin <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_inhib,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = pH_dat)
+)
+```
+
+Without
+```{r}
+outpinni <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = pH_dat)
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpinin, type = 'l')
+plot(pH ~ time, data = outpinin, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinni, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinin, col = 'red')
+plot(CH4 ~ time, data = outpodr, type = 'l')
+```
+
+
+
+
+
 # Other functionality
 
 Other functionality not shown includes:
@@ -767,3 +901,4 @@ Here is the `rates()` function, around 50 lines of code that call no other abmne
 ```{r}
 print(rates)
 ```
+

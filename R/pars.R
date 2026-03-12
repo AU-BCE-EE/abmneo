@@ -32,7 +32,7 @@ pack_pars <- function(
   # * 
 
   # Check for identical dimensions in inhibition pars
-  if (!all.equal(dimnames(ic0), dimnames(ic100))) {
+  if (!is.null(pars$ic0) && !isTRUE(all.equal(dimnames(pars$ic0), dimnames(pars$ic100)))) {
     stop('ic0 and ic100 row or column names must be identical but are not.')
   }
 
@@ -107,8 +107,19 @@ pack_pars <- function(
   pars$max_slurry_mass <- pars$storage_depth * pars$area * pars$dens
   pars$resid_mass <- pars$resid_depth / pars$storage_depth * pars$max_slurry_mass
 
-  # Inhibition and ??? stuff ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  pars$ics <- 1 / (pars$ic100 - pars$ic0)
+  # Inhibition precomputation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (!is.null(pars$ic0)) {
+    # Slopes
+    pars$ics <- 1 / (pars$ic100 - pars$ic0)
+
+    # Figure out where inhibitors comes from
+    rn <- rownames(pars$ic0)
+    is_conc <- grepl('_conc$', rn)
+    pars$inhib_y_rows <- which(is_conc)
+    pars$inhib_y_vars <- gsub('_conc$', '', rn[is_conc])
+    pars$inhib_p_rows <- which(!is_conc)
+    pars$inhib_p_vars <- rn[!is_conc]
+  }
 
   return(pars)
  
@@ -343,24 +354,13 @@ update_inhib <- function(pars, y) {
     return(pars$qhat)
   }
 
-  # Get concentrations
-  yc <- y[intersect(names(y), gsub('_conc', '', rownames(pars$ic0)))] / y['slurry_mass']
-  names(yc) <- paste0(names(yc), '_conc')
- 
-  # Inhibition parameters
-  ic0 <- pars$ic0
-  # Slope
-  ics <- pars$ics
+  # Build inhibitor value vector using precomputed indices
+  x <- numeric(nrow(pars$ic0))
+  x[pars$inhib_y_rows] <- y[pars$inhib_y_vars] / y['slurry_mass']
+  x[pars$inhib_p_rows] <- unlist(pars[pars$inhib_p_vars])
 
-  # Get inhibitors
-  # NTS: below line is fragile because pars has some length > 1 elements that should not but could be listed as names in ic0 rows
-  x <- as.numeric(c(pars, yc)[rownames(ic0)])
-  xm <- matrix(rep(x, ncol(ic0)), nrow = length(x))
-  # Add names for debugging
-  dimnames(xm) <- dimnames(ic0)
-
-  # Inhibition matrix, xm > 0 is inhibition 
-  im <- ics * (xm - ic0) 
+  # Inhibition matrix (x recycled row-wise across columns of ic0 so this works without turning it into a matrix)
+  im <- pars$ics * (x - pars$ic0)
   im[im < 0] <- 0
   im[im > 1] <- 1
   im <- 1 - im

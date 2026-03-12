@@ -31,6 +31,11 @@ pack_pars <- function(
   # * order of all grp pars must match
   # * 
 
+  # Check for identical dimensions in inhibition pars
+  if (!all.equal(dimnames(ic0), dimnames(ic100))) {
+    stop('ic0 and ic100 row or column names must be identical but are not.')
+  }
+
   # Fill in default values for grp_pars if keyword name `default` is used
   # Note: Microbial groups are defined by grps element
   # Note: `default` does *not* work with add_pars argument because grps are already defined in defaults
@@ -101,6 +106,9 @@ pack_pars <- function(
   # Maximum slurry mass in kg
   pars$max_slurry_mass <- pars$storage_depth * pars$area * pars$dens
   pars$resid_mass <- pars$resid_depth / pars$storage_depth * pars$max_slurry_mass
+
+  # Inhibition and ??? stuff ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  pars$ics <- 1 / (pars$ic100 - pars$ic0)
 
   return(pars)
  
@@ -330,21 +338,23 @@ CTM <- function(temp_K, t_opt, t_min, t_max, y_opt) {
 
 # Inhibition
 update_inhib <- function(pars, y) {
+
+  if (is.null(pars$ic0) || is.null(pars$ic100)) {
+    return(pars$qhat)
+  }
+
+  # Get concentrations
+  yc <- y[intersect(names(y), gsub('_conc', '', rownames(pars$ic0)))] / y['slurry_mass']
+  names(yc) <- paste0(names(yc), '_conc')
  
   # Inhibition parameters
   ic0 <- pars$ic0
-  ic100 <- pars$ic100
   # Slope
-  ics <- 1 / (ic100 - ic0)
-
-  # Check for identical dimensions
-  # NTS: Move this to packPars() or before that and check all pars there?
-  if (!all.equal(dimnames(ic0), dimnames(ic100))) {
-    stop('ic0 and ic100 row or column names must be identical but are not.')
-  }
+  ics <- pars$ics
 
   # Get inhibitors
-  x <- as.numeric(c(pars, y)[rownames(ic0)])
+  # NTS: below line is fragile because pars has some length > 1 elements that should not but could be listed as names in ic0 rows
+  x <- as.numeric(c(pars, yc)[rownames(ic0)])
   xm <- matrix(rep(x, ncol(ic0)), nrow = length(x))
   # Add names for debugging
   dimnames(xm) <- dimnames(ic0)
@@ -355,10 +365,11 @@ update_inhib <- function(pars, y) {
   im[im > 1] <- 1
   im <- 1 - im
 
-  # Apply to qhat_opt
-  pars$qhat_opt[colnames(im)] <- pars$qhat_opt[colnames(im)] * apply(im, 2, prod)
+  # Apply to qhat
+  qhat <- pars$qhat
+  qhat[colnames(im)] <- qhat[colnames(im)] * apply(im, 2, prod)
 
   # And return
-  return(pars)
+  return(qhat)
  
 }

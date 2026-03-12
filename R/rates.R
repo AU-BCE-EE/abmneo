@@ -5,6 +5,10 @@ rates <- function(t, y, parms) {
   # Short name for parms to make indexing in code below simpler 
   p <- parms
 
+  # Update any inhibition effects
+  ## NTS: yc <- y[intersect(names(y), gsub('_conc', '', rownames(ic0)))] / y['slurry_mass']
+  qhat <- update_inhib(p, y)
+
   # Initialize vectors with derivative components, all with same order of y elements
   inflow <- metab <- hyferm <- 0 * y
 
@@ -27,7 +31,7 @@ rates <- function(t, y, parms) {
   monodprod <- apply(monod, 2, prod)
 
   # Utilization rate 
-  rut <- p$qhat * monodprod * y[p$grps] / y['slurry_mass']
+  rut <- qhat * monodprod * y[p$grps] / y['slurry_mass']
 
   # And consumption, growth, production all in one matrix operation
   metab[rownames(p$mstoich)] <- p$mstoich %*% rut * y['slurry_mass']

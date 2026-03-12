@@ -2,6 +2,7 @@
 
 clean_output <- function(
   dat, 
+  days,
   times, 
   pars, 
   addcols, 

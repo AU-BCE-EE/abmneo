@@ -87,6 +87,7 @@ abmneo <- function(
   # Clean up and extend output
   dat <- clean_output(
     dat, 
+    days,
     times,
     pars, 
     addcols = TRUE, 

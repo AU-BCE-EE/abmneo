@@ -52,7 +52,7 @@ comb_mstoich <- function(mstoich, yield) {
   # Yield matrix
   ym <- diag(yield, ncol(msc), ncol(msc))
   rownames(ym) <- names(yield)
-  combstoich <- rbind(mstoich, ym)
+  combstoich <- rbind(msc, ym)
 
   return(combstoich)
 

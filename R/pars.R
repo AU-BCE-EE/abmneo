@@ -371,6 +371,7 @@ update_inhib <- function(pars, y) {
 
   # Apply to qhat
   qhat <- pars$qhat
+  # Use product of columns in im matrix 
   qhat[colnames(im)] <- qhat[colnames(im)] * apply(im, 2, prod)
 
   # And return

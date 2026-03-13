@@ -10,7 +10,7 @@ rates <- function(t, y, parms) {
   qhat <- update_inhib(p, y)
 
   # Initialize vectors with derivative components, all with same order of y elements
-  inflow <- metab <- hyferm <- 0 * y
+  inflow <- metab <- hyferm <- resp <- 0 * y
 
   # Inflow from slurry addition
   inflow[names(p$conc_fresh)] <- p$conc_fresh * p$slurry_prod_rate
@@ -46,12 +46,18 @@ rates <- function(t, y, parms) {
   # Consumption and production all in one line, including arbitrary products based on specified fermentation stoichiometry
   hyferm[rownames(p$fstoich)] <- p$fstoich %*% (p$alpha[p$subs] * y[p$subs])
 
+  # Surface respiration: aerobic VFA oxidation limited by O2 surface flux
+  # Monod term on VFA prevents negative values at low concentrations (ks_resp = 0.05 g COD/kg)
+  if (p$has_resp) {
+    resp['VFA'] <- -p$O2_flux * p$area * y['VFA'] / (y['VFA'] + 0.05 * y['slurry_mass'])
+  }
+
   # Add vectors to get derivatives
-  # All elements in g/d as COD except 
+  # All elements in g/d as COD except
   #   * slurry_mass (kg/d as fresh slurry mass)
   #   * CH4 (g/d as CH4-C)
   #   * user-defined solutes other than VFA (as C, N, or S as described in documentation)
-  ders <- inflow + metab + hyferm
+  ders <- inflow + metab + hyferm + resp
 
   return(list(ders, c(CH4_emis_rate = metab[['CH4']], temp_C = p$temp_C, pH = p$pH)))
 

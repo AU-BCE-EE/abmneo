@@ -882,6 +882,47 @@ lines(CH4_emis_rate ~ time, data = outpinin, col = 'red')
 plot(VFA_conc ~ time, data = outpinin, type = 'l')
 ```
 
+# NEW Respiration
+
+```{r}
+stor_reg_rsp <- list(
+  type = 'regular',
+  slurry_prod_rate = 5, 
+  storage_depth = 2,     
+  area = 0.65,              
+  temp_C = 20,
+  resid_enrich = 0.2,
+  slurry_mass = 7,     
+  resid_depth = 0.01,      
+  empty_int = 28,          
+  wash_water = 0,            
+  wash_int = 90,
+  rest_d = 1,
+  O2_flux = 5
+)
+```
+
+```{r}
+devtools::load_all()
+outpinrsp <- abmneo(
+  storage = stor_reg_rsp,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref
+)
+```
+
+```{r}
+plot(slurry_depth ~ time, data = outpinr, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinrsp, col = 'red')
+plot(CH4 ~ time, data = outpinr, type = 'l')
+plot(VFA_conc ~ time, data = outpinr, type = 'l')
+lines(VFA_conc ~ time, data = outpinrsp, col = 'red')
+```
+
 
 # Other functionality
 

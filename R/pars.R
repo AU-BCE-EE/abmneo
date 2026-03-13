@@ -108,6 +108,9 @@ pack_pars <- function(
   pars$max_slurry_mass <- pars$storage_depth * pars$area * pars$dens
   pars$resid_mass <- pars$resid_depth / pars$storage_depth * pars$max_slurry_mass
 
+  # Respiration precomputation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  pars$has_resp <- !is.null(pars$O2_flux) && pars$O2_flux > 0
+
   # Inhibition precomputation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (!is.null(pars$ic0)) {
     # Slopes

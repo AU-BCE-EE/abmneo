@@ -46,10 +46,11 @@ rates <- function(t, y, parms) {
   # Consumption and production all in one line, including arbitrary products based on specified fermentation stoichiometry
   hyferm[rownames(p$fstoich)] <- p$fstoich %*% (p$alpha[p$subs] * y[p$subs])
 
-  # Surface respiration: aerobic VFA oxidation limited by O2 surface flux
-  # Monod term on VFA prevents negative values at low concentrations (ks_resp = 0.05 g COD/kg)
+  # Surface respiration: aerobic oxidation limited by O2 surface flux
+  # Monod term on VFA prevents negative values at low concentrations (ks = 0.05 g COD/kg)
   if (p$has_resp) {
-    resp['VFA'] <- -p$O2_flux * p$area * y['VFA'] / (y['VFA'] + 0.05 * y['slurry_mass'])
+    resp_rate <- p$O2_flux * p$area * y['VFA'] / (y['VFA'] + 0.05 * y['slurry_mass'])
+    resp[names(p$rstoich)] <- resp_rate * p$rstoich
   }
 
   # Add vectors to get derivatives

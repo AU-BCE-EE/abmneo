@@ -110,6 +110,9 @@ pack_pars <- function(
 
   # Respiration precomputation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars$has_resp <- !is.null(pars$O2_flux) && pars$O2_flux > 0
+  if (pars$has_resp && is.null(pars$rstoich)) {
+    pars$rstoich <- c(VFA = -1)
+  }
 
   # Inhibition precomputation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (!is.null(pars$ic0)) {

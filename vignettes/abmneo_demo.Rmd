@@ -323,8 +323,6 @@ This was a deliberate change aimed at simplification of the code and an increase
 There is almost certainly a speed improvement.
 Users can go for a finer resolution in the input, but there will be a (small?) speed penalty.
 
-NEW
-
 We might recommend that output resolution should match input resolution when inputs vary over time.
 That can be done using `times`.
 
@@ -774,7 +772,7 @@ matplot(outpins$time, outpins[, nn <- c('m0_conc','m1_conc','m2_conc')], col = '
 matplot(outpinr$time, outpinr[, nn <- c('m0_conc','m1_conc','m2_conc')], col = 'black', lty = 1:length(nn), type = 'l')
 ```
 
-# Inhibition NEW
+# Inhibition
 
 Now we have inhibition.
 I went for the IC0/IC100 approach.
@@ -898,7 +896,7 @@ stor_reg_rsp <- list(
   wash_water = 0,            
   wash_int = 90,
   rest_d = 1,
-  O2_flux = 5
+  O2_flux = 2
 )
 ```
 
@@ -923,6 +921,156 @@ plot(VFA_conc ~ time, data = outpinr, type = 'l')
 lines(VFA_conc ~ time, data = outpinrsp, col = 'red')
 ```
 
+To add CO2 we need to explicitly define an `rstoich` vector and of course have CO2 as a component.
+
+```{r}
+inf_rspc <- list(VFA_fresh = 2, 
+		  VFA_init = 2,
+		  comps = c('CO2'),
+                  comp_fresh = c(CO2 = 0), 
+                  comp_init = c(CO2 = 0), 
+                  pH = 7, 
+		  dens = 1000)
+```
+
+The `rstoich` vector does not naturally fit well in any particular input!
+It is stuck with O2 flux in `storage`. 
+
+```{r}
+stor_reg_rspc <- list(
+  type = 'regular',
+  slurry_prod_rate = 5, 
+  storage_depth = 2,     
+  area = 0.65,              
+  temp_C = 20,
+  resid_enrich = 0.2,
+  slurry_mass = 7,     
+  resid_depth = 0.01,      
+  empty_int = 28,          
+  wash_water = 0,            
+  wash_int = 90,
+  rest_d = 1,
+  O2_flux = 2,
+  rstoich = c(VFA = -1, CO2 = 0.375)
+)
+```
+
+And CO2 is a gas.
+
+
+```{r}
+chem_rspc <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4', 'CO2'))
+```
+
+And if we are going to track CO2, we'd better include the methanogensis contribution.
+First sort out stoich coeff.
+
+```{r}
+micstoich('CH3COOH', product = 'CH4')
+micstoich:::massconv('CO2') / micstoich:::massconv('CH3COOH') 
+```
+
+```{r}
+mstoich_rspc <- matrix(
+  c(-1, -1, -1, 
+    1, 1, 1,
+    0.1877, 0.1877, 0.1877),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'CH4', 'CO2'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+mstoich_rspc
+```
+
+
+```{r}
+devtools::load_all()
+outpinrspc <- abmneo(
+  storage = stor_reg_rspc,
+  365,
+  inf_pars = inf_rspc,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_rspc,
+  add_pars = list(mstoich = mstoich_rspc)
+)
+```
+
+```{r}
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinrspc, col = 'red')
+
+plot(CH4 ~ time, data = outpinr, type = 'l')
+lines(CH4 ~ time, data = outpinrspc, col = 'blue')
+lines(CO2 ~ time, data = outpinrspc, col = 'red')
+plot(VFA_conc ~ time, data = outpinr, type = 'l')
+lines(VFA_conc ~ time, data = outpinrsp, col = 'red')
+```
+
+# NEW speed
+
+Here is a demo of speed.
+10 year regular simulation:
+
+```{r}
+system.time(
+abmneo(
+  storage = stor_reg_ref,
+  10 * 365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref
+)
+)
+```
+
+10 year series input simulation using startup.
+
+```{r}
+system.time(
+abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  startup = 9
+)
+)
+```
+
+And 10 year with variable temperature.
+
+
+```{r}
+system.time(
+abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat),
+  startup = 9
+)
+)
+```
+
+
+
+Not sure of ABM package times but this stuff seems pretty fast.
+
+# NEW Note on COD balance
+
+It sometimes indicates some problems!
+Could be real (means programming problem) or in the balance calculation but certainly needs to be sorted out.
 
 # Other functionality
 
@@ -936,13 +1084,13 @@ Here are file sizes.
 First, current ABM master.
 
 ```{r}
-system('wc -l ../../ABM/R/*.R ../../ABM/src/*.cpp')
+cat(system('wc -l ../../ABM/R/*.R ../../ABM/src/*.cpp', intern = TRUE), sep = '\n')                                                                                                   
 ```
 
 Then abmneo.
 
 ```{r}
-system('wc -l ../R/*.R')
+cat(system('wc -l ../R/*.R', intern = TRUE), sep = '\n')
 ```
 
 To be fair, I am sure ABM has some unused code.
@@ -951,11 +1099,12 @@ But still. . .
 Look at rates() in particular.
 
 ```{r}
-system('wc -l ../../ABM/src/rates_cpp.cpp ../R/rates.R')
+cat(system('wc -l ../../ABM/src/rates_cpp.cpp ../R/rates.R', intern = TRUE), sep = '\n')
 ```
 
 That `rates.R` file includes some other functions.
-Here is the `rates()` function, around 50 lines of code that call no other abmneo functions:
+Here is the `rates()` function, around 50 lines of code that used to call no other abmneo functions. 
+Now it does call an inhibition function. . . :
 
 ```{r}
 print(rates)

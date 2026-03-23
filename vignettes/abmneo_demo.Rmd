@@ -235,8 +235,7 @@ outpinr <- abmneo(
   365,
   inf_pars = inf_ref,
   grp_pars = grp_ref,
-  sub_pars = sub_ref,
-  chem_pars = chem_ref
+  sub_pars = sub_ref
 )
 ```
 

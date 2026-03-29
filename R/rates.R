@@ -15,7 +15,7 @@ rates <- function(t, y, parms) {
   # Inflow from slurry addition
   inflow[names(p$conc_fresh)] <- p$conc_fresh * p$slurry_prod_rate
   inflow[c('slurry_mass', 'slurry_load')] <- 1 * p$slurry_prod_rate
-  inflow['COD_load'] <- sum(inflow[names(p$conc_fresh)])
+  inflow['COD_load'] <- sum(inflow[p$supercomps] * p$COD_conv[p$supercomps])
 
   # Substrate matrix for utilization rate
   sm <- matrix(y[rownames(p$mstoich)], 

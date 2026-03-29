@@ -1,27 +1,31 @@
 # Stoichometry functions
 
 # Check COD balance
-check_COD <- function(dat, 
-                     grps,
-                     subs,
-                     COD_conv,
-                     fstoich,
-                     rtol = 0.001
-                    ) {
+check_COD <- function(dat, pars, rtol = 0.001) {
 
   first <- unlist(dat[1, ])
   last <- unlist(dat[nrow(dat), ])
 
-  CODin <- sum(last[['COD_load']], first[grps], first[subs] * fstoich['VFA', subs], first[['VFA']])
-  CODeff <- sum(last[paste0(subs, '_eff')] * fstoich['VFA', subs]) + last[['VFA_eff']]
-  CODemis <- last[['CH4']] * COD_conv[['CH4']]
-  CODrem <- sum(last[grps], last[subs] * fstoich['VFA', subs], last[['VFA']])
-  bal <- CODin - CODeff - CODemis - CODrem
-  rbal <- bal / CODin
+  supercomps <- pars$supercomps
+  gases <- pars$gases
+  COD_conv <- pars$COD_conv
+
+  # Present at start
+  CODstart <- sum(first[supercomps] * COD_conv[supercomps]) 
+  # Loading
+  CODin <- last[['COD_load']] 
+  # Removed in effluent
+  CODeff <- sum(last[paste0(supercomps, '_eff')] * COD_conv[supercomps])
+  # Emitted
+  CODemis <- last[[gases]] * COD_conv[[gases]]
+  # Remaining
+  CODrem <- sum(last[supercomps] * COD_conv[supercomps]) 
+
+  bal <- CODstart + CODin - CODeff - CODemis - CODrem
+  rbal <- bal / (CODstart + CODin)
 
   if (abs(rbal) > rtol) {
     warning('COD balance is off by ', signif(100 * rbal, 2), '%')
-    return(invisible(rbal))
   } 
 
   return(invisible(rbal))
@@ -44,10 +48,22 @@ comb_fstoich <- function(fstoich, subs) {
 
 comb_mstoich <- function(mstoich, yield) {
 
+  # For convenience
+  msc <- mstoich
+
+  # R&M's fe
+  femat <- matrix(1 - yield, nrow = nrow(msc), ncol = length(yield), byrow = TRUE)
+
   # Subtract microbial yields from product formation
   # Note that this is not simply subtraction because some products may not be in COD units!
-  msc <- mstoich
-  msc[msc > 0] <- (msc * matrix(1 - yield, nrow = nrow(msc), ncol = length(yield), byrow = TRUE))[msc > 0]
+  msc[msc > 0] <- (msc * femat)[msc > 0]
+
+  # Subtract microbial yields from secondary reactant (e.g., electron acceptor)
+  mscnovfa <- msc[rownames(msc) != 'VFA', ]
+  fematnovfa <- femat[rownames(msc) != 'VFA', ]
+  mscnovfa[mscnovfa < 0] <- (mscnovfa * fematnovfa)[mscnovfa < 0]
+
+  msc[rownames(msc) != 'VFA', ] <- mscnovfa
 
   # Yield matrix
   ym <- diag(yield, ncol(msc), ncol(msc))

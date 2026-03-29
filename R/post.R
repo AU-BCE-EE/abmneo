@@ -44,7 +44,7 @@ clean_output <- function(
 add_concs <- function(dat, pars) {
   
     # Which components?
-    wc <- c(pars$grps, pars$subs, pars$sols)
+    wc <- pars$supercomps
     # Not gases
     wc <- wc[!wc %in% pars$gases]
 

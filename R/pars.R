@@ -53,22 +53,12 @@ pack_pars <- function(
   check_grp_names(pars)
 
   # Size-variable elements ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # For size-variable parameters, get number of elements and indices 
-  # NTS: I expect to change to a different approach, only using block below this one with names
-  pars$n_mic <- length(pars$grps)
-
-  # Solutes and particle groups in slurry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # VFA intermediate is always present; force name regardless of user input
-  names(pars$VFA_fresh) <- 'VFA'
-  names(pars$VFA_init) <- 'VFA'
-  pars$sols <- unique(c(pars$comps, 'VFA'))
-  # Grouping for easier rates() calculations
-  pars$conc_fresh <- c(pars$xa_fresh, pars$sub_fresh, pars$VFA_fresh, pars$comp_fresh)
-  pars$conc_init <- c(pars$xa_init, pars$sub_init, pars$VFA_init, pars$comp_init)
+  # List of names of *all* components, supercomps
+  pars$supercomps <- c(pars$grps, pars$subs, 'VFA', pars$comps)
 
   # Sort out stoichiometry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Fermentation stoichiometry
-  # Three possibilities: 1) NULL, 2) "calc", 3) given
+  # Two possibilities: 1) NULL -> assume 1, 2) given
   # If missing, assume only VFA is produced
   if (is.null(pars$fstoich)) {
     # Fill in missing stochiometry
@@ -88,6 +78,30 @@ pack_pars <- function(
 
   # Extend ks matrix if not full (typically not)
   pars$ksmat <- fix_ksmat(pars$ksmat, pars$mstoich)
+
+  # Solutes and particle groups in slurry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # VFA intermediate is always present; force name regardless of user input (expect no name)
+  names(pars$VFA_fresh) <- names(pars$VFA_init) <- 'VFA'
+  # Solutes (exclude gases from components) (and does not include particulate substrates)
+  pars$sols <- unique(c(pars$comps[!names(pars$comps) %in% pars$gases], 'VFA'))
+  # Grouping for easier rates() calculations
+  pars$conc_fresh <- c(pars$xa_fresh, pars$sub_fresh, pars$VFA_fresh, pars$comp_fresh)
+  pars$conc_init <- c(pars$xa_init, pars$sub_init, pars$VFA_init, pars$comp_init)
+
+  # All comps (sols is part of comps) plus subs plus grps should have a COD conversion value for COD balance!
+  # Units: g COD' per g whatever comp units are 
+  # VFA is defined as 1
+  pars$COD_conv['VFA'] <- 1
+  # subs typically (always?) 1 but user could put in something else in fstoich matrix
+  pars$COD_conv[pars$subs] <- pars$fstoich[1, ][pars$subs]
+  # grps intended to be 1
+  pars$COD_conv[pars$grps] <- 1
+  # Values should be entered in chem_pars for all comps
+
+  # Check for missing
+  if (any(! pars$supercomps %in% names(pars$COD_conv))) {
+    stop(paste0('Missing COD_conv for ', pars$supercomps[!pars$supercomps %in% names(pars$COD_conv)], '.'))
+  }
 
   # Substrates ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   pars$n_subs <- length(pars$subs)

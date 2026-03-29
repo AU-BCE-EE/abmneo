@@ -98,10 +98,7 @@ abmneo <- function(
   # Check COD balance
   codbal <- check_COD(
     dat = dat, 
-    grps = pars$grps, 
-    subs = pars$subs, 
-    COD_conv = pars$COD_conv, 
-    fstoich = pars$fstoich, 
+    pars = pars,
     rtol = 0.01
   )
 

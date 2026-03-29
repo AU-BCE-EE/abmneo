@@ -10,7 +10,7 @@ rates <- function(t, y, parms) {
   qhat <- update_inhib(p, y)
 
   # Initialize vectors with derivative components, all with same order of y elements
-  inflow <- metab <- hyferm <- resp <- 0 * y
+  inflow <- metab <- death <- hyferm <- resp <- 0 * y
 
   # Inflow from slurry addition
   inflow[names(p$conc_fresh)] <- p$conc_fresh * p$slurry_prod_rate
@@ -42,6 +42,9 @@ rates <- function(t, y, parms) {
   # Convert CH4 from g COD / d to g C / d
   metab['CH4'] <- metab['CH4'] / p$COD_conv['CH4']
 
+  # Biomass death
+  death[rownames(p$dstoich)] <- p$dstoich %*% (p$dd_rate * y[p$grps])
+
   # Hydrolysis and fermentation of particulate substrates
   # Consumption and production all in one line, including arbitrary products based on specified fermentation stoichiometry
   hyferm[rownames(p$fstoich)] <- p$fstoich %*% (p$alpha[p$subs] * y[p$subs])
@@ -58,7 +61,7 @@ rates <- function(t, y, parms) {
   #   * slurry_mass (kg/d as fresh slurry mass)
   #   * CH4 (g/d as CH4-C)
   #   * user-defined solutes other than VFA (as C, N, or S as described in documentation)
-  ders <- inflow + metab + hyferm + resp
+  ders <- inflow + metab + death + hyferm + resp
 
   return(list(ders, c(CH4_emis_rate = metab[['CH4']], temp_C = p$temp_C, pH = p$pH)))
 

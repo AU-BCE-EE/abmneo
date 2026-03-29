@@ -82,3 +82,14 @@ fix_ksmat <- function(ksmat, mstoich) {
   return(ks)
 
 }
+
+make_dstoich <- function(pars) {
+
+  sm <- diag(-1, length(pars$grps), length(pars$grps))
+  dstoich <- rbind(sm, rep(1, length(pars$grps)))
+  rownames(dstoich) <- c(pars$grps, pars$xd)
+  colnames(dstoich) <- pars$grps
+
+  return(dstoich)
+
+}

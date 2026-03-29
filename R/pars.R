@@ -58,7 +58,7 @@ pack_pars <- function(
 
   # Sort out stoichiometry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Fermentation stoichiometry
-  # Two possibilities: 1) NULL -> assume 1, 2) given
+  # Two possibilities: 1) NULL -> assume 1.0, 2) given
   # If missing, assume only VFA is produced
   if (is.null(pars$fstoich)) {
     # Fill in missing stochiometry
@@ -75,6 +75,9 @@ pack_pars <- function(
 
   # Add microbial yield to mstoich matrix as rows and subtract from product formation)
   pars$mstoich <- comb_mstoich(pars$mstoich, pars$yield)
+
+  # Create biomass death stoichiometry matrix
+  pars$dstoich <- make_dstoich(pars)
 
   # Extend ks matrix if not full (typically not)
   pars$ksmat <- fix_ksmat(pars$ksmat, pars$mstoich)

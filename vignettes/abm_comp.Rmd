@@ -99,8 +99,8 @@ grp_pars <- list(
   xa_fresh = c(m0 = 0.06, m1 = 0.06, m2 = 0.06, m3 = 0.06, m4 = 0.06, m5 = 0.06, sr1 = 0.06),
   xa_init = c(default = 0.06),
   dd_rate = c(default = 0.02),
-  #qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 8),
-  qhat_opt =  c(default = 0, sr1 = 8.3451),
+  qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 8),
+  #qhat_opt =  c(default = 0, sr1 = 8.3451),
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, m3 = 36, m4 = 43.75, m5 = 55, sr1 = 43.75),
   T_min = c(m0 = 0, m1 = 9.67, m2 = 9.67, m3 = 15, m4 = 26.25, m5 = 30, sr1 = 0),
   T_max = c(m0 = 25, m1 = 25, m2 = 38, m3 = 45, m4 = 51.25, m5 = 60, sr1 = 51.25),
@@ -118,8 +118,8 @@ inf_pars <- list(
   VFA_fresh = 0, 
   VFA_init = 10,
   comps = c('SO4'),
-  comp_fresh = c(SO4 = 0), 
-  comp_init = c(SO4 = 10), 
+  comp_fresh = c(SO4 = 1), 
+  comp_init = c(SO4 = 1), 
   pH = 7, 
   dens = 1000
 )
@@ -174,13 +174,14 @@ lines(tempC, rc)
 
 ```{r}
 sub_pars <- list(
-  subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'),
+  subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd', 'xd'),
+  xd = 'xd',
   T_opt_hyd = c(default = 80),
   T_min_hyd = c(default = 0),
   T_max_hyd = c(default = 80),
   hydrol_opt = c(default = 0.7),
-  sub_fresh = c(default = 0),
-  sub_init = c(default = 0)
+  sub_fresh = c(starch = 10, default = 0),
+  sub_init = c(starch = 10, default = 0)
 )
 ```
 
@@ -192,7 +193,7 @@ Chem pars.
 COD_conv is mass whatever (here g CH4-C and g SO4-S) per g COD
 
 ```{r}
-chem_pars <- list(COD_conv = c(CH4 = 5.32, SO4 = -1/0.50156), gases = c('CH4'))
+chem_pars <- list(COD_conv = c(CH4 = 5.32, SO4 = -1.9938), gases = c('CH4'))
 ```
 
 Get COD of SO4-2
@@ -202,6 +203,7 @@ micstoich::calcCOD('CH3COOH', per = 'mol') * 0.125
 How much SO4-S consumed?
 micstoich::molmass('SO4-2', 'S') * 0.125
 4.0125 / 8
+8 / 4.0125
 Try to run
 
 
@@ -210,7 +212,7 @@ Q
 devtools::load_all()
 out <- abmneo(
   storage = stor_ser,
-  50,
+  365,
   inf_pars = inf_pars,
   grp_pars = grp_pars,
   sub_pars = sub_pars,
@@ -231,6 +233,8 @@ legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 matplot(out$time, out[, nn <- paste0(c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 plot(VFA ~ time, data = out, type = 'l')
+plot(starch_conc ~ time, data = out, type = 'l')
+plot(xd_conc ~ time, data = out, type = 'l')
 plot(VFA_conc ~ time, data = out, type = 'l')
 plot(SO4_conc ~ time, data = out, type = 'l')
 plot(COD_load ~ time, data = out, type = 'l')

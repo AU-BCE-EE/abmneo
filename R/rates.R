@@ -50,10 +50,12 @@ rates <- function(t, y, parms) {
   hyferm[rownames(p$fstoich)] <- p$fstoich %*% (p$alpha[p$subs] * y[p$subs])
 
   # Surface respiration: aerobic oxidation limited by O2 surface flux
-  # Monod term on VFA prevents negative values at low concentrations (ks = 0.05 g COD/kg)
+  # Monod term on VFA prevents negative values at low concentrations (ks = 0.05 g COD/m3)
+  # O2 reduces (net) COD loading
   if (p$has_resp) {
     resp_rate <- p$O2_flux * p$area * y['VFA'] / (y['VFA'] + 0.05 * y['slurry_mass'])
     resp[names(p$rstoich)] <- resp_rate * p$rstoich
+    resp['COD_load'] <- - resp_rate 
   }
 
   # Add vectors to get derivatives

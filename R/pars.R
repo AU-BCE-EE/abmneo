@@ -34,7 +34,12 @@ pack_pars <- function(
 
   # Check for identical dimensions in inhibition pars
   if (!is.null(pars$ic0) && !isTRUE(all.equal(dimnames(pars$ic0), dimnames(pars$ic100)))) {
-    stop('ic0 and ic100 row or column names must be identical but are not.')
+    stop('ic0 and ic100 row and column names must be identical but are not.')
+  }
+
+  # Add xd to subs if missing
+  if (! pars$xd %in% pars$subs) {
+    pars$subs <- c(pars$subs, pars$xd)
   }
 
   # Fill in default values for grp_pars if keyword name `default` is used
@@ -327,7 +332,7 @@ calc_temp_pars <- function(pars, y) {
   pars$temp_K <- pars$temp_C + 273.15
   
   # Hydrolysis rate (vectorized)
-  pars$alpha[pars$subs] <- arrhenius(pars$temp_K, pars$arrA, pars$arrE)
+  pars$alpha[pars$subs] <- arrhenius(pars$temp_K, pars$arrA, pars$arrE, pars$arr_max_temp_K)
 
   # Microbial substrate utilization rate (vectorized calculation)
   pars$qhat[pars$grps] <- CTM(pars$temp_K, pars$T_opt, pars$T_min, pars$T_max, pars$qhat_opt)
@@ -372,8 +377,10 @@ CTM <- function(temp_K, t_opt, t_min, t_max, y_opt) {
 }
 
 # Arrhenius function
-arrhenius <- function(temp_K, A, E, R = 8.314){
+arrhenius <- function(temp_K, A, E, arr_max_temp_K = 313, R = 8.314){
   
+  if (temp_K >= arr_max_temp_K) temp_K <- arr_max_temp_K
+
   y <- A * exp(-E/(R * temp_K))
   
   return(y)

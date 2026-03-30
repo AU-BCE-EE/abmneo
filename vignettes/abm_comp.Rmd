@@ -116,7 +116,7 @@ Influent pars
 ```{r}
 inf_pars <- list(
   VFA_fresh = 0, 
-  VFA_init = 10,
+  VFA_init = 0,
   comps = c('SO4'),
   comp_fresh = c(SO4 = 1), 
   comp_init = c(SO4 = 1), 
@@ -154,32 +154,11 @@ arrh_pars <- list(lnA =  29.96298,
 ```
 
 ```{r}
-Arrh_func <- function(A, E, R, temp_K){
-  
-  y <- A * exp(-E/(R * temp_K))
-  
-  return(y)
-}
-```
-
-```{r}
-r <- Arrh_func(A = 3.61383e12, E = 81557, R = 8.314, temp_K = (tempC <- 0:55) + 273.15)
-args(abmneo:::CTM)
-ctmv <- Vectorize(abmneo:::CTM)
-rc <- ctmv(temp_K = (tempC <- 0:55) + 273.15, t_opt = 80 + 273.15, t_min = 0 + 273.15, t_max = 80 + 273.15, y_opt = 0.7)
-
-plot(tempC, r, ylim = c(0, 1))
-lines(tempC, rc)
-```
-
-```{r}
 sub_pars <- list(
   subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd', 'xd'),
   xd = 'xd',
-  T_opt_hyd = c(default = 80),
-  T_min_hyd = c(default = 0),
-  T_max_hyd = c(default = 80),
-  hydrol_opt = c(default = 0.7),
+  arrA = c(default = 3.61e12),
+  arrE = c(default = 8.16e4),
   sub_fresh = c(starch = 10, default = 0),
   sub_init = c(starch = 10, default = 0)
 )
@@ -204,8 +183,10 @@ How much SO4-S consumed?
 micstoich::molmass('SO4-2', 'S') * 0.125
 4.0125 / 8
 8 / 4.0125
-Try to run
 
+
+
+Try to run
 
 Q
 ```{r}
@@ -230,7 +211,7 @@ matplot(out$time, out[, nn <- c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1')], col =
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 matplot(out$time, out[, nn <- paste0(c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), lty = 1:length(nn), type = 'l')
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-matplot(out$time, out[, nn <- paste0(c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
+matplot(out$time, out[, nn <- paste0(c('starch', 'Cfat', 'CPs', 'CPf', 'RFd', 'xd'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 plot(VFA ~ time, data = out, type = 'l')
 plot(starch_conc ~ time, data = out, type = 'l')

@@ -327,7 +327,7 @@ calc_temp_pars <- function(pars, y) {
   pars$temp_K <- pars$temp_C + 273.15
   
   # Hydrolysis rate (vectorized)
-  pars$alpha[pars$subs] <- CTM(pars$temp_K, pars$T_opt_hyd, pars$T_min_hyd, pars$T_max_hyd, pars$hydrol_opt)
+  pars$alpha[pars$subs] <- arrhenius(pars$temp_K, pars$arrA, pars$arrE)
 
   # Microbial substrate utilization rate (vectorized calculation)
   pars$qhat[pars$grps] <- CTM(pars$temp_K, pars$T_opt, pars$T_min, pars$T_max, pars$qhat_opt)
@@ -367,6 +367,14 @@ CTM <- function(temp_K, t_opt, t_min, t_max, y_opt) {
     # Combine using ifelse and enforce in-range
     y[in_range] <- pmax(0, ifelse(use_first, y1, y2)[in_range])
   }
+  
+  return(y)
+}
+
+# Arrhenius function
+arrhenius <- function(temp_K, A, E, R = 8.314){
+  
+  y <- A * exp(-E/(R * temp_K))
   
   return(y)
 }

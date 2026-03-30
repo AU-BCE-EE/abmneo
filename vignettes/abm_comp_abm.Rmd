@@ -1,0 +1,118 @@
+---
+title: 'Comparison of abmneo and ABM - ABM part'
+output: pdf_document
+author: Sasha D. Hafner
+date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
+---
+
+```{r}
+devtools::load_all('../../ABM')
+```
+
+```{r}
+mass_series <- read.csv('level_pig_od_ref.csv') 
+plot(slurry_mass ~ time, data = mass_series, type = 'o')
+```
+
+```{r}
+temp_dat <- data.frame(time = seq(0, 365, length.out = 12))
+temp_dat$temp_C <- 10 + 10 * sin((temp_dat$time - 130) / 365 * 2 * pi)
+plot(temp_C ~ time, data = temp_dat, type = 'o')
+```
+
+```{r}
+arrh_pars <- list(lnA =  29.96298,
+              E_CH4 = 81000, 
+              A = c(xa_dead= 3.61383 * 10^12, starch = 5 * 3.61383 * 10^12, Cfat = 0.1 * 3.61383 * 10^12, CPs = 3.61383 * 10^12, CPf = 3.61383 * 10^12, RFd = 3.61383 * 10^12, VSd = 3.61383 * 10^12, urea = 4.38*10^15), 
+              E = c(xa_dead= 81557, starch = 81557, Cfat = 81557, CPs = 81557, CPf = 81557, RFd = 81557, VSd = 81557, urea = 81559),  
+              R = 8.314,  
+              VS_CH4 = 6.67,
+              scale_alpha_opt = list(VSd = 0.46056, notVSd = 0.556886, CP = 2.065),
+              kl = c(NH3 = 336, NH3_floor = 0.36*337, H2S = 0.02),
+              scale_EF_NH3 = 0.0000048)
+
+```
+
+```{r}
+grp_pars <- list(grps = c('m0', 'm1', 'm2','m3','m4','m5','sr1'),
+                 yield = c(default = 0.05, sr1 = 0.065),
+                 xa_fresh = c(m0 = 0.06, m1 = 0.06, m2 = 0.06, m3 = 0.06, m4 = 0.06, m5 = 0.06, sr1 = 0.06),
+                 xa_init = c(all = 0.06),
+                 decay_rate = c(all = 0.02),
+                 ks_coefficient = c(default = 1.153337, sr1 = 0.461335),
+                 qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 8.3451),
+                 T_opt = c(m0 = 18, m1 = 18, m2 = 28, m3 = 36, m4 = 43.75, m5 = 55, sr1 = 43.75),
+                 T_min = c(m0 = 0, m1 = 9.67, m2 = 9.67, m3 = 15, m4 = 26.25, m5 = 30, sr1 = 0),
+                 T_max = c(m0 = 25, m1 = 25, m2 = 38, m3 = 45, m4 = 51.25, m5 = 60, sr1 = 51.25),
+                 ki_NH3_min = c(all = 0.015),
+                 ki_NH3_max = c(all = 5.37),
+                 ki_NH4_min = c(all = 2.7),
+                 ki_NH4_max = c(all = 6.8492),
+                 ki_H2S_slope = c(default = -0.10623, sr1 = -0.1495),
+                 ki_H2S_int = c(default = 1.02, sr1 = 1.42),
+                 ki_H2S_min = c(default = 0.08),
+                 IC50_low = c(default = 0.20854, sr1 = 0.2772),
+                 ki_HAC = c(default = 0.31),
+                 pH_UL = c(default = 8.0),
+                 pH_LL = c(default = 6.5, sr1 = 5.5))
+```
+
+Write mng_pars in order to insert slurry_mass data
+
+```{r}
+mng_pars <- list(slurry_prod_rate = 5700,  
+                slurry_mass = mass_series,
+                storage_depth = 2,   
+                resid_depth = 0,
+                floor_area = 0,    
+                area = 0.7,         
+                empty_int = 0,    
+                temp_C = temp_dat,
+                wash_water = 0,            
+                wash_int = NA,
+                rest_d = 0,
+                cover = 'none',
+                resid_enrich = 0.9,
+                graze = c(start = 'May', duration = 0, hours_day = 0),
+                scale = c(ks_coefficient = 1, qhat_opt = 1, xa_fresh = 1, yield = 1, alpha_opt = 1)
+)
+```
+
+Take man_pars from man_pars_pig2.0
+
+```{r}
+man_pars_pig2.0 <- list(conc_fresh = list(sulfide = 0.01, urea = 3.17, sulfate = 0.01, TAN = 0.0, starch = 5.25, 
+                                      VFA = 1.7, xa_dead = 0, Cfat = 27.6, CPs = 21.1 * 0.55, CPf = 21.1 * 0.45, RFd = 25.4, iNDF = 11.3, VSd = 0, 
+                                      ash = 15), pH = 7, dens = 1000)
+```
+
+```{r}
+devtools::load_all('../../ABM')
+system.time(
+  abm_out <- abm(
+    man_pars = man_pars_pig2.0,
+    mng_pars = mng_pars, 
+    arrh_pars = arrh_pars, 
+    grp_pars = grp_pars,
+    evap_pars = list(evap = 0, rain = 0),
+    startup = 2
+  )
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = abm_out, type = 'l')
+lines(slurry_mass ~ time, data = mass_series, type = 'l', col = 'red')
+plot(temp_C ~ time, data = abm_out, type = 'l')
+plot(CH4_emis_rate ~ time, data = abm_out, type = 'l')
+matplot(abm_out$time, abm_out[, nn <- c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1')], col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+matplot(abm_out$time, abm_out[, nn <- paste0(c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+matplot(abm_out$time, abm_out[, nn <- c('starch', 'Cfat', 'CPs', 'CPf', 'RFd')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
+matplot(abm_out$time, abm_out[, nn <- paste0(c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+plot(VFA ~ time, data = abm_out, type = 'l')
+plot(starch_conc ~ time, data = abm_out, type = 'l')
+plot(VFA_conc ~ time, data = abm_out, type = 'l')
+```

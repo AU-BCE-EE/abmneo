@@ -94,25 +94,51 @@ system.time(
     mng_pars = mng_pars, 
     arrh_pars = arrh_pars, 
     grp_pars = grp_pars,
-    evap_pars = list(evap = 0, rain = 0),
-    startup = 2
+    add_pars = list(evap = 0, rain = 0),
+    startup = 0
   )
 )
 ```
 
 ```{r}
 plot(slurry_mass ~ time, data = abm_out, type = 'l')
-lines(slurry_mass ~ time, data = mass_series, type = 'l', col = 'red')
+
 plot(temp_C ~ time, data = abm_out, type = 'l')
+
 plot(CH4_emis_rate ~ time, data = abm_out, type = 'l')
-matplot(abm_out$time, abm_out[, nn <- c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1')], col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), lty = 1:length(nn), type = 'l')
+
+plot(CH4_emis_cum ~ time, data = abm_out, type = 'l')
+
+matplot(
+  abm_out$time, 
+  abm_out[, nn <- grp_pars$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1:length(nn), type = 'l',
+  ylab = 'Xa'
+)
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-matplot(abm_out$time, abm_out[, nn <- paste0(c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), lty = 1:length(nn), type = 'l')
+
+matplot(
+  abm_out$time, 
+  abm_out[, nn <- paste0(grp_pars$grps, '_conc')], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1:length(nn), 
+  type = 'l',
+  ylab = 'Xa conc'
+)
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-matplot(abm_out$time, abm_out[, nn <- c('starch', 'Cfat', 'CPs', 'CPf', 'RFd')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
-matplot(abm_out$time, abm_out[, nn <- paste0(c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
+
+matplot(
+  abm_out$time, 
+  abm_out[, nn <- paste0(c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'), '_conc')], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'red'), 
+  lty = 1:length(nn), 
+  type = 'l',
+  ylab = 'Substrate conc.'
+)
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+
 plot(VFA ~ time, data = abm_out, type = 'l')
-plot(starch_conc ~ time, data = abm_out, type = 'l')
+
 plot(VFA_conc ~ time, data = abm_out, type = 'l')
 ```

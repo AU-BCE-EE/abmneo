@@ -71,8 +71,8 @@ Influent pars from man_pars2.0.
 
 ```{r}
 inf_pars <- list(
-  VFA_fresh = 0, 
-  VFA_init = 0,
+  VFA_fresh = 1.7, 
+  VFA_init = 1.7,
   comps = c('SO4'),
   comp_fresh = c(SO4 = 0.2), 
   comp_init = c(SO4 = 0.2), 
@@ -92,7 +92,7 @@ stor_ser <- list(
   dat = mass_series,
   storage_depth = 2,     
   area = 0.7,              
-  temp_C = 18,
+  temp_C = 0,
   resid_enrich = 0.9 
 )
 ```
@@ -104,6 +104,7 @@ temp_dat$temp_C <- 10 + 10 * sin((temp_dat$time - 130) / 365 * 2 * pi)
 
 plot(temp_C ~ time, data = temp_dat, type = 'o')
 ```
+Q
 
 Substrates and hydrolysis
 
@@ -114,7 +115,7 @@ sub_pars <- list(
   arrA = c(starch = 3.61e12, Cfat = 3.61e12, CPs = 2.065 * 3.61e12, CPf = 2.065 * 3.61e12, RFd = 3.61e12, xd = 3.61e12),
   arrE = c(default = 8.16e4),
   sub_fresh = c(starch = 5.25, Cfat = 27.6, CPs = 21.1 * 0.55, CPf = 21.1 * 0.45, RFd = 25.4, xd = 0),
-  sub_init = c(starch = 10, default = 0)
+  sub_init = c(starch = 5.25, Cfat = 27.6, CPs = 21.1 * 0.55, CPf = 21.1 * 0.45, RFd = 25.4, xd = 0)
 )
 ```
 
@@ -154,27 +155,50 @@ system.time(
     sub_pars = sub_pars,
     chem_pars = chem_pars,
     var_pars = list(var = temp_dat),
-    startup = 2
+    startup = 0
   )
 )
 ```
-traceback()
 
 ```{r}
 plot(slurry_mass ~ time, data = neo_out, type = 'l')
+
 plot(temp_C ~ time, data = neo_out, type = 'l')
+
 plot(CH4_emis_rate ~ time, data = neo_out, type = 'l')
+
 plot(CH4 ~ time, data = neo_out, type = 'l')
-matplot(neo_out$time, neo_out[, nn <- c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1')], col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), lty = 1:length(nn), type = 'l')
+
+matplot(
+  neo_out$time, 
+  neo_out[, nn <- grp_pars$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1:length(nn), type = 'l',
+  ylab = 'Xa'
+)
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-matplot(neo_out$time, neo_out[, nn <- paste0(c('m0','m1','m2', 'm3', 'm4', 'm5', 'sr1'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), lty = 1:length(nn), type = 'l')
+
+matplot(
+  neo_out$time, 
+  neo_out[, nn <- paste0(grp_pars$grps, '_conc')], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1:length(nn), 
+  type = 'l',
+  ylab = 'Xa conc'
+)
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-matplot(neo_out$time, neo_out[, nn <- paste0(c('starch', 'Cfat', 'CPs', 'CPf', 'RFd', 'xd'), '_conc')], col = cc <- c('blue', 'orange', 'green', 'black', 'red'), lty = 1:length(nn), type = 'l')
+
+matplot(
+  neo_out$time, 
+  neo_out[, nn <- paste0(sub_pars$subs, '_conc')], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'red'), 
+  lty = 1:length(nn), 
+  type = 'l',
+  ylab = 'Substrate conc.'
+)
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+
 plot(VFA ~ time, data = neo_out, type = 'l')
-plot(starch_conc ~ time, data = neo_out, type = 'l')
-plot(xd_conc ~ time, data = neo_out, type = 'l')
+
 plot(VFA_conc ~ time, data = neo_out, type = 'l')
-plot(SO4_conc ~ time, data = neo_out, type = 'l')
-plot(COD_load ~ time, data = neo_out, type = 'l')
 ```

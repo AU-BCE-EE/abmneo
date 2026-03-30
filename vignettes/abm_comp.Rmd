@@ -190,7 +190,7 @@ ls()
 ```
 
 Chem pars.
-COD_conv is mass whatever (here g CH4-C and g SO4-S) per g COD
+COD_conv is g COD per g whatever (here g CH4-C and g SO4-S)
 
 ```{r}
 chem_pars <- list(COD_conv = c(CH4 = 5.32, SO4 = -1.9938), gases = c('CH4'))

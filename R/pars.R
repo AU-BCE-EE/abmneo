@@ -48,7 +48,7 @@ pack_pars <- function(
   # expandPars() will also sort out element order and drop excluded elements
   # NTS: Could these vectors of names be set in some kind of defaults?
   # Note that mstoich is *not* expanded! Too complicated. So it needs all the elements (rows/columns)
-  grp_par_nms <- c("yield", "xa_fresh", "xa_init", "dd_rate", "qhat_opt", "T_opt", "T_min", "T_max")
+  grp_par_nms <- c("yield", "xa_fresh", "xa_init", "d_max", "qhat_opt", "T_opt", "T_min", "T_max")
   sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init")
   pars <- expand_pars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
   pars <- expand_pars(pars = pars, elnms = pars$subs, parnms = sub_par_nms)
@@ -248,7 +248,7 @@ fix_add_pars <- function(pars, add_pars) {
   # If any additional parameters were added (or modified) using add_pars, update them in pars list here
   # But grp_pars and sub_pars work differently than the others because of the default = keyword
   # Needs to work in a case where default is all but e.g., m1 is given in add_pars
-  grp_par_nms <- c('yield', 'xa_fresh', 'xa_init', 'dd_rate', 'qhat_opt', 'T_opt', 'T_min', 'T_max')
+  grp_par_nms <- c('yield', 'xa_fresh', 'xa_init', 'd_max', 'qhat_opt', 'T_opt', 'T_min', 'T_max')
   grp_par_nms <- grp_par_nms[grp_par_nms %in% names(pars)]
   sub_par_nms <- c('T_opt_hyd', 'T_min_hyd', 'T_max_hyd', 'hydrol_opt', 'sub_fresh', 'sub_init')
   sub_par_nms <- sub_par_nms[sub_par_nms %in% names(pars)]
@@ -307,6 +307,13 @@ calc_temp_pars <- function(pars, y) {
 
   # Microbial substrate utilization rate (vectorized calculation)
   pars$qhat[pars$grps] <- CTM(pars$temp_K, pars$T_opt, pars$T_min, pars$T_max, pars$qhat_opt)
+
+  # Death rate
+  if (pars$temp_C > 40) {
+    pars$d_rate <- pars$d_max
+  } else {
+    pars$d_rate <- CTM(pars$temp_K, 313, 273, 325, pars$d_max)
+  }
 
   return(pars)
 

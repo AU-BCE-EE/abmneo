@@ -43,7 +43,7 @@ rates <- function(t, y, parms) {
   metab['CH4'] <- metab['CH4'] / p$COD_conv['CH4']
 
   # Biomass death
-  death[rownames(p$dstoich)] <- p$dstoich %*% (p$dd_rate * y[p$grps])
+  death[rownames(p$dstoich)] <- p$dstoich %*% (p$d_rate * y[p$grps])
 
   # Hydrolysis and fermentation of particulate substrates
   # Consumption and production all in one line, including arbitrary products based on specified fermentation stoichiometry

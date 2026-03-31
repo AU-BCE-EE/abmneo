@@ -7,6 +7,9 @@ get_schedule <- function(
   delta_t
 ) {
 
+  # Trim 
+  series <- series[series$time <= days,]
+
   # Sort out times returned by ODE solver
   if (is.null(times)) {
     times <- seq(0, days, by = delta_t)
@@ -165,6 +168,9 @@ clean_series <- function(
     # But added removal should = FALSE
     series[is.na(series$removal), 'removal'] <- FALSE
 
+    # And slurry_prod_rate should always use forward
+    series$slurry_prod_rate <- fill_down(series$slurry_prod_rate)
+
     if (pars$fill_method == 'interp') {
       if (any(sapply(series, class) == 'list')) {
         warning('ctrl_pars element fill_method \"interp\" cannot be used with list elements, so reverting to \"forward\"')
@@ -204,7 +210,7 @@ calc_prod_rem <- function(
   series,
   pars
 ) {
-  
+
   # Removals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Note final 0--alignment is a bit tricky
   if (pars$approx_method %in% c('late', 'mid')) {
@@ -226,6 +232,7 @@ calc_prod_rem <- function(
   } else {
     series$resid_mass <- c(series$slurry_mass[-1], 0)
   }
+  series$resid_mass[!series$removal] <- NA
 
   return(series)
 }

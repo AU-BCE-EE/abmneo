@@ -37,7 +37,7 @@ arrh_pars <- list(lnA =  29.96298,
 grp_pars <- list(grps = c('m0', 'm1', 'm2','m3','m4','m5','sr1'),
                  yield = c(default = 0.05, sr1 = 0.065),
                  xa_fresh = c(m0 = 0.06, m1 = 0.06, m2 = 0.06, m3 = 0.06, m4 = 0.06, m5 = 0.06, sr1 = 0.06),
-                 xa_init = c(all = 0.06),
+                 xa_init = c(all = 0.1),
                  decay_rate = c(all = 0.02),
                  ks_coefficient = c(default = 1.153337, sr1 = 0.461335),
                  qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 0),
@@ -53,8 +53,8 @@ grp_pars <- list(grps = c('m0', 'm1', 'm2','m3','m4','m5','sr1'),
                  ki_H2S_min = c(default = 0.08),
                  IC50_low = c(default = 0.20854, sr1 = 0.2772),
                  ki_HAC = c(default = 0.31),
-                 pH_UL = c(default = 8.0),
-                 pH_LL = c(default = 6.5, sr1 = 5.5))
+                 pH_UL = c(default = 12),
+                 pH_LL = c(default = 4))
 ```
 
 Write mng_pars in order to insert slurry_mass data
@@ -95,8 +95,9 @@ system.time(
     mng_pars = mng_pars, 
     arrh_pars = arrh_pars, 
     grp_pars = grp_pars,
-    add_pars = list(evap = 0, rain = 0),
+    add_pars = list(evap = 0, rain = 0, COD_conv.CH4 = 5.32),
     resp = FALSE,
+    pH_inhib_overrule = TRUE,
     startup = 0
   )
 )

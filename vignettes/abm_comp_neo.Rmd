@@ -54,7 +54,7 @@ grp_pars <- list(
   grps = c('m0', 'm1', 'm2','m3','m4','m5','sr1'),
   yield = c(default = 0.05, sr1 = 0.065),
   xa_fresh = c(m0 = 0.06, m1 = 0.06, m2 = 0.06, m3 = 0.06, m4 = 0.06, m5 = 0.06, sr1 = 0.06),
-  xa_init = c(default = 0.06),
+  xa_init = c(default = 0.1),
   d_max = c(default = 0.02),
   qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 0),
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, m3 = 36, m4 = 43.75, m5 = 55, sr1 = 43.75),
@@ -110,6 +110,7 @@ Substrates and hydrolysis
 ```{r}
 sub_pars <- list(
   subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'),
+  sub_enrich = c('starch', 'Cfat', 'CPs', 'RFd'),
   xd = 'xd',
   arrA = c(starch = 0.557 * 3.61e12, Cfat = 0.557 * 3.61e12, CPs = 0.557 * 2.065 * 3.61e12, CPf = 0.557 * 2.065 * 3.61e12, RFd = 0.557 * 3.61e12, xd = 0.557 * 3.61e12),
   arrE = c(default = 8.16e4),

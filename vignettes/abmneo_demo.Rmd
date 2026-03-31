@@ -155,7 +155,7 @@ Gases have no association with the slurry like solutes or substrates do--their p
 chem_ref <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4'))
 ```
 
-Conversion factor from: `calc_COD('CH4') / mol_mass('C')` from the `mic-stoich` repo.
+Conversion factor from: `calc_COD('CH4', per = 'mol') / mol_mass('C')` from the `mic-stoich` repo.
 It is g COD / g CH4-C.
 
 

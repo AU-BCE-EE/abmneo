@@ -40,7 +40,7 @@ grp_pars <- list(grps = c('m0', 'm1', 'm2','m3','m4','m5','sr1'),
                  xa_init = c(all = 0.06),
                  decay_rate = c(all = 0.02),
                  ks_coefficient = c(default = 1.153337, sr1 = 0.461335),
-                 qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 8.3451),
+                 qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 0),
                  T_opt = c(m0 = 18, m1 = 18, m2 = 28, m3 = 36, m4 = 43.75, m5 = 55, sr1 = 43.75),
                  T_min = c(m0 = 0, m1 = 9.67, m2 = 9.67, m3 = 15, m4 = 26.25, m5 = 30, sr1 = 0),
                  T_max = c(m0 = 25, m1 = 25, m2 = 38, m3 = 45, m4 = 51.25, m5 = 60, sr1 = 51.25),
@@ -65,7 +65,7 @@ mng_pars <- list(slurry_prod_rate = 5700,
                 storage_depth = 2,   
                 resid_depth = 0,
                 floor_area = 0,    
-                area = 0.7,         
+                area = 0.03,         
                 empty_int = 0,    
                 temp_C = temp_dat,
                 wash_water = 0,            
@@ -90,11 +90,13 @@ man_pars_pig2.0 <- list(conc_fresh = list(sulfide = 0.01, urea = 3.17, sulfate =
 devtools::load_all('../../ABM')
 system.time(
   abm_out <- abm(
+    days = 365,
     man_pars = man_pars_pig2.0,
     mng_pars = mng_pars, 
     arrh_pars = arrh_pars, 
     grp_pars = grp_pars,
     add_pars = list(evap = 0, rain = 0),
+    resp = FALSE,
     startup = 0
   )
 )
@@ -102,6 +104,10 @@ system.time(
 
 ```{r}
 plot(slurry_mass ~ time, data = abm_out, type = 'l')
+
+plot(slurry_depth ~ time, data = abm_out, type = 'l')
+
+plot(slurry_load_cum ~ time, data = abm_out, type = 'l')
 
 plot(temp_C ~ time, data = abm_out, type = 'l')
 

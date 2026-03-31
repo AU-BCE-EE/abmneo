@@ -55,8 +55,8 @@ grp_pars <- list(
   yield = c(default = 0.05, sr1 = 0.065),
   xa_fresh = c(m0 = 0.06, m1 = 0.06, m2 = 0.06, m3 = 0.06, m4 = 0.06, m5 = 0.06, sr1 = 0.06),
   xa_init = c(default = 0.06),
-  dd_rate = c(default = 0.02),
-  qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 8),
+  d_max = c(default = 0.02),
+  qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 0),
   T_opt = c(m0 = 18, m1 = 18, m2 = 28, m3 = 36, m4 = 43.75, m5 = 55, sr1 = 43.75),
   T_min = c(m0 = 0, m1 = 9.67, m2 = 9.67, m3 = 15, m4 = 26.25, m5 = 30, sr1 = 0),
   T_max = c(m0 = 25, m1 = 25, m2 = 38, m3 = 45, m4 = 51.25, m5 = 60, sr1 = 51.25),
@@ -91,20 +91,19 @@ stor_ser <- list(
   type = 'series',
   dat = mass_series,
   storage_depth = 2,     
-  area = 0.7,              
+  area = 0.03,              
   temp_C = 0,
   resid_enrich = 0.9 
 )
 ```
 
 ```{r}
-temp_dat <- data.frame(time = seq(0, 365, length.out = 12))
+temp_dat <- data.frame(time = seq(0, 365, length.out = 53))
 
 temp_dat$temp_C <- 10 + 10 * sin((temp_dat$time - 130) / 365 * 2 * pi)
 
 plot(temp_C ~ time, data = temp_dat, type = 'o')
 ```
-Q
 
 Substrates and hydrolysis
 
@@ -112,7 +111,7 @@ Substrates and hydrolysis
 sub_pars <- list(
   subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'),
   xd = 'xd',
-  arrA = c(starch = 3.61e12, Cfat = 3.61e12, CPs = 2.065 * 3.61e12, CPf = 2.065 * 3.61e12, RFd = 3.61e12, xd = 3.61e12),
+  arrA = c(starch = 0.557 * 3.61e12, Cfat = 0.557 * 3.61e12, CPs = 0.557 * 2.065 * 3.61e12, CPf = 0.557 * 2.065 * 3.61e12, RFd = 0.557 * 3.61e12, xd = 0.557 * 3.61e12),
   arrE = c(default = 8.16e4),
   sub_fresh = c(starch = 5.25, Cfat = 27.6, CPs = 21.1 * 0.55, CPf = 21.1 * 0.45, RFd = 25.4, xd = 0),
   sub_init = c(starch = 5.25, Cfat = 27.6, CPs = 21.1 * 0.55, CPf = 21.1 * 0.45, RFd = 25.4, xd = 0)
@@ -143,13 +142,13 @@ micstoich::molmass('SO4-2', 'S') * 0.125
 
 Try to run
 
-Q
 ```{r}
 devtools::load_all()
 system.time(
   neo_out <- abmneo(
     storage = stor_ser,
     365,
+    delta_t = 1,
     inf_pars = inf_pars,
     grp_pars = grp_pars,
     sub_pars = sub_pars,
@@ -162,8 +161,14 @@ system.time(
 
 ```{r}
 plot(slurry_mass ~ time, data = neo_out, type = 'l')
+lines(slurry_mass ~ time, data = mass_series, type = 'l', col = 'red')
+
+plot(slurry_depth ~ time, data = neo_out, type = 'l')
+
+plot(slurry_load ~ time, data = neo_out, type = 'l')
 
 plot(temp_C ~ time, data = neo_out, type = 'l')
+lines(temp_C ~ time, data = temp_dat, col = 'red')
 
 plot(CH4_emis_rate ~ time, data = neo_out, type = 'l')
 

@@ -53,9 +53,9 @@ pack_pars <- function(
   pars <- expand_pars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
   pars <- expand_pars(pars = pars, elnms = pars$subs, parnms = sub_par_nms)
 
-  # Check grp arguments, including order of element names in some pars
+  # Do we need to check grp arguments, including order of element names in some pars?
   # After above block, this should be redundant
-  check_grp_names(pars)
+  # Otherwise see old check_grp_names() code
 
   # Size-variable elements ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # List of names of *all* components, supercomps
@@ -283,35 +283,6 @@ fix_add_pars <- function(pars, add_pars) {
   }
 
   return(pars)
-
-}
-
-
-# NTS: Outdated! Not all these elements are present.
-check_grp_names <- function(pars) {
-
-  if (
-    !all.equal(
-      names(pars$yield), 
-      names(pars$xa_fresh), 
-      names(pars$xa_init), 
-      names(pars$decay_rate),
-      names(pars$ks_coefficient), 
-      names(pars$resid_enrich), 
-      names(pars$qhat_opt), 
-      names(pars$T_opt), 
-      names(pars$T_min), 
-      names(pars$T_max), 
-      names(pars$ki_NH3_min), 
-      names(pars$ki_NH3_max), 
-      names(pars$ki_NH4_min), 
-      names(pars$ki_NH4_max), 
-      names(pars$pH_lwr), 
-      names(pars$upr)
-    )
-  ) {
-    stop('Microbial groups, i.e., element names in `grp_pars`, must match but do not.')
-  }
 
 }
 

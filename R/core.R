@@ -149,7 +149,7 @@ abm_core <- function(
         y, 
 	    resid_mass = pars$resid_mass, 
 	    resid_enrich = pars$resid_enrich,
-	    enrich_names = c(pars$grps, pars$subs),
+	    enrich_names = c(pars$grps, pars$sub_enrich),
 	    ignore_names =  unique(c(pars$gases, '_emis', '_load', '_cum_', '_conv_', 'cum$'))
       )
       y.eff <- y$eff

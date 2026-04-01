@@ -41,7 +41,7 @@ abmneo <- function(
   }
   
   if (!is.null(starting) & inherits(starting, 'data.frame')) {
-    pars <- starting_pars(pars, starting)
+    pars$conc_init[pars$supercomps] <- as.numeric(starting[nrow(starting), paste0(pars$supercomps, '_conc')])
   }
 
   # If startup repetitions are requested, repeat some number of times before returning results

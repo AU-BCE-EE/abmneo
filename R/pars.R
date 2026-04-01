@@ -13,9 +13,13 @@ pack_pars <- function(
   days
 ) {
 
-  # Move extra var_pars into first (var) element, possibly as lists within each data frame element~
+  # Time-variable pars initial processing
   if(!is.null(var_pars) && !is.null(var_pars$var)) {
+    # Move extra var_pars into first (var) element, possibly as lists within each data frame element~
     var_pars <- combine_var_pars(var_pars)
+    # Shift to mid time
+    tt <- var_pars[['var']]$time
+    var_pars[['var']]$time <- c(tt[1], tt[-length(tt)] + diff(tt) / 2)
   }
 
   # Combine pars to make extraction and pass to rates() easier ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -143,6 +143,7 @@ micstoich::molmass('SO4-2', 'S') * 0.125
 
 Try to run
 
+Q
 ```{r}
 devtools::load_all()
 system.time(
@@ -155,7 +156,7 @@ system.time(
     sub_pars = sub_pars,
     chem_pars = chem_pars,
     var_pars = list(var = temp_dat),
-    startup = 0
+    startup = 2
   )
 )
 ```
@@ -171,7 +172,7 @@ plot(slurry_load ~ time, data = neo_out, type = 'l')
 plot(temp_C ~ time, data = neo_out, type = 'l')
 lines(temp_C ~ time, data = temp_dat, col = 'red')
 
-plot(CH4_emis_rate ~ time, data = neo_out, type = 'l')
+plot(CH4_emis_rate ~ time, data = neo_out, type = 'l', ylim = c(0, 3.2))
 
 plot(CH4 ~ time, data = neo_out, type = 'l')
 

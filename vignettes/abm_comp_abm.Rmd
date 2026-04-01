@@ -15,7 +15,7 @@ plot(slurry_mass ~ time, data = mass_series, type = 'o')
 ```
 
 ```{r}
-temp_dat <- data.frame(time = seq(0, 365, length.out = 12))
+temp_dat <- data.frame(time = seq(0, 365, length.out = 53))
 temp_dat$temp_C <- 10 + 10 * sin((temp_dat$time - 130) / 365 * 2 * pi)
 plot(temp_C ~ time, data = temp_dat, type = 'o')
 ```
@@ -53,8 +53,8 @@ grp_pars <- list(grps = c('m0', 'm1', 'm2','m3','m4','m5','sr1'),
                  ki_H2S_min = c(default = 0.08),
                  IC50_low = c(default = 0.20854, sr1 = 0.2772),
                  ki_HAC = c(default = 0.31),
-                 pH_UL = c(default = 12),
-                 pH_LL = c(default = 4))
+                 pH_UL = c(default = 100),
+                 pH_LL = c(default = -100))
 ```
 
 Write mng_pars in order to insert slurry_mass data
@@ -98,7 +98,7 @@ system.time(
     add_pars = list(evap = 0, rain = 0, COD_conv.CH4 = 5.32),
     resp = FALSE,
     pH_inhib_overrule = TRUE,
-    startup = 0
+    startup = 2
   )
 )
 ```
@@ -112,7 +112,7 @@ plot(slurry_load_cum ~ time, data = abm_out, type = 'l')
 
 plot(temp_C ~ time, data = abm_out, type = 'l')
 
-plot(CH4_emis_rate ~ time, data = abm_out, type = 'l')
+plot(CH4_emis_rate ~ time, data = abm_out, type = 'l', ylim = c(0, 3.2))
 
 plot(CH4_emis_cum ~ time, data = abm_out, type = 'l')
 

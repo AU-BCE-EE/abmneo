@@ -12,7 +12,6 @@ abmneo <- function(
     approx_method = 'early',
     fill_method = 'interp',
     par_key = '\\.',
-    rates_calc = 'instant',
     arr_max_temp_K = 313
   ),
   var_pars = list(var = NULL),

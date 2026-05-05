@@ -27,7 +27,7 @@ rates <- function(t, y, parms) {
   #dimnames(sm) <- dimnames(p$mstoich)
 
   # Monod term
-  monod <- sm / (sm + y['slurry_mass'] * p$ksmat)
+  monod <- sm / (sm + y['slurry_mass'] * p$ksmat_t)
   # Force to 1 for non-substrates
   monod[p$mstoich >= 0] <- 1
   # Product across multiple substrates
@@ -63,7 +63,15 @@ rates <- function(t, y, parms) {
   #   * slurry_mass (kg/d as fresh slurry mass)
   #   * CH4 (g/d as CH4-C)
   #   * user-defined solutes other than VFA (as C, N, or S as described in documentation)
+
   ders <- inflow + metab + death + hyferm + resp
+
+  ## Debugging code below
+  #if (y['VFA'] < 0) {
+  #    print(xx <- c(t = t, y = y, der = ders))
+  #    xxx <<- rbind(xxx, xx)
+  #    if (t > 6) browser()
+  #}
 
   return(list(ders, c(CH4_emis_rate = metab[['CH4']], temp_C = p$temp_C, pH = p$pH)))
 

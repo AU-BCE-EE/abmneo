@@ -312,6 +312,9 @@ calc_temp_pars <- function(pars, y) {
   # Microbial substrate utilization rate (vectorized calculation)
   pars$qhat[pars$grps] <- CTM(pars$temp_K, pars$T_opt, pars$T_min, pars$T_max, pars$qhat_opt)
 
+  # Temperature effect on ks values
+  pars$ksmat_t <- pars$ksmat * (0.8157 * exp(-0.063 * pars$temp_C))
+
   # Death rate
   if (pars$temp_C > 40) {
     pars$d_rate <- pars$d_max

@@ -112,7 +112,7 @@ sub_pars <- list(
   subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'),
   sub_enrich = c('starch', 'Cfat', 'CPs', 'RFd'),
   xd = 'xd',
-  arrA = c(starch = 0.557 * 3.61e12, Cfat = 0.1 * 0.557 * 3.61e12, CPs = 0.557 * 2.065 * 3.61e12, CPf = 0.557 * 2.065 * 3.61e12, RFd = 0.557 * 3.61e12, xd = 0.557 * 3.61e12),
+  arrA = c(starch = 0.557 * 5 * 3.61e12, Cfat = 0.1 * 0.557 * 3.61e12, CPs = 0.557 * 2.065 * 3.61e12, CPf = 0.557 * 2.065 * 3.61e12, RFd = 0.557 * 3.61e12, xd = 0.557 * 3.61e12),
   arrE = c(default = 8.16e4),
   sub_fresh = c(starch = 5.25, Cfat = 27.6, CPs = 21.1 * 0.55, CPf = 21.1 * 0.45, RFd = 25.4, xd = 0),
   sub_init = c(starch = 5.25, Cfat = 27.6, CPs = 21.1 * 0.55, CPf = 21.1 * 0.45, RFd = 25.4, xd = 0)
@@ -269,4 +269,39 @@ plot(VFA ~ time, data = neo_out0, type = 'l')
 plot(VFA_conc ~ time, data = neo_out0, type = 'l')
 ```
 
+# Individual substrates for comparison
 
+
+```{r}
+sub_pars_starch <- list(
+  subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'),
+  sub_enrich = c('starch', 'Cfat', 'CPs', 'RFd'),
+  xd = 'xd',
+  arrA = c(starch = 0.557 * 5 * 3.61e12, Cfat = 0.1 * 0.557 * 3.61e12, CPs = 0.557 * 2.065 * 3.61e12, CPf = 0.557 * 2.065 * 3.61e12, RFd = 0.557 * 3.61e12, xd = 0.557 * 3.61e12),
+  arrE = c(default = 8.16e4),
+  sub_fresh = c(starch = 1, Cfat = 0, CPs = 0, CPf = 0, RFd = 0, xd = 0),
+  sub_init = c(starch = 1, Cfat = 0, CPs = 0, CPf = 0, RFd = 1, xd = 0)
+)
+```
+
+```{r}
+neo_out_starch <- abmneo(
+  storage = stor_ser,
+  100,
+  delta_t = 1,
+  inf_pars = inf_pars,
+  grp_pars = grp_pars0,
+  sub_pars = sub_pars_starch,
+  chem_pars = chem_pars,
+  var_pars = list(var = temp_dat),
+  add_pars = list(VFA_fresh = 0, VFA_init = 0),
+  startup = 0
+)
+```
+
+Numeric output
+
+```{r}
+neo_out_starch$sum <- neo_out_starch$starch_conc + neo_out_starch$VFA_conc
+neo_out_starch[1:40, c('time', 'starch_conc', 'VFA_conc', 'sum')]
+```

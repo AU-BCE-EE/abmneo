@@ -234,4 +234,32 @@ plot(VFA ~ time, data = abm_out0, type = 'l')
 plot(VFA_conc ~ time, data = abm_out0, type = 'l')
 ```
 
+# Individual substrates 
 
+## Starch first
+
+```{r}
+man_pars_starch <- list(conc_fresh = list(sulfide = 0.01, urea = 3.17, sulfate = 0.01, TAN = 0.0, starch = 1, 
+                                      VFA = 0, xa_dead = 0, Cfat = 0, CPs = 0, CPf = 0, RFd = 0, iNDF = 11.3, VSd = 0, 
+                                      ash = 0), pH = 7, dens = 1000)
+```
+
+```{r}
+abm_out_starch <- abm(
+  days = 100,
+  man_pars = man_pars_starch,
+  mng_pars = mng_pars, 
+  arrh_pars = arrh_pars, 
+  grp_pars = grp_pars0,
+  add_pars = list(evap = 0, rain = 0, COD_conv.CH4 = 5.32),
+  resp = FALSE,
+  pH_inhib_overrule = TRUE,
+  startup = 0
+)
+```
+
+
+```{r}
+abm_out_starch$sum <- abm_out_starch$starch_conc + abm_out_starch$VFA_conc
+abm_out_starch[1:40, c('time', 'starch_conc', 'VFA_conc', 'sum')]
+```

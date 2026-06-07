@@ -9,7 +9,7 @@ A summary to go with a video for PIGMET meeting June 2026
 The new abmneo package is an alternative implementation of the ABM model that is substantially simpler.
 It came from a ABM branch `simpler1` that I started in summer 2025.
 I moved this work to a new abmneo package in early 2026, and made some other substantial changes.
-At some point in 2026 I started using AI tools for the project, initially CHatGPT then Claude Code, mainly for a second opinion on my ideas and for improving or supporting implementation, checking for errors, but also sorting out some code for the more sophisticated approaches. 
+At some point in 2026 I started using AI tools for the project, initially ChatGPT then Claude Code, mainly for a second opinion on my ideas and for improving or supporting implementation, checking for errors, but also sorting out some code for the more sophisticated approaches. 
 I'm pleased that the features I like the most (like the vectorized approach in `rates()`, the super simple inhibition approach, and the handling of substrates) are from me.
 But Claude was essential for sorting out other parts--the matrix code for the `ks` constants is one example.
 This summary explains some of the differences between abmneo and ABM.

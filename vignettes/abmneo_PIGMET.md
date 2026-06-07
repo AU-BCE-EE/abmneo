@@ -1,18 +1,17 @@
 # abmneo summary for PIGMET
 
-By Sasha D. Hafner
+Sasha D. Hafner
 
 A summary to go with a video for PIGMET meeting June 2026
 
 # Overview
 
-The ABM package grew out of a project with the two of us and Sven Sommer and Søren O. Petersen that must have originally started more than 10 years ago.
-Since the first release that I probably mostly wrote, both Frederik and I have tweaked it but also added a lot of functionality. 
-Complexity and size generally increased.
 The new abmneo package is an alternative implementation of the ABM model that is substantially simpler.
-It came from a ABM branch `simpler1` started in summer 2025.
-I moved this work to a new abmneo package in early 2026 (first commit 18 Feb 2026), and further simplified.
-At some point in 2026 I started using AI tools for the project, particularly Claude Code, but mainly for improving implementation of my ideas, checking for errors, or sorting out code for some sophisticated approaches. 
+It came from a ABM branch `simpler1` that I started in summer 2025.
+I moved this work to a new abmneo package in early 2026, and made some other substantial changes.
+At some point in 2026 I started using AI tools for the project, initially CHatGPT then Claude Code, mainly for a second opinion on my ideas and for improving or supporting implementation, checking for errors, but also sorting out some code for the more sophisticated approaches. 
+I'm pleased that the features I like the most (like the vectorized approach in `rates()`, the super simple inhibition approach, and the handling of substrates) are from me.
+But Claude was essential for sorting out other parts--the matrix code for the `ks` constants is one example.
 This summary explains some of the differences between abmneo and ABM.
 
 # Motivation and progress
@@ -32,10 +31,10 @@ Only some of these are covered in detail in this summary.
 Here is what I was able to do:
 
 1. size of the codebase is half as large and the `rates()` function in particular is shorter and clearer,
-2. model and codebase are both much simpler,
-3. eliminated most hard-coding; even microbial groups can have any metabolic pathways and any names,
+2. model and codebase are both much simpler and optional processes are shorter and more efficient,
+3. most hard-coding is gone; even microbial groups can have any metabolic pathways and any names,
 4. deSolve is the only dependency,
-5. COD balance is built in
+5. COD balance is built in,
 6. Rcpp is no longer used, but
 7. the `abmneo::abmneo()` function is about as fast as `ABM::abm()` (faster in some cases)
 
@@ -112,7 +111,7 @@ In ABM, several inputs variables, like temperature and pH, can vary smoothly ove
 Internally, this is done by creating interpolation functions that are then called from within the `rates()` function (or `rates_cpp()`)).
 The approach is available to only some variables, and relies on hard-coding.
 In general, this smooth approach slows down model runs, because more functions need to be called every time `rates()` is called.
-Rcpp helps with this issue a lot!
+However, Rcpp helps with this issue a lot!
 
 In abmneo, time-variable inputs change in steps.
 The user decides on the temporal resolution.
@@ -121,7 +120,17 @@ And it is possible to change more input parameters--almost any input can vary ov
 
 Frederik had to pressure me a bit to include inhibition and respiration, mainly because they add complexity.
 But now they are in and programmed efficiently I think (especially inhibition) without special cases.
+There is no farm-level component.
 I am sure there are other ABM processes not included; Frederik can list them.
 
 # Comparison
-Take a look at the two `comp` vignettes.
+Take a look at the two `comp` vignettes: `abm_comp_abm.pdf` and `abm_comp_neo.pdf`.
+These apply the same scenario in the two packages, so demonstrate some differences in inputs and similarity (plus differences) in output.
+
+# Next steps
+We need to decide how to proceed before ABM and abmneo converge more!
+I am sure that abmneo has advantages but is it practical to try to revise ABM code to match abmneo?
+Or should we release it as an alternative and try to use it for new work? 
+Are there missing components that must be added before we do anything?
+And are we really better off leaving Rcpp (C++) behind?
+I think so, but these are questions we haven't really sorted out yet!

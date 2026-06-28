@@ -1,0 +1,1227 @@
+---
+title: 'Getting started with the `abmneo()` function'
+output: pdf_document
+author: Sasha D. Hafner
+date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
+---
+
+# abmneo
+The abmneo package, with a single `abmneo()` function, is an implementation of the ABM model (Dalby et al., 2021).
+The ABM model is already implemented in the [ABM package](https://github.com/AU-BCE-EE/ABM), but the package codebase is relatively large and complex. 
+The new package was developed as a simpler alternative.
+Most of that simplicity is in the code; the user experience is broadly similar.
+This vignette demonstrates use of the `abmneo()` model function. 
+
+# What's different?
+The main differences between abmneo and ABM are:
+
+1. complexity
+2. handling of time-variable inputs,
+3. hard-coded behavior, special cases, and flexibility,
+4. verification,
+5. size of codebase, and
+6. use of Rcpp.
+
+Not all of these are discussed in this document.
+In abmneo, time-variable inputs (2) are treated using steps insteady of interpolation, as in ABM.
+This approach ostensibly reduces the accuracy of the model as a tradeoff for simpler code and faster evaluation.
+But in practice the effects seem negligible beyond a visual effect in plots.
+
+Hard-coded behavior and special cases in ABM includes the microbial community, with fixed symbols for methanogen and sulfate reducer names and designated code for each. 
+In contrast, the microbial community in abmneo is defined completely by input parameters, and any stoichiometry can be specified.
+Internally, shorter vectorized or matrix operations do the work for all groups without special cases.
+Substrates and inhibition are two other areas where these types of major changes were made.
+
+Rcpp was incorporated into ABM for speed, but the cost is code complication and debugging difficulty, as well as increased requirements for installation.
+So it was dropped from abmneo, with any speed penalty offset by other simplifications.
+In the end abmneo is not obviously slower than ABM; it is even slightly faster in some cases.
+
+# Prep
+
+```{r}
+devtools::load_all()
+```
+
+# Input parameters
+In this first release, abmneo does not include any default parameter sets.
+Instead, this example presents a set close to the latest ABM set.
+
+Here are the `abmneo()` arguments:
+
+```{r, eval=FALSE}
+abmneo <- function(
+  storage,
+  days = 365,
+  delta_t = 1,
+  times = NULL,
+  inf_pars = NULL,
+  grp_pars = NULL,
+  sub_pars = NULL,
+  chem_pars = list(COD_conv = c(CH4 = 5.32), gases = c('CH4', 'CO2', 'H2S')),
+  ctrl_pars = list(
+    approx_method = 'early',
+    fill_method = 'interp',
+    par_key = '\\.',
+    arr_max_temp_K = 313
+  ),
+  var_pars = list(var = NULL),
+  add_pars = NULL,
+  pars = NULL,
+  startup = 0,
+  starting = NULL,
+  warn = TRUE
+) 
+```
+
+We'll come back to the `storage` argument later.
+The `days` (total simulation time), `delta_t` (time step *in output*), and `times` (specific times to be included in output) are similar in ABM and straightforward.
+Let's work on the `*_pars` arguments.
+
+`inf_pars` has inflow properties.
+VFA is a hard-coded intermediate, and we need to set fresh and initial concentrations (g/kg) along with pH and density.
+
+```{r}
+inf_ref <- list(VFA_fresh = 2, VFA_init = 2, pH = 7, dens = 1000)
+```
+
+`grp_pars` defines the microbial community. 
+The argument should have these elements:
+
+* `grps`: group names
+* `yield`: biomass yields on COD basis
+* `xa_fresh`: active biomass concentrations in fresh influent
+* `xa_init`: initial concentrations
+* `d_max`: maximum death/decay rate (1/d)
+* `qhat_opt`: maximum substrate untilization rate (g COD / g COD - d)
+* `T_opt`: temperature of maximum activity (deg. C)
+* `T_min`: minimum temperature with any activity (deg. C)
+* `T_max`: maximum temperature with any activity (deg. C)
+* `ksmat`: matrix of Monod parameters
+* `mstoich`: matrix of stoichiometry
+
+There is a lot of flexibility here, but we'll include the groups used in the latest ABM parameter set.
+Here is the stoichiometry matrix.
+
+```{r}
+mstoich <- matrix(
+  c(
+    -1, -1, -1, -1, -1, -1, -1,
+     0,  0,  0,  0,  0,  0, -0.50156,
+     1,  1,  1,  1,  1,  1,  0
+  ),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'SO4', 'CH4'),
+    c('m0', 'm1', 'm2', 'm3', 'm4', 'm5', 'sr1')
+  )
+)
+```
+
+It is easier to understand by looking at the matrix with row and column names:
+
+```{r}
+mstoich
+```
+
+Columns are groups, rows are substrates or products.
+The values of 1 are pretty obvious--they show that each methanogen group produces 1 g of methane (COD basis!) per g of VFA consumed.
+This is a result of COD conservation.
+Compounds without a COD are expressed as mass N (if present), S (if present), or otherwise total compound mass.
+Here then `'SO4-2'` is as mass of S.
+So where did the `0.50` come from?
+The new [micstoich package]()
+
+```{r, eval = FALSE}
+library(micstoich)
+rxn <- micstoich('CH3COOH', acceptor = 'SO4-2', product = 'H2S')
+rxn
+molmass('SO4-2', 'S') * rxn['SO4-2'] / (calcCOD('CH3COOH', per = 'mol') * rxn['CH3COOH'])
+```
+
+This gives:
+
+```{r, eval = FALSE}
+> library(micstoich)
+> rxn <- micstoich('CH3COOH', acceptor = 'SO4-2', product = 'H2S')
+> rxn
+CH3COOH   SO4-2      H+     H2S     HS-     H2O     CO2 
+-0.1250 -0.1250 -0.1875  0.0625  0.0625  0.2500  0.2500 
+> molmass('SO4-2', 'S') * rxn['SO4-2'] / (calcCOD('CH3COOH', per = 'mol') * rxn['CH3COOH'])
+    SO4-2 
+0.5015625 
+```
+
+
+# For ksmat, SO4 value is from mic.pars2.0 in ABM repo
+ksmat <- matrix(
+  c(1.15, 1.15, 1.15, 1.15, 1.15, 1.15, 0.46,
+      NA,   NA,   NA,   NA,   NA,   NA, 0.00694),
+  nrow = 2,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'SO4'),
+    c('m0', 'm1', 'm2', 'm3', 'm4', 'm5', 'sr1')
+  )
+)
+
+ksmat
+```
+
+```{r}
+grp_pars <- list(
+  grps = c('m0', 'm1', 'm2','m3','m4','m5','sr1'),
+  yield = c(default = 0.05, sr1 = 0.065),
+  xa_fresh = c(m0 = 0.06, m1 = 0.06, m2 = 0.06, m3 = 0.06, m4 = 0.06, m5 = 0.06, sr1 = 0.06),
+  xa_init = c(default = 0.1),
+  d_max = c(default = 0.02),
+  qhat_opt =  c(m0 = 0.46289, m1 = 0.74568, m2 = 0.9006605, m3 = 2.79672, m4 = 4.66012, m5 = 7.4601, sr1 = 0),
+  T_opt = c(m0 = 18, m1 = 18, m2 = 28, m3 = 36, m4 = 43.75, m5 = 55, sr1 = 43.75),
+  T_min = c(m0 = 0, m1 = 9.67, m2 = 9.67, m3 = 15, m4 = 26.25, m5 = 30, sr1 = 0),
+  T_max = c(m0 = 25, m1 = 25, m2 = 38, m3 = 45, m4 = 51.25, m5 = 60, sr1 = 51.25),
+  ksmat = ksmat,
+  mstoich = mstoich
+)
+
+
+
+First substrate parameters, a new argument compared to `ABM()`.
+We could have any number with any names but will just use the old `VSd` from ABM here.
+
+```{r}
+sub_ref <- list(
+  subs = c('VSd'),
+  T_opt_hyd = c(VSd = 60),
+  T_min_hyd = c(VSd = 0),
+  T_max_hyd = c(VSd = 90),
+  hydrol_opt = c(VSd = 0.1),
+  sub_fresh = c(VSd = 30),
+  sub_init = c(VSd = 30)
+)
+```
+
+Microbial parameters are similar to other ABM versions.
+But now we have microbial stoichiometry instead of the "special cases" that complicate the code.
+The ks par is now in a matrix, which could have more than one row when there are multiple substrates in a reaction (e.g., with sulfate reduction).
+
+```{r}
+mstoich_ref <- matrix(
+  c(-1, -1, -1, 1, 1, 1),
+  nrow = 2,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'CH4'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+mstoich_ref
+
+ksmat_ref <- matrix(
+  c(0.5, 0.5, 0.5),
+  nrow = 1,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+ksmat_ref
+```
+
+With a COD basis for substrates and CH4 internally, stoichiometric coefficients are usually simple, as above.
+These matrices are put into `grp_pars` along with recognizable elements.
+Note that CTM is used for all temperature responses.
+
+```{r}
+grp_ref <- list(
+  grps = c('m0', 'm1', 'm2'),
+  yield = c(default = 0.05),
+  xa_fresh = c(default = 0.05),
+  xa_init = c(default = 0.05),
+  dd_rate = c(default = 0.02),
+  qhat_opt = c(m0 = 0.5, m1 = 1, m2 = 1),
+  T_opt = c(m0 = 10, m1 = 18, m2 = 28),
+  T_min = c(m0 = 0, m1 = 5, m2 = 10),
+  T_max = c(m0 = 25, m1 = 25, m2 = 38),
+  ksmat = ksmat_ref,
+  mstoich = mstoich_ref
+)
+```
+
+The `dd_rate` parameter is for "death and decay".
+
+These last two parameter lists here are similar to other versions.
+VFA is hard-coded as an intermediate.
+The name `VFA` is used internally and in output.
+No name is set here in the elements.
+This `inf_pars` holds what is left of the original `man_pars`.
+The name is for *inflow*, meant to be more generic than manure.
+
+```{r}
+inf_ref <- list(VFA_fresh = 2, VFA_init = 2, pH = 7, dens = 1000)
+```
+
+The chem_pars list now specifies which components are emitted as gases and which are otherwise solutes.
+Gases have no association with the slurry like solutes or substrates do--their production is taken as emission and cumulative values are tracked.
+
+```{r}
+chem_ref <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4'))
+```
+
+Conversion factor from: `calc_COD('CH4', per = 'mol') / mol_mass('C')` from the `mic-stoich` repo.
+It is g COD / g CH4-C.
+
+
+# Slurry mass series versus regular inputs
+When it comes to how slurry level and the fill/empty schedule is entered, we now distinguish between *regular* inputs (as in repeating/consistent, as in earlier versions of `abmneo()`) and *series* inputs, where the schedule is inferred from time series data on slurry mass (what was called time-variable in earlier versions of `abmneo()`).
+These are specified in the `storage` argument.
+The name indicates that this argument describes the storage structure.
+The slurry mass data frame for storage only has time and slurry_mass.
+It is no longer a part of `var_pars`--the two are now independent (at least externally).
+
+We'll work on a single pig scale here with some normal outdoor tank levels from a spreadsheet calculator from Peter Kai.
+
+```{r}
+mass_series <- read.csv('level_pig_od_ref.csv') 
+plot(slurry_mass ~ time, data = mass_series, type = 'o')
+
+stor_ser_ref <- list(
+  type = 'series',
+  dat = mass_series,
+  storage_depth = 2,     
+  area = 0.7,              
+  temp_C = 18,
+  resid_enrich = 0.2 
+)
+```
+
+Unlike `ABM()`, no `var_pars` is needed.
+And the fixed inputs like `slurry_prod_rate` that were ignored in these cases with `ABM()` are no longer expected.
+(But the `storage` argument expects these when `type = 'regular'`.)
+
+```{r}
+outpodr <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref
+)
+devtools::load_all()
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodr, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpodr, type = 'l')
+plot(CH4 ~ time, data = outpodr, type = 'l')
+matplot(outpodr$time, outpodr[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA ~ time, data = outpodr, type = 'l')
+plot(VFA_conc ~ time, data = outpodr, type = 'l')
+plot(VSd_conc ~ time, data = outpodr, type = 'l')
+plot(COD_load ~ time, data = outpodr, type = 'l')
+```
+
+With regular inputs, `slurry_prod_rate` etc. are now explicitly given.
+This is also for one pig, with a 28 d batch period.
+
+```{r}
+stor_reg_ref <- list(
+  type = 'regular',
+  slurry_prod_rate = 5, 
+  storage_depth = 2,     
+  area = 0.65,              
+  temp_C = 20,
+  resid_enrich = 0.2,
+  slurry_mass = 7,     
+  resid_depth = 0.01,      
+  empty_int = 28,          
+  wash_water = 0,            
+  wash_int = 90,
+  rest_d = 1
+)
+```
+
+```{r}
+outpinr <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref
+)
+```
+
+(Will get an error when starting with 0 slurry_mass)
+
+```{r}
+plot(slurry_mass ~ time, data = outpinr, type = 'l', ylim = c(0, 150))
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+plot(CH4 ~ time, data = outpinr, type = 'l')
+matplot(outpinr$time, outpinr[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA ~ time, data = outpinr, type = 'l')
+plot(VFA_conc ~ time, data = outpinr, type = 'l')
+plot(VSd_conc ~ time, data = outpinr, type = 'l')
+plot(COD_load ~ time, data = outpinr, type = 'l')
+```
+
+# Time-variable inputs
+Time-variable inputs (now separate from slurry mass series data) can be combined with both of the above examples.
+Let's use it in the outdoor storage data (series type `storage`).
+
+```{r}
+temp_dat <- data.frame(time = seq(0, 365, length.out = 12))
+temp_dat$temp_C <- 10 + 10 * sin((temp_dat$time - 100) / 365 * 2 * pi)
+plot(temp_C ~ time, data = temp_dat, type = 'o')
+```
+
+```{r}
+devtools::load_all()
+outpodv <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat)
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodv, type = 'l')
+plot(temp_C ~ time, data = outpodv, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpodr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpodv, type = 'l', col = 'blue')
+plot(CH4 ~ time, data = outpodr, type = 'l')
+lines(CH4 ~ time, data = outpodv, type = 'l', col = 'blue')
+matplot(outpodv$time, outpodv[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA_conc ~ time, data = outpodv, type = 'l')
+plot(VSd_conc ~ time, data = outpodv, type = 'l')
+```
+
+Or regular inputs.
+
+```{r}
+outpinv <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat)
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpinv, type = 'l')
+plot(temp_C ~ time, data = outpinv, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinv, type = 'l', col = 'blue')
+plot(CH4 ~ time, data = outpinr, type = 'l')
+lines(CH4 ~ time, data = outpinv, type = 'l', col = 'blue')
+matplot(outpinv$time, outpinv[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA_conc ~ time, data = outpinv, type = 'l')
+plot(VSd_conc ~ time, data = outpinv, type = 'l')
+```
+
+Note the "steps" in the time-variable inputs.
+There is no longer active interpolation.
+This was a deliberate change aimed at simplification of the code and an increase in flexibility (no special cases, i.e., make interpolation functions for x and y inputs, and almost any inputs can vary over time now).
+There is almost certainly a speed improvement.
+Users can go for a finer resolution in the input, but there will be a (small?) speed penalty.
+
+We might recommend that output resolution should match input resolution when inputs vary over time.
+That can be done using `times`.
+
+Q
+```{r}
+devtools::load_all()
+outpinvt <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  times = temp_dat$time,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat)
+)
+```
+
+With this approach, instantaneous emission rate is not very meaningful.
+The purple line makes more sense.
+
+```{r}
+plot(slurry_mass ~ time, data = outpinvt, type = 'o')
+plot(temp_C ~ time, data = outpinvt, type = 'o')
+plot(temp_C ~ time, data = outpinvt, type = 's')
+
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l', col = 'gray70')
+lines(CH4_emis_rate ~ time, data = outpinv, type = 'l', col = 'blue')
+lines(CH4_emis_rate ~ time, data = outpinvt, type = 'o', col = 'red')
+lines(CH4_emis_rate_ave ~ time, data = outpinvt, type = 'S', col = 'purple', lwd = 2)
+
+plot(CH4 ~ time, data = outpinr, type = 'l')
+lines(CH4 ~ time, data = outpinvt, type = 'l', col = 'blue')
+matplot(outpinvt$time, outpinvt[, nn <- c('m0','m1','m2')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VFA_conc ~ time, data = outpinvt, type = 'l')
+plot(VSd_conc ~ time, data = outpinvt, type = 'l')
+```
+
+
+
+# Flexible substrates
+
+Above only a single particulate substrate was used.
+But any substrates, with arbitrary names and stoichiometry can be defined.
+
+```{r}
+sub_smf <- list(
+  subs = c('slow', 'mid', 'fast'),
+  T_opt_hyd = c(default = 60),
+  T_min_hyd = c(default = 0),
+  T_max_hyd = c(default = 90),
+  hydrol_opt = c(slow = 0.01, mid = 0.1, fast = 1),
+  sub_fresh = c(slow = 10, mid = 10, fast = 10),
+  sub_init = c(slow = 10, mid = 10, fast = 10)
+)
+```
+
+```{r}
+outpodf <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_smf,
+  chem_pars = chem_ref
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodf, type = 'l')
+plot(slow_conc ~ time, data = outpodf, type = 'l', ylim = c(0, 10))
+lines(mid_conc ~ time, data = outpodf, col = 'blue')
+lines(fast_conc ~ time, data = outpodf, col = 'red')
+```
+
+This is the simple way to specify substrates.
+When entered in this way, there is no stoichiometry *per se*, but each g substrate COD produces 1 g VFA intermediate.
+The alternative is to define stoichiometry.
+That is described below.
+
+# Sulfate reduction and other metabolic pathways
+The microbial metabolism code (whatever happens after VFA intermediate is formed) now used is completely flexible with respect to reactants and products.
+Sulfate reduction is not hard-coded but can easily and very explicitly be specified with the new approach.
+We need the appropriate stoichiometry.
+Masses/coefficients are specified as:
+
+1. COD mass, or if COD = 0, then
+2. N mass, or if N = 0, then
+3. C mass, or if C = 0, then
+4. S mass, or if S = 0, then
+5. total mass.
+
+So for SO4-2, we want the the mass of S divided by the COD of acetate, i.e., 32 / 64 = 0.5.
+(We might think about flexibility in how stoichiometry is defined, e.g., allow user to input moles, but it is probably better to fix it.)
+
+```{r}
+mstoich_sr <- matrix(
+  c(-1, -1, -1, -1,
+     0,  0,  0, -0.5,
+     1,  1,  1,  0),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'SO4', 'CH4'),
+    c('m0', 'm1', 'm2', 'sr1')
+  )
+)
+
+mstoich_sr
+
+ksmat_sr <- matrix(
+  c(0.5, 0.5, 0.5, 0.5,
+    NA,   NA,  NA, 0.5),
+  nrow = 2,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'SO4'),
+    c('m0', 'm1', 'm2',  'sr1')
+  )
+)
+
+ksmat_sr
+```
+
+Put these in a grp_pars list.
+
+```{r}
+grp_sr <- list(
+  grps = c('m0', 'm1', 'm2', 'sr1'),
+  yield = c(default = 0.05),
+  xa_fresh = c(default = 0.05),
+  xa_init = c(default = 0.05),
+  dd_rate = c(default = 0.02),
+  qhat_opt = c(m0 = 1, m1 = 1, m2 = 2, sr1 = 2),
+  T_opt = c(m0 = 18, m1 = 18, m2 = 28, sr1 = 25),
+  T_min = c(m0 = 0, m1 = 6.41, m2 = 6.41, sr1 = 0),
+  T_max = c(m0 = 25, m1 = 25, m2 = 38, sr1 = 40),
+  ksmat = ksmat_sr,
+  mstoich = mstoich_sr
+)
+```
+
+Sulfate needs to be added as a component.
+
+```{r}
+inf_sr <- list(VFA_fresh = 2, 
+		  VFA_init = 2,
+		  comps = c('SO4'),
+                  comp_fresh = c(SO4 = 10), 
+                  comp_init = c(SO4 = 10), 
+                  pH = 7, 
+		  dens = 1000)
+```
+
+Because it is a solute, we don't need to change the `chem_pars` contents (we would if it were a gas).
+
+```{r}
+outpodsr <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_sr,
+  grp_pars = grp_sr,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodsr, type = 'l')
+matplot(outpodsr$time, outpodsr[, nn <- c('m0','m1','m2', 'sr1')], col = 'black', lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, lty = 1:length(nn))
+plot(VSd_conc ~ time, data = outpodsr, type = 'l')
+plot(VFA_conc ~ time, data = outpodsr, type = 'l')
+plot(SO4_conc ~ time, data = outpodsr, type = 'l')
+```
+
+Notice that the sulfate reduction reaction is not complete, because the products are missing.
+Neither is methanogenesis, for that matter.
+Additional arbitrary chemical products can be added easily (and would be included in default parameter sets presumably).
+
+Let's add H2S and CO2.
+The micstoich package can help sort out stoichiometry easily.
+
+```{r}
+library(micstoich)
+r1 <- micstoich(donor = 'CH3COOH', acceptor = 'SO4-2', product = 'H2S')
+r1
+```
+
+But these are molar, and we need COD etc. based coefficients.
+We need the coefficient on CO2 in g C, and g S on H2S and SO4.
+
+First, combine H2S and HS- (see <https://github.com/AU-BCE-EE/micstoich/issues/2>).
+
+```{r}
+r1['H2S'] <- r1['H2S'] + r1['HS-']
+r1 <- r1[names(r1) != 'HS-']
+r1
+```
+
+```{r}
+r1mc <- r1
+for (i in seq_along(r1)) {
+  mc <- micstoich:::massconv(names(r1)[i])
+  r1mc[i] <- mc * r1[i]
+}
+r1mc
+```
+
+Let's check some of them (I don't trust them yet).
+
+```{r}
+calcCOD('SO4-2')
+molmass('S')
+0.1250 * 32.1
+```
+
+OK.
+
+```{r}
+calcCOD('CH3COOH') * 0.125
+```
+
+OK.
+
+Now CO2.
+
+```{r}
+0.25 * 12
+```
+
+OK.
+
+But note that SO4-2 and H2S have different bases!
+
+```{r}
+calcCOD('H2S')
+```
+
+We need to discuss this issue.
+
+
+Then convert to 1 g VFA COD basis.
+
+```{r}
+r1mc / -r1mc[1]
+```
+
+```{r}
+mstoich_src <- matrix(
+  c(-1,    -1,    -1,     -1,
+     0,     0,     0,     -0.5016,
+     0.187, 0.187, 0.187,  0.3753,
+     0,     0,     0,      0.25,
+     1,     1,     1,      0),
+  nrow = 5,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'SO4', 'CO2', 'H2S', 'CH4'),
+    c('m0', 'm1', 'm2', 'sr1')
+  )
+)
+
+mstoich_src
+```
+
+We also need to add these new components:
+
+```{r}
+inf_src <- list(VFA_fresh = 2, 
+		  VFA_init = 2,
+		  comps = c('SO4', 'H2S', 'CO2'),
+                  comp_fresh = c(SO4 = 10, H2S = 0, CO2 = 0), 
+                  comp_init = c(SO4 = 10, H2S = 0, CO2 = 0), 
+                  pH = 7, 
+		  dens = 1000)
+```
+
+```{r}
+chem_src <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4', 'CO2', 'H2S'))
+```
+
+Let's try to use the old `add_pars` function instead of creating a new grp_pars list.
+We'll use that for the gases too.
+
+```{r}
+devtools::load_all()
+outpodsrc <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_src,
+  grp_pars = grp_sr,
+  sub_pars = sub_ref,
+  chem_pars = chem_src,
+  add_pars = list(mstoich = mstoich_src)
+)
+```
+
+Notice that the COD balance is off now. 
+SO4-2 consumes it.
+
+(Also note that adding gases CO2 and H2S in add_pars didn't work--look into this.)
+
+Remember that all this could be added to default parameter sets!
+
+```{r}
+plot(CO2 ~ time, data = outpodsrc, type = 'l', col = 'blue')
+lines(CH4 ~ time, data = outpodsrc, type = 'l')
+lines(H2S ~ time, data = outpodsrc, type = 'l', col = 'orange')
+plot(SO4_conc ~ time, data = outpodsrc, type = 'l', ylim = c(0, 30))
+lines(VFA_conc ~ time, data = outpodsrc, col = 'blue')
+lines(VSd_conc ~ time, data = outpodsrc, col = 'red')
+matplot(outpodsrc$time, outpodsrc[, nn <- c('m0', 'm1', 'm2', 'sr1')], col = cc <- c('red', 'gray', 'blue', 'orange'), lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+```
+
+Repeat without any sulfate for sulfate reducers.
+
+```{r}
+devtools::load_all()
+outpodsrn <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_src,
+  grp_pars = grp_sr,
+  sub_pars = sub_ref,
+  chem_pars = chem_src,
+  add_pars = list(mstoich = mstoich_src, comp_fresh.SO4 = 0, comp_init.SO4 = 0)
+)
+```
+
+```{r}
+plot(CO2 ~ time, data = outpodsrn, type = 'l', col = 'blue')
+lines(CH4 ~ time, data = outpodsrn, type = 'l', lty = 2)
+lines(H2S ~ time, data = outpodsrn, type = 'l', col = 'orange')
+plot(SO4_conc ~ time, data = outpodsrn, type = 'l', ylim = c(0, 30))
+lines(VFA_conc ~ time, data = outpodsrn, col = 'blue')
+lines(VSd_conc ~ time, data = outpodsrn, col = 'red')
+matplot(outpodsrn$time, outpodsrn[, nn <- c('m0', 'm1', 'm2', 'sr1')], col = cc <- c('red', 'gray', 'blue', 'orange'), lty = 1:length(nn), type = 'l')
+legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+```
+
+Remember all these additions are through input changes only, and the `rates()` code is simple.
+
+# Time-variable inputs part 2
+Almost any model parameter can now be varied over time through var_pars.
+If it is a single value without named elements for any time, it can be combined in the var data frame.
+This excludes anything having to do with emptying, loading rate, or slurry level--if any of those need to vary non-regularly over time, the storage argument must be used!
+So, that leaves probably only pH and temperature.
+For example, we could simulate acidification with this.
+
+```{r}
+tp_dat <- data.frame(
+  time = c(0, 30, 100, 200, 250), 
+  temp_C = c(10, 20, 25, 15, 10),
+  pH = c(7, 6.5, 5, 5, 5)
+)
+```
+
+```{r}
+devtools::load_all()
+outpodvtp <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = tp_dat)
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodvtp, type = 'l')
+plot(temp_C ~ time, data = outpodvtp, type = 'l')
+plot(pH ~ time, data = outpodvtp, type = 'l')
+plot(CH4 ~ time, data = outpodvtp, type = 'l')
+```
+
+For other inputs that are set in named elements, make a separate data frame for each other argument with column names that give the element names.
+This gives us a lot of flexibility.
+For example, we could simulate inhibition here.
+
+```{r}
+qq <- cbind(time = c(0, 30, 100), 
+                 m0 = 0.5, m1 = 1, m2 = 1)
+qq[, -1] <- qq[, -1] * c(1, 0.2, 0.1)
+qhat_dat <- data.frame(qq)
+```
+Then combine them all in a list, using the parameter element names for element names.
+
+```{r}
+var_inhib <- list(var = tp_dat, qhat_opt = qhat_dat)
+```
+
+Note that times do not need to be the same!
+The data frames are merged and missing values are interpolated or filled forward (we need to align the language for this and mid etc.)
+
+
+```{r}
+devtools::load_all()
+outpodvib <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = var_inhib
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpodvib, type = 'l')
+plot(temp_C ~ time, data = outpodvib, type = 'l')
+plot(pH ~ time, data = outpodvib, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpodvtp, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpodvib, col = 'red')
+```
+
+That is a lot of flexibility, I think.
+
+# The startup argument
+
+Works as before.
+
+
+```{r}
+devtools::load_all()
+outpins <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  startup = 3
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpinr, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpins, col = 'orange')
+matplot(outpins$time, outpins[, nn <- c('m0_conc','m1_conc','m2_conc')], col = 'black', lty = 1:length(nn), type = 'l')
+matplot(outpinr$time, outpinr[, nn <- c('m0_conc','m1_conc','m2_conc')], col = 'black', lty = 1:length(nn), type = 'l')
+```
+
+# Inhibition
+
+Now we have inhibition.
+I went for the IC0/IC100 approach.
+And I thought of a clever way to have inhibition at both low and high inhibitor levels (needed for at least pH) that fit into this approach very well.
+
+```{r}
+ic0 <- matrix(
+  c(8, 8, 8,
+    8, 8, 8,
+    6, 6, 6),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA_conc', 'pH', 'pH'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+ic100 <- matrix(
+  c(15, 15, 15,
+    9, 9, 9,
+    5, 5, 5),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA_conc', 'pH', 'pH'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+
+ic0
+ic100
+```
+
+Notice how pH is entered twice and reversed?
+These inhibition parameter matrices go into the `grp_pars` list.
+
+```{r}
+grp_inhib <- list(
+  grps = c('m0', 'm1', 'm2'),
+  yield = c(default = 0.05),
+  xa_fresh = c(default = 0.05),
+  xa_init = c(default = 0.05),
+  dd_rate = c(default = 0.02),
+  qhat_opt = c(m0 = 0.5, m1 = 1, m2 = 1),
+  T_opt = c(m0 = 10, m1 = 18, m2 = 28),
+  T_min = c(m0 = 0, m1 = 5, m2 = 10),
+  T_max = c(m0 = 25, m1 = 25, m2 = 38),
+  ksmat = ksmat_ref,
+  mstoich = mstoich_ref,
+  ic0 = ic0,
+  ic100 = ic100
+)
+```
+
+Here are some pH data for inhibition
+
+```{r}
+pH_dat <- data.frame(
+  time = c(0, 30, 100, 200, 250), 
+  pH = c(7, 6.5, 5, 5, 5)
+)
+```
+
+Below we'll run with and without inhibition, and time.
+I worked hard to make the slowdown as small as possible (and Claude Code had some good suggestions).
+
+With inhibition.
+```{r}
+devtools::load_all()
+system.time(
+outpinin <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_inhib,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = pH_dat)
+)
+)
+```
+
+Without
+```{r}
+system.time(
+outpinni <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = pH_dat)
+)
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = outpinin, type = 'l')
+plot(pH ~ time, data = outpinin, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinni, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinin, col = 'red')
+plot(VFA_conc ~ time, data = outpinin, type = 'l')
+```
+
+# NEW Respiration
+
+```{r}
+stor_reg_rsp <- list(
+  type = 'regular',
+  slurry_prod_rate = 5, 
+  storage_depth = 2,     
+  area = 0.65,              
+  temp_C = 20,
+  resid_enrich = 0.2,
+  slurry_mass = 7,     
+  resid_depth = 0.01,      
+  empty_int = 28,          
+  wash_water = 0,            
+  wash_int = 90,
+  rest_d = 1,
+  O2_flux = 2
+)
+```
+
+```{r}
+devtools::load_all()
+outpinrsp <- abmneo(
+  storage = stor_reg_rsp,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref
+)
+```
+
+```{r}
+plot(slurry_depth ~ time, data = outpinr, type = 'l')
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinrsp, col = 'red')
+plot(CH4 ~ time, data = outpinr, type = 'l')
+plot(VFA_conc ~ time, data = outpinr, type = 'l')
+lines(VFA_conc ~ time, data = outpinrsp, col = 'red')
+```
+
+To add CO2 we need to explicitly define an `rstoich` vector and of course have CO2 as a component.
+
+```{r}
+inf_rspc <- list(VFA_fresh = 2, 
+		  VFA_init = 2,
+		  comps = c('CO2'),
+                  comp_fresh = c(CO2 = 0), 
+                  comp_init = c(CO2 = 0), 
+                  pH = 7, 
+		  dens = 1000)
+```
+
+The `rstoich` vector does not naturally fit well in any particular input!
+It is stuck with O2 flux in `storage`. 
+
+```{r}
+stor_reg_rspc <- list(
+  type = 'regular',
+  slurry_prod_rate = 5, 
+  storage_depth = 2,     
+  area = 0.65,              
+  temp_C = 20,
+  resid_enrich = 0.2,
+  slurry_mass = 7,     
+  resid_depth = 0.01,      
+  empty_int = 28,          
+  wash_water = 0,            
+  wash_int = 90,
+  rest_d = 1,
+  O2_flux = 2,
+  rstoich = c(VFA = -1, CO2 = 0.375)
+)
+```
+
+And CO2 is a gas.
+
+
+```{r}
+chem_rspc <- list(COD_conv = c(CH4 = 5.32), gases = c('CH4', 'CO2'))
+```
+
+And if we are going to track CO2, we'd better include the methanogensis contribution.
+First sort out stoich coeff.
+
+```{r}
+micstoich('CH3COOH', product = 'CH4')
+micstoich:::massconv('CO2') / micstoich:::massconv('CH3COOH') 
+```
+
+```{r}
+mstoich_rspc <- matrix(
+  c(-1, -1, -1, 
+    1, 1, 1,
+    0.1877, 0.1877, 0.1877),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'CH4', 'CO2'),
+    c('m0', 'm1', 'm2')
+  )
+)
+
+mstoich_rspc
+```
+
+
+```{r}
+devtools::load_all()
+outpinrspc <- abmneo(
+  storage = stor_reg_rspc,
+  365,
+  inf_pars = inf_rspc,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_rspc,
+  add_pars = list(mstoich = mstoich_rspc)
+)
+```
+
+```{r}
+plot(CH4_emis_rate ~ time, data = outpinr, type = 'l')
+lines(CH4_emis_rate ~ time, data = outpinrspc, col = 'red')
+
+plot(CH4 ~ time, data = outpinr, type = 'l')
+lines(CH4 ~ time, data = outpinrspc, col = 'blue')
+lines(CO2 ~ time, data = outpinrspc, col = 'red')
+plot(VFA_conc ~ time, data = outpinr, type = 'l')
+lines(VFA_conc ~ time, data = outpinrsp, col = 'red')
+```
+
+# NEW speed
+
+Here is a demo of speed.
+10 year regular simulation:
+
+```{r}
+system.time(
+abmneo(
+  storage = stor_reg_ref,
+  10 * 365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref
+)
+)
+```
+
+10 year series input simulation using startup.
+
+```{r}
+system.time(
+abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  startup = 9
+)
+)
+```
+
+And 10 year with variable temperature.
+
+
+```{r}
+system.time(
+abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  chem_pars = chem_ref,
+  var_pars = list(var = temp_dat),
+  startup = 9
+)
+)
+```
+
+
+
+Not sure of ABM package times but this stuff seems pretty fast.
+
+# NEW Note on COD balance
+
+It sometimes indicates some problems!
+Could be real (means programming problem) or in the balance calculation but certainly needs to be sorted out.
+
+# Other functionality
+
+Other functionality not shown includes:
+* CO2 production or consumption from fermentation
+
+# Details on package size
+
+Here are file sizes.
+
+First, current ABM master.
+
+```{r}
+cat(system('wc -l ../../ABM/R/*.R ../../ABM/src/*.cpp', intern = TRUE), sep = '\n')                                                                                                   
+```
+
+Then abmneo.
+
+```{r}
+cat(system('wc -l ../R/*.R', intern = TRUE), sep = '\n')
+```
+
+To be fair, I am sure ABM has some unused code.
+But still. . .
+
+Look at rates() in particular.
+
+```{r}
+cat(system('wc -l ../../ABM/src/rates_cpp.cpp ../R/rates.R', intern = TRUE), sep = '\n')
+```
+
+That `rates.R` file includes some other functions.
+Here is the `rates()` function, around 50 lines of code that used to call no other abmneo functions. 
+Now it does call an inhibition function. . . :
+
+```{r}
+print(rates)
+```
+

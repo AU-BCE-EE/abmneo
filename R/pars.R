@@ -64,6 +64,8 @@ pack_pars <- function(
   # Size-variable elements ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # List of names of *all* components, supercomps
   pars$supercomps <- c(pars$grps, pars$subs, 'VFA', pars$comps)
+  # And supercomps plus gases, at least to check stoich matrix and trim missing products
+  pars$supercomps_gases <- c(pars$supercomps, pars$gases)
 
   # Sort out stoichiometry ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Fermentation stoichiometry
@@ -84,6 +86,25 @@ pack_pars <- function(
 
   # Add microbial yield to mstoich matrix as rows and subtract from product formation)
   pars$mstoich <- comb_mstoich(pars$mstoich, pars$yield)
+
+  # Check for reactants or products not included in simulation
+  if (any(! rownames(pars$mstoich) %in% pars$supercomps_gases)) {
+    missing <- rownames(pars$mstoich)[!rownames(pars$mstoich) %in% pars$supercomps_gases]
+    stop('Reactant(s)/product(s) present in mstoich matrix but not a solute or gas: ', missing)
+  }
+
+  # Check for components or gases not included in mstoich matrix, add if missing
+  if (any(!c(pars$comps, pars$gases) %in% rownames(pars$mstoich))) {
+    warning('Expanding mstoich matrix with new rows to include missing comps or gases.')
+    missing <- c(pars$comps, pars$gases)[!c(pars$comps, pars$gases) %in% rownames(pars$mstoich)]
+    pars$mstoich <- rbind(pars$mstoich, matrix(0, nrow = length(missing), ncol = ncol(pars$mstoich), dimnames = list(missing, colnames(pars$mstoich))))
+  }
+
+  # Check for missing COD conversion factors
+  if (any(!c(pars$comps, pars$gases) %in% names(pars$COD_conv))) {
+    missing <- c(pars$comps, pars$gases)[!c(pars$comps, pars$gases) %in% names(pars$COD_conv)]
+    stop('COD_conv missing some elements: ', paste(missing, collapse = ', '))
+  }
 
   # Create biomass death stoichiometry matrix
   pars$dstoich <- make_dstoich(pars)

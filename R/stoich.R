@@ -17,7 +17,7 @@ check_COD <- function(dat, pars, rtol = 0.001) {
   # Removed in effluent
   CODeff <- sum(last[paste0(supercomps, '_eff')] * COD_conv[supercomps])
   # Emitted
-  CODemis <- last[[gases]] * COD_conv[[gases]]
+  CODemis <- sum(last[gases] * COD_conv[gases])
   # Remaining
   CODrem <- sum(last[supercomps] * COD_conv[supercomps]) 
 

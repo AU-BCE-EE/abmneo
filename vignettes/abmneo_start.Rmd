@@ -1,6 +1,10 @@
 ---
 title: 'Getting started with the `abmneo()` function'
 output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{Getting started with the abmneo() function}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 author: Sasha D. Hafner
 date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
 ---

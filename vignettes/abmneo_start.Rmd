@@ -11,10 +11,10 @@ date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
 
 # abmneo
 The abmneo package, with a single `abmneo()` function, is an implementation of the ABM model for anaerobic biodegradation of organic wastes (Dalby et al., 2021).
-The ABM model is already implemented in an earlier [ABM package](https://github.com/AU-BCE-EE/ABM), but that package codebase is relatively large and complex. 
+The ABM model is also available in an earlier [ABM package](https://github.com/AU-BCE-EE/ABM).
 The new package was developed as a simpler but more flexible alternative.
 Most of that simplicity is in the code; the user experience is roughly similar if default parameter sets are used.
-For user-defined substrates, microbial groups, or metabolic pathways, the newer package provides a lot flexibility.
+For user-defined substrates, microbial groups, or metabolic pathways, the newer package provides much more flexibility.
 This vignette demonstrates the use of the `abmneo()` model function. 
 
 # What's different?
@@ -26,7 +26,7 @@ The main differences between abmneo and ABM are:
 
 Not all of these are discussed in this document.
 
-In abmneo, time-variable inputs (2) are treated using steps instead of the interpolation approach used in ABM.
+In abmneo, time-variable inputs (2 above) are treated using steps instead of the interpolation approach used in ABM.
 This approach ostensibly reduces the accuracy of the model as a tradeoff for simpler code, more flexibility in which inputs can vary, and faster evaluation.
 But in practice the effects seem negligible beyond a visual effect in plots.
 
@@ -35,8 +35,8 @@ In contrast, the microbial community in abmneo is defined completely by input pa
 Internally, shorter vectorized or matrix operations do the work for all groups without special cases.
 Substrates and inhibition are two other areas where these types of major changes were made.
 
-C++ code and the Rcpp package were incorporated into ABM for speed, but the cost is code complication and debugging difficulty, as well as increased requirements for installation.
-So it was dropped from abmneo, with any speed penalty offset by other simplifications.
+C++ code and the Rcpp package were incorporated into the ABM package for speed, but at the expense of simple code and easy debugging.
+So it was dropped from abmneo, with any speed penalty apparently offset by other simplifications.
 In the end abmneo is not obviously slower than ABM; it is even slightly faster in some cases.
 Other dependencies were also eliminated in abmneo.
 
@@ -75,17 +75,24 @@ abmneo <- function(
 We'll come back to the `storage` argument later.
 The `days` (total simulation time), `delta_t` (time step *in output*), and `times` (specific times to be included in output) are similar in ABM and straightforward.
 Let's work on the `*_pars` arguments.
-These are all input parameters.
+These all contain input parameters.
 In this first release, abmneo does not include any default parameter sets.
 Instead, this example presents a set similar to the ABM set `grp_pars_pig2.0` in ABM.
 
-`inf_pars` has inflow properties.
+`inf_pars` has influent or inflow properties.
 VFA is a hard-coded intermediate, and we need to set fresh and initial concentrations (g/kg) along with pH and density.
 The presence of any other solutes, with any names, is set in the `comps` element, with concentrations in g/kg given in `comp_fresh` and `comp_init` elements.
 
 ```{r}
-inf_ref <- list(VFA_fresh = 2, VFA_init = 2, comps = c('SO4'), comp_fresh = c(SO4 = 0.2), comp_init = c(SO4 = 0.2), pH = 7, dens = 1000)
-		  
+inf_ref <- list(
+  VFA_fresh = 2,
+  VFA_init = 2,
+  comps = c('SO4'),
+  comp_fresh = c(SO4 = 0.2),
+  comp_init = c(SO4 = 0.2),
+  pH = 7,
+  dens = 1000
+)
 ```
 
 `grp_pars` defines the microbial community. 
@@ -103,7 +110,7 @@ The argument should have these elements:
 * `ksmat`: matrix of Monod parameters
 * `mstoich`: matrix of stoichiometry
 
-Definition of the microbial community is completely flexible; any number of groups with any names an practically any metabolism.
+Definition of the microbial community is completely flexible; any number of groups with any names and practically any metabolism can be specified.
 Here we'll include those groups used in the latest ABM parameter set.
 Let's start with the stoichiometry matrix.
 
@@ -218,14 +225,14 @@ The `chem_pars` argument has COD conversion ratios in g COD per g output or inpu
 These are needed for the COD balance and expressing output in useful units.
 The default element is for methane, as g COD per g methane C.
 Of course VFA and substrates are all in COD units, so there is no conversion.
-The `gases` element names the components that should be treated as gases, they do not accumulate in the slurry.
+The `gases` element names the components that should be treated as gases; they do not accumulate in the slurry.
 Cumulative emission and emission rate is calculated for each gas.
 All other components are solutes, which accumulate until the storage is emptied.
 
 The `var_pars` argument is used for time-variable inputs.
 We won't use it in the first example.
 And `add_pars` is for adding or modifying parameters set through other arguments.
-We won't use that either.
+We won't use that in this first example either.
 
 But we do need to sort out the `storage` argument.
 There are two basic approaches that can be used: "regular", with a fixed rate of influent addition and a fixed emptying interval; and "series", where influent addition and storage emptying is completely flexible, and defined by a slurry level over time.
@@ -255,6 +262,8 @@ And for a series, the main element is a data frame with the measurements.
 
 ```{r}
 mass_series <- read.csv('level_pig_od_ref.csv') 
+head(mass_series)
+tail(mass_series)
 plot(slurry_mass ~ time, data = mass_series, type = 'o')
 
 stor_ser_ref <- list(
@@ -272,7 +281,6 @@ These are both for pig production systems.
 Finally, let's run the model.
 
 ```{r}
-devtools::load_all()
 out_reg <- abmneo(
   storage = stor_reg_ref,
   365,
@@ -380,8 +388,9 @@ stor_ser_ref <- list(
 )
 ```
 
+Let's use these inputs.
+
 ```{r}
-devtools::load_all()
 out_ser <- abmneo(
   storage = stor_ser_ref,
   365,
@@ -448,6 +457,9 @@ plot(temp_C ~ time, data = out_ser, type = 'l')
 
 # Time-variable inputs
 
+Most inputs can be varied over time.
+They go into the `var_pars` argument as named data frames in a list.
+
 ```{r}
 temp_dat <- data.frame(time = seq(0, 365, length.out = 53))
 
@@ -457,7 +469,6 @@ plot(temp_C ~ time, data = temp_dat, type = 'o')
 ```
 
 ```{r}
-devtools::load_all()
 out_var <- abmneo(
   storage = stor_ser_ref,
   365,
@@ -470,9 +481,13 @@ out_var <- abmneo(
 
 And the same plots again.
 
+Emission rate.
+
 ```{r}
 plot(CH4_emis_rate ~ time, data = out_var, type = 'l')
 ```
+
+Cumulative emission.
 
 ```{r}
 plot(CH4 ~ time, data = out_var, type = 'l')
@@ -526,5 +541,4 @@ plot(temp_C ~ time, data = out_var, type = 'l')
 # References
 
 Dalby, F.R., Hafner, S.D., Petersen, S.O., Vanderzaag, A., Habtewold, J., Dunfield, K., Chantigny, M.H., Sommer, S.G., 2021. A mechanistic model of methane emission from animal slurry with a focus on microbial groups. PLOS ONE 16, e0252881. 10.1371/journal.pone.0252881
-
 

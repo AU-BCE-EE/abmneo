@@ -87,6 +87,10 @@ pack_pars <- function(
   # Add microbial yield to mstoich matrix as rows and subtract from product formation)
   pars$mstoich <- comb_mstoich(pars$mstoich, pars$yield)
 
+  # Drop any gases not actually produced
+  # comps treated differently because they could be conservative, or even accumulate if user wants
+  pars$gases <- pars$gases[pars$gases %in% rownames(pars$mstoich)]
+
   # Check for reactants or products not included in simulation
   if (any(! rownames(pars$mstoich) %in% pars$supercomps_gases)) {
     missing <- rownames(pars$mstoich)[!rownames(pars$mstoich) %in% pars$supercomps_gases]

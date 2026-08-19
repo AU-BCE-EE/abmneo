@@ -53,7 +53,7 @@ pack_pars <- function(
   # NTS: Could these vectors of names be set in some kind of defaults?
   # Note that mstoich is *not* expanded! Too complicated. So it needs all the elements (rows/columns)
   grp_par_nms <- c("yield", "xa_fresh", "xa_init", "d_max", "qhat_opt", "T_opt", "T_min", "T_max")
-  sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init")
+  sub_par_nms <- c("T_opt_hyd", "T_min_hyd", "T_max_hyd", "hydrol_opt", "sub_fresh", "sub_init", "h_rate_ref", "h_rate_q10")
   pars <- expand_pars(pars = pars, elnms = pars$grps, parnms = grp_par_nms)
   pars <- expand_pars(pars = pars, elnms = pars$subs, parnms = sub_par_nms)
 
@@ -328,7 +328,7 @@ calc_temp_pars <- function(pars, y) {
   pars$temp_K <- pars$temp_C + 273.15
   
   # Hydrolysis rate (vectorized)
-  pars$alpha[pars$subs] <- arrhenius(pars$temp_K, pars$arrA, pars$arrE, pars$arr_max_temp_K)
+  pars$h_rate[pars$subs] <- q10(pars$temp_K, pars$h_rate_ref, pars$h_rate_q10, pars$h_rate_max_temp)
 
   # Microbial substrate utilization rate (vectorized calculation)
   pars$qhat[pars$grps] <- CTM(pars$temp_K, pars$T_opt, pars$T_min, pars$T_max, pars$qhat_opt)
@@ -390,6 +390,17 @@ arrhenius <- function(temp_K, A, E, arr_max_temp_K = 313, R = 8.314){
   y <- A * exp(-E/(R * temp_K))
   
   return(y)
+}
+
+# Q10 function for hydrolysis rate, possibly others
+q10 <- function(temp_K, yref, qpar, temp_ref = 273.15 + 20, max_temp = 313) {
+
+  temp_K[temp_K >= max_temp] <- max_temp
+
+  y <- yref * qpar^((temp_K - temp_ref) / 10)
+
+  return(y)
+
 }
 
 # Inhibition

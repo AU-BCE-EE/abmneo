@@ -20,7 +20,7 @@ grp_VS_dig3 <- list(
   xa_init = c(default = 0.06),
   d_max = c(default = 0.02),
   qhat_opt =  c(m1 = 1.6, m2 = 2.8, m3 = 6.2, m4 = 10, m5 = 16),
-  T_opt = c(m1 = 18  m2 = 28, m3 = 36, m4 = 44, m5 = 55),
+  T_opt = c(m1 = 18, m2 = 28, m3 = 36, m4 = 44, m5 = 55),
   T_min = c(m1 =  2, m2 =  2, m3 = 15, m4 = 26, m5 = 30),
   T_max = c(m1 = 25, m2 = 38, m3 = 45, m4 = 51, m5 = 60),
   ksmat = matrix(
@@ -34,8 +34,8 @@ grp_VS_dig3 <- list(
   ),
   mstoich = matrix(
     c(
-      -1, -1, -1, -1, -1, -1,
-       1,  1,  1,  1,  1,  1
+      -1, -1, -1, -1, -1,
+       1,  1,  1,  1,  1
     ),
     nrow = 2,
     byrow = TRUE,
@@ -47,11 +47,11 @@ grp_VS_dig3 <- list(
 )
 
 sub_VS_dig3 <- list(
-  subs = c('PS'),
-  sub_enrich = c('PS'),
+  subs = 'PS',
+  sub_enrich = 'PS',
   xd = 'xd',
-  arrA = c(default = 1e9),
-  arrE = c(default = 55609),
+  h_rate_ref = c(default = 0.1),
+  h_rate_q10 = c(default = 2),
   sub_fresh = c(PS = 18.22, xd = 0),
   sub_init  = c(PS = 18.22, xd = 0)
 )
@@ -71,7 +71,6 @@ With time series inputs.
 mass_series <- read.csv('level_pig_od_ref.csv') 
 head(mass_series)
 tail(mass_series)
-plot(slurry_mass ~ time, data = mass_series, type = 'o')
 
 stor_ser_ref <- list(
   type = 'series',
@@ -84,6 +83,7 @@ stor_ser_ref <- list(
 ```
 
 ```{r}
+devtools::load_all()
 out_simp_ser <- abmneo(
   storage = stor_ser_ref,
   365,

@@ -47,7 +47,7 @@ rates <- function(t, y, parms) {
 
   # Hydrolysis and fermentation of particulate substrates
   # Consumption and production all in one line, including arbitrary products based on specified fermentation stoichiometry
-  hyferm[rownames(p$fstoich)] <- p$fstoich %*% (p$alpha[p$subs] * y[p$subs])
+  hyferm[rownames(p$fstoich)] <- p$fstoich %*% (p$h_rate[p$subs] * y[p$subs])
 
   # Surface respiration: aerobic oxidation limited by O2 surface flux
   # Monod term on VFA prevents negative values at low concentrations (ks = 0.05 g COD/m3)

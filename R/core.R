@@ -12,7 +12,7 @@ abmneo <- function(
     approx_method = 'early',
     fill_method = 'interp',
     par_key = '\\.',
-    arr_max_temp_K = 313
+    h_rate_max_temp = 313
   ),
   var_pars = list(var = NULL),
   add_pars = NULL,

@@ -1,0 +1,2 @@
+
+maxcores <- 8

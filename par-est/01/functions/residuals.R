@@ -4,9 +4,7 @@ residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
   add_pars <- 10^add_pars
   add_pars <- as.list(add_pars)
 
-  abm_out <- data.table()
-  for (i in ids) {
-    #cat(i, '\n')
+  abm_out <- foreach (i = ids, .combine = rbind, .multicombine = TRUE, .packages = 'data.table') %dorng% {
     out <- abmneo(
       storage = stors[[i]],
       days = 365,
@@ -21,7 +19,7 @@ residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
     )
     setDT(out)
     out[, tank := i]
-    abm_out <- rbind(abm_out, out)
+    out
   }
   
   # For clarity

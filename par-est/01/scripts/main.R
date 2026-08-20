@@ -4,6 +4,7 @@ rm(list = ls())
 
 source('packages.R')
 source('functions.R')
+source('settings.R')
 source('load.R')
 source('clean.R')
 source('tank_pars.R')

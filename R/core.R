@@ -19,7 +19,8 @@ abmneo <- function(
   pars = NULL,
   startup = 0,
   starting = NULL,
-  warn = TRUE
+  warn = TRUE,
+  quiet = FALSE
 ) {
 
   # Sort out parameters, package all parameters into a single pars list, add some others
@@ -46,7 +47,9 @@ abmneo <- function(
   # If startup repetitions are requested, repeat some number of times before returning results
   # Uses pars, already packed and with starting values added
   if (startup > 0) {
-    cat('\nStartup run ')
+    if (!quiet) {
+      cat('\nStartup run ')
+    }
     out <- abm_startup(
       storage = storage,
       days = days,
@@ -55,7 +58,8 @@ abmneo <- function(
       pars = pars,
       startup = startup,
       starting = starting,
-      warn = warn
+      warn = warn,
+      quiet = quiet
     )
     return(out)
   } 

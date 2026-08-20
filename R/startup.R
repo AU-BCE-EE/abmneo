@@ -9,15 +9,18 @@ abm_startup <- function(
   pars,
   startup,
   starting,
-  warn
+  warn,
+  quiet
 ) {
 
   for (i in 1:(startup + 1)) {
-    if (i > startup) {
-      cat('and final run')
-      cat('\n')
-    } else {
-      cat(paste0(i, 'x -> '))
+    if (!quiet) {
+      if (i > startup) {
+        cat('and final run')
+        cat('\n')
+      } else {
+        cat(paste0(i, 'x -> '))
+      }
     }
 
     if (i > 1) {

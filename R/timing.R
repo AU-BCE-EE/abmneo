@@ -18,7 +18,7 @@ get_schedule <- function(
   # Include days argument in times vector
   times <- sort(unique(c(times, series$time)))
     
-  # Notes about time: 1) All simulations start at 0, 2) days must be at least as long as var seriesa
+  # Notes about time: 1) All simulations start at 0, 2) days must be at least as long as var series
   # Note that this works even with t_end = NULL (is ignored)
   # Note the "dummy" placeholder in position 1 (and extra + 1 in n_int)
   n_int <- nrow(series)

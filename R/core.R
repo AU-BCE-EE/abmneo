@@ -88,7 +88,6 @@ abmneo <- function(
   dat <- clean_output(
     dat, 
     days,
-    times,
     pars, 
     addcols = TRUE, 
     addconcs = TRUE, 
@@ -101,6 +100,15 @@ abmneo <- function(
     pars = pars,
     rtol = 0.01
   )
+
+  # Drop times that were not requested in output
+  if (!is.null(times)) {
+    dat <- dat[dat$time %in% c(times, days), ]
+  }
+
+  # Add average emission rate
+  dat$CH4_emis_rate_ave <- c(NA, diff(dat$CH4) / diff(dat$time))
+
 
   # Return results
   return(dat)

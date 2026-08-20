@@ -3,17 +3,11 @@
 clean_output <- function(
   dat, 
   days,
-  times, 
   pars, 
   addcols, 
   addconcs, 
   cumeff
 ) {
-
-  # Drop times that were not requested in output
-  if (!is.null(times)) {
-    dat <- dat[dat$time %in% c(times, days), ]
-  }
 
   # Replace . in names with _
   names(dat) <- gsub('\\.', '_', names(dat))
@@ -33,9 +27,6 @@ clean_output <- function(
     dat <- add_concs(dat, pars)
   }
   
-  # Add average emission rate
-  dat$CH4_emis_rate_ave <- c(NA, diff(dat$CH4) / diff(dat$time))
-
   return(dat)
 
 }

@@ -10,7 +10,7 @@ seed_main <- 123
 registerDoRNG(seed_main)
 
 res <- optim(
-  par = c(h_rate_ref.PS = -1.3, qhat_opt.m1 = -1, qhat_opt.m2 = -0.1),
+  par = c(h_rate_ref.PS = -1.3, h_rate_q10.PS = log10(2), qhat_opt.m1 = -1, qhat_opt.m2 = -0.1, qhat_opt.m3 = 0.1, qhat_opt.m4 = 1),
   fn = residuals,
   stors = stors,
   times = times, 
@@ -19,3 +19,5 @@ res <- optim(
   subs = subs, 
   temps = temps
 )
+
+best_pars <- as.list(10^res$par)

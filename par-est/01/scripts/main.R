@@ -11,5 +11,7 @@ source('tank_pars.R')
 source('shared_pars.R')
 source('test_run.R')
 source('par_est.R')
-source('plot.R')
+source('run.R')
 source('export.R')
+
+best_pars

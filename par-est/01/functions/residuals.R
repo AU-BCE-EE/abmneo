@@ -14,7 +14,7 @@ residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
       sub_pars = subs[[i]],
       var_pars = list(var = temps[[i]]),
       add_pars = add_pars,
-      startup = 1,
+      startup = startup,
       quiet = TRUE
     )
     setDT(out)
@@ -39,8 +39,8 @@ residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
   # Residuals
   resids <- emis_comp$CH4_emis_rate_mod - emis_comp$CH4_emis_rate_meas
 
-  print(sum(resids^2))
+  print(sum(abs(resids)))
 
-  return(sum(resids^2))
+  return(sum(abs(resids)))
 
 }

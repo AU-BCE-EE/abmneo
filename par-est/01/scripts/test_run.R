@@ -1,7 +1,5 @@
 # Test ABM runs
 
-tt <- c(1, sort(unique(emis$doy)), 365)
-
 abm_out <- data.table()
 for (i in ids) {
   cat(i, '\n')
@@ -36,7 +34,6 @@ emis_comp <- merge(
 
 # Residuals
 resids <- emis_comp$CH4_emis_rate_mod - emis_comp$CH4_emis_rate_meas
-emis_comp[, .(time, CH4_emis_rate_mod)]
 
 ggplot(emis_comp, aes(doy_end_abm, CH4_emis_rate_mod, colour = tank)) +
   geom_step() +

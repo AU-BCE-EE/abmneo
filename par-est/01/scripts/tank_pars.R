@@ -33,7 +33,7 @@ for (i in ids) {
     subs = 'PS',
     sub_enrich = 'PS',
     xd = 'xd',
-    h_rate_ref = c(default = 0.1),
+    h_rate_ref = c(PS = 0.1, xd = 0.1),
     h_rate_q10 = c(default = 2),
     sub_fresh = c(PS = tanks[tank == i, substrate], xd = 0),
     sub_init  = c(PS = tanks[tank == i, substrate], xd = 0)
@@ -49,7 +49,7 @@ for (i in ids) {
 
 times <- list()
 for (i in ids) {
-  times[[i]] <- sort(unique(c(1, unname(unlist(emis[tank == i, .(doy_start, doy_end)])))))
+  times[[i]] <- sort(unique(c(0, unname(unlist(emis[tank == i, .(doy_start, doy_end)])))))
 }
 
 

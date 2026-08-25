@@ -1,8 +1,6 @@
 # Run ABM with best-fit pars
 
-abm_out <- data.table()
-for (i in ids) {
-  cat(i, '\n')
+abm_out <- foreach (i = ids, .combine = rbind, .multicombine = TRUE, .packages = 'data.table') %dorng% {
   out <- abmneo(
     storage = stors[[i]],
     days = 365,
@@ -16,28 +14,34 @@ for (i in ids) {
   )
   setDT(out)
   out[, tank := i]
-  abm_out <- rbind(abm_out, out)
+  out
 }
 
-# For clarity
-abm_out[, CH4_emis_rate_mod := CH4_emis_rate_ave / 1000]
-abm_out[, doy_end_abm := time]
-emis[, CH4_emis_rate_meas := CH4_emis_rate]
-emis[, doy_end_meas := doy_end]
-
-# Merge
-emis_comp <- merge(
-  abm_out[, .(tank, time, doy_end_abm, CH4_emis_rate_mod)],
-  emis[, .(tank, doy_mid, doy_end_meas, CH4_emis_rate_meas)],
-  by.x = c('tank', 'doy_end_abm'),
-  by.y = c('tank', 'doy_end_meas'),
-  all = TRUE
-)
-
-ggplot(emis_comp, aes(doy_end_abm, CH4_emis_rate_mod, colour = tank)) +
+names(emis)
+ggplot(abm_out, aes(time, CH4_emis_rate / 1000, colour = tank)) +
   geom_step() +
-  geom_point(aes(x = doy_mid, y = CH4_emis_rate_meas)) +
+  geom_point(data = emis, aes(x = doy_mid, y = CH4_emis_rate)) +
   facet_wrap(~ tank, scale = 'free') +
   theme_bw()
 ggsave('../plots/emis_comp.png', height = 4, width = 6)
+
+
+ggplot(abm_out, aes(time, VFA_conc, colour = tank)) +
+  geom_step() +
+  facet_wrap(~ tank, scale = 'free') +
+  theme_bw()
+ggsave('../plots/VFA_conc.png', height = 4, width = 6)
+
+ggplot(abm_out, aes(time, PS_conc, colour = tank)) +
+  geom_step() +
+  facet_wrap(~ tank, scale = 'free') +
+  theme_bw()
+ggsave('../plots/PS_conc.png', height = 4, width = 6)
+
+grp_out <- melt(abm_out, id.vars = c('tank', 'time'), measure.vars = c('m1_conc', 'm2_conc', 'm3_conc', 'm4_conc', 'm5_conc'))
+ggplot(grp_out, aes(time, value, colour = variable)) +
+  geom_step() +
+  facet_wrap(~ tank, scale = 'fixed') +
+  theme_bw()
+ggsave('../plots/mic_conc.png', height = 4, width = 6)
 

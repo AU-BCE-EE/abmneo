@@ -1,5 +1,5 @@
 
-residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
+residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps, ids, obj = 'ss') {
 
   if ('qhat_opt.scale' %in% names(add_pars)) {
     qscale <- add_pars['qhat_opt.scale']
@@ -43,10 +43,9 @@ residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
   # Residuals
   resids <- emis_comp$CH4_emis_rate_mod - emis_comp$CH4_emis_rate_meas
 
-  print(sum(abs(resids)))
-  print(sum(resids^2))
+  if (obj == 'ss') return(sum(resids^2))
+  if (obj == 'sae') return(sum(abs(resids)))
 
-  #return(sum(abs(resids)))
-  return(sum(resids^2))
+  stop('check obj arg!')
 
 }

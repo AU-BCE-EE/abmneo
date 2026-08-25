@@ -1,8 +1,9 @@
 # Test ABM runs
+if (!foreach::getDoParRegistered()) {
+  registerDoParallel(cores = min(maxcores, parallel::detectCores() - 2))
+}
 
-abm_out <- data.table()
-for (i in ids) {
-  cat(i, '\n')
+abm_out <- foreach (i = ids, .combine = rbind, .multicombine = TRUE, .packages = 'data.table') %dorng% {
   out <- abmneo(
     storage = stors[[i]],
     days = 365,
@@ -15,7 +16,7 @@ for (i in ids) {
   )
   setDT(out)
   out[, tank := i]
-  abm_out <- rbind(abm_out, out)
+  out
 }
 
 # For clarity

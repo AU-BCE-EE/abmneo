@@ -14,4 +14,4 @@ source('par_est.R')
 source('run.R')
 source('export.R')
 
-best_pars
+print(best_pars)

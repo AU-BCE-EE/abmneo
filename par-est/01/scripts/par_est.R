@@ -1,8 +1,7 @@
 
 # Parallel setup
-n_cores <- min(maxcores, parallel::detectCores() - 2)  # Leave at least 2 cores free
 if (!foreach::getDoParRegistered()) {
-  registerDoParallel(cores = n_cores)
+  registerDoParallel(cores = min(maxcores, parallel::detectCores() - 2))
 }
 
 ## Test
@@ -16,14 +15,16 @@ seed_main <- 123
 registerDoRNG(seed_main)
 
 res <- optim(
-  par = c(h_rate_ref.PS = -1.3, h_rate_q10.PS = log10(2), qhat_opt.scale = 0),
+  par = c(h_rate_ref.PS = log10(0.003), resid_enrich = log10(0.9)),
   fn = residuals,
   stors = stors,
   times = times, 
   infls = infls, 
   grp_pars = grp_pars, 
   subs = subs, 
-  temps = temps
+  temps = temps,
+  ids = c('AD1', 'AD2', 'AD3'),
+  obj = 'ss'
 )
 
 best_pars <- as.list(10^res$par)

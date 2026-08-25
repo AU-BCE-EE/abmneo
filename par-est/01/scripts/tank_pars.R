@@ -11,7 +11,7 @@ for (i in ids) {
     storage_depth = tanks[tank == i, depth],     
     area = tanks[tank == i, area],              
     temp_C = 0,
-    resid_enrich = 0.2 
+    resid_enrich = 0.9 
   )
 }
 

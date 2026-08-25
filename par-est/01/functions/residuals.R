@@ -1,6 +1,10 @@
 
 residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
 
+  if ('qhat_opt.scale' %in% names(add_pars)) {
+    qscale <- add_pars['qhat_opt.scale']
+    add_pars[c('qhat_opt.m1', 'qhat_opt.m2', 'qhat_opt.m3', 'qhat_opt.m4', 'qhat_opt.m5')] <- log10(grp_pars[['qhat_opt']][c('m1', 'm2', 'm3', 'm4', 'm5')]) + qscale
+  }
   add_pars <- 10^add_pars
   add_pars <- as.list(add_pars)
 
@@ -40,7 +44,9 @@ residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps) {
   resids <- emis_comp$CH4_emis_rate_mod - emis_comp$CH4_emis_rate_meas
 
   print(sum(abs(resids)))
+  print(sum(resids^2))
 
-  return(sum(abs(resids)))
+  #return(sum(abs(resids)))
+  return(sum(resids^2))
 
 }

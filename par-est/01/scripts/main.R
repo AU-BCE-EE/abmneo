@@ -13,5 +13,3 @@ source('test_run.R')
 source('par_est.R')
 source('run.R')
 source('export.R')
-
-print(best_pars)

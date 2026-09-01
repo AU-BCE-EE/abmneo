@@ -41,5 +41,5 @@ ggplot(emis_comp, aes(doy_end_abm, CH4_emis_rate_mod, colour = tank)) +
   geom_point(aes(x = doy_mid, y = CH4_emis_rate_meas)) +
   facet_wrap(~ tank) +
   theme_bw()
-
+ggsave('../plots/test_run.png')
 

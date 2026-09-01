@@ -33,7 +33,7 @@ for (i in ids) {
     subs = 'PS',
     sub_enrich = 'PS',
     xd = 'xd',
-    h_rate_ref = c(PS = 0.003, xd = 0.003),
+    h_rate_ref = c(PS = 0.03, xd = 0.03),
     h_rate_q10 = c(PS = 2.1, xd = 2.1),
     sub_fresh = c(PS = tanks[tank == i, substrate], xd = 0),
     sub_init  = c(PS = tanks[tank == i, substrate], xd = 0)

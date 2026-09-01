@@ -1,5 +1,8 @@
+# Residuals function for parameter estimation
+# ids limits to specific ids in measurement data.table
+# weights (data.table column name) could be used in same way
 
-residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps, ids, obj = 'ss') {
+residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps, meas, ids, weights = NULL, obj = 'ss') {
 
   if ('qhat_opt.scale' %in% names(add_pars)) {
     qscale <- add_pars['qhat_opt.scale']
@@ -27,24 +30,28 @@ residuals <- function(add_pars, stors, times, infls, grp_pars, subs, temps, ids,
   }
   
   # For clarity
+  # Note unit conversion to kg/d
   abm_out[, CH4_emis_rate_mod := CH4_emis_rate_ave / 1000]
   abm_out[, doy_end_abm := time]
-  emis[, CH4_emis_rate_meas := CH4_emis_rate]
-  emis[, doy_end_meas := doy_end]
+  meas[, CH4_emis_rate_meas := CH4_emis_rate]
+  meas[, doy_end_meas := doy_end]
   
   # Merge
   emis_comp <- merge(
     abm_out[, .(tank, time, doy_end_abm, CH4_emis_rate_mod)],
-    emis[, .(tank, doy_mid, doy_end_meas, CH4_emis_rate_meas)],
+    meas,
     by.x = c('tank', 'doy_end_abm'),
     by.y = c('tank', 'doy_end_meas')
   )
   
   # Residuals
   resids <- emis_comp$CH4_emis_rate_mod - emis_comp$CH4_emis_rate_meas
+  if (!is.null(weights)) {
+    resids <- emis_comp[, ..weights] * resids
+  } 
 
-  if (obj == 'ss') return(sum(resids^2))
-  if (obj == 'sae') return(sum(abs(resids)))
+  if (tolower(obj) == 'ss') return(sum(resids^2))
+  if (tolower(obj) == 'sae') return(sum(abs(resids)))
 
   stop('check obj arg!')
 

@@ -475,7 +475,7 @@ out_var <- abmneo(
   inf_pars = inf_ref,
   grp_pars = grp_ref,
   sub_pars = sub_ref,
-  var_pars = list(var = temp_dat),
+  var_pars = list(var = temp_dat)
 )
 ```
 
@@ -551,7 +551,136 @@ plot(CH4 ~ time, data = out_dig, type = 'l')
 plot(slurry_mass ~ time, data = out_dig, type = 'l', ylim = c(0, 2e6))
 ```
 
+# Optional arguments
 
+This section briefly presents the use of some of the optional `abmneo()` arguments.
+Only a subset--those that are probably the most useful--are presented here.
+
+The optional `add_pars` argument can be used to change individual parameters without repeating all the values in an argument.
+For example, in `ctrl_pars` there is a `rem_align_method` parameter that determines the interpretation of slurry removal from a series `storage` object.
+It could be changed from the default with calls like these.
+
+```{r}
+out_dig_early <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01,
+  add_pars = list(rem_align_method = 'early')
+)
+```
+
+```{r}
+out_dig_late <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01,
+  add_pars = list(rem_align_method = 'late')
+)
+```
+
+```{r}
+plot(slurry_mass ~ time, data = out_dig, type = 'l', ylim = c(0, 2e6))
+lines(slurry_mass ~ time, data = out_dig_early, col = 'red')
+lines(slurry_mass ~ time, data = out_dig_late, col = 'blue')
+```
+
+This `rem_align_method` argument will have a tiny effect when slurry mass inputs are close together in time.
+But when available measurements are sparse, as in this example dataset, it can have a large effect.
+
+```{r}
+plot(CH4 ~ time, data = out_dig, type = 'l')
+lines(CH4 ~ time, data = out_dig_early, col = 'red')
+lines(CH4 ~ time, data = out_dig_late, col = 'blue')
+```
+
+It is important to make sure the selected approach best matches the measurements.
+For example, if level measurements were made just after emptying, the `'late'` approach should be used.
+
+For changing a parameter that is nested, like the initial concentration of `PS`, there is a `.` notation that has been build into the function.
+
+```{r}
+out_dig_psi <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01,
+  add_pars = list(sub_init.PS = 0)
+)
+```
+
+```{r}
+plot(PS_conc ~ time, data = out_dig, type = 'l', ylim = c(0, 15))
+lines(PS_conc ~ time, data = out_dig_psi, col = 'red')
+```
+
+The `startup` argument can be used to run the specified simulation some number of times.
+This simulates, e.g., years of operation and gives the microbial community time to reach, if not a true steady-state, then a state that is not highly sensitive to starting conditions.
+
+
+```{r}
+out_dig_1s <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01,
+  startup = 1
+)
+```
+
+```{r}
+out_dig_3s <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01,
+  startup = 3
+)
+```
+
+```{r}
+plot(CH4 ~ time, data = out_dig, type = 'l')
+lines(CH4 ~ time, data = out_dig_1s, col = 'red')
+lines(CH4 ~ time, data = out_dig_3s, col = 'blue')
+```
+
+Here is an example with time-variable temperature.
+
+```{r}
+out_var_1s <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  var_pars = list(var = temp_dat),
+  startup = 1
+)
+```
+
+```{r}
+out_var_3s <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  var_pars = list(var = temp_dat),
+  startup = 3
+)
+```
+
+```{r}
+plot(CH4_emis_rate ~ time, data = out_var, type = 'l')
+lines(CH4_emis_rate ~ time, data = out_var_1s, col = 'red')
+lines(CH4_emis_rate ~ time, data = out_var_3s, col = 'blue', lty = 2)
+```
 
 # References
 

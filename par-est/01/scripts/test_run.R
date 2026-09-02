@@ -43,3 +43,10 @@ ggplot(emis_comp, aes(doy_end_abm, CH4_emis_rate_mod, colour = tank)) +
   theme_bw()
 ggsave('../plots/test_run.png')
 
+ggplot(abm_out, aes(time, slurry_depth, colour = tank)) +
+  geom_step() +
+  facet_wrap(~ tank) +
+  theme_bw()
+ggsave('../plots/slurry_level.png')
+
+

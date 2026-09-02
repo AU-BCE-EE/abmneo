@@ -46,7 +46,11 @@ sub_pars_dig_01 <- list(
   xd = 'xd',
   h_rate_ref = c(PS = 0.032, xd = 0.032),
   h_rate_q10 = c(PS = 2.1, xd = 2.1),
-  sub_fresh = c(PS = tanks[tank == i, substrate], xd = 0),
-  sub_init  = c(PS = tanks[tank == i, substrate], xd = 0)
+  sub_fresh = c(PS = 10, xd = 0),
+  sub_init  = c(PS = 10, xd = 0)
 )
+
+save(inf_pars_dig_01, file = '../data/inf_pars_dig_01.rda')
+save(grp_pars_dig_01, file = '../data/grp_pars_dig_01.rda')
+save(sub_pars_dig_01, file = '../data/sub_pars_dig_01.rda')
 

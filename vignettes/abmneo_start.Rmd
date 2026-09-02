@@ -61,7 +61,7 @@ abmneo <- function(
     approx_method = 'early',
     fill_method = 'interp',
     par_key = '\\.',
-    arr_max_temp_K = 313
+    h_rate_max_temp = 313
   ),
   var_pars = list(var = NULL),
   add_pars = NULL,
@@ -76,12 +76,12 @@ We'll come back to the `storage` argument later.
 The `days` (total simulation time), `delta_t` (time step *in output*), and `times` (specific times to be included in output) are similar in ABM and straightforward.
 Let's work on the `*_pars` arguments.
 These all contain input parameters.
-In this first release, abmneo does not include any default parameter sets.
-Instead, this example presents a set similar to the ABM set `grp_pars_pig2.0` in ABM.
+Here we will construct a set roughly similar to the ABM set `*_pars_pig2.0` default sets in ABM.
 
 `inf_pars` has influent or inflow properties.
 VFA is a hard-coded intermediate, and we need to set fresh and initial concentrations (g/kg) along with pH and density.
 The presence of any other solutes, with any names, is set in the `comps` element, with concentrations in g/kg given in `comp_fresh` and `comp_init` elements.
+Here the only optional solute we'll add is sulfate, which is needed for sulfate reduction.
 
 ```{r}
 inf_ref <- list(
@@ -110,7 +110,7 @@ The argument should have these elements:
 * `ksmat`: matrix of Monod parameters
 * `mstoich`: matrix of stoichiometry
 
-Definition of the microbial community is completely flexible; any number of groups with any names and practically any metabolism can be specified.
+Definition of the microbial community is very flexible; any number of groups with any names and practically any metabolism can be specified.
 Here we'll include those groups used in the latest ABM parameter set.
 Let's start with the stoichiometry matrix.
 
@@ -136,8 +136,8 @@ It is easier to understand by looking at the matrix with row and column names:
 mstoich
 ```
 
-Columns are groups, rows are substrates or products.
-The values of 1 are an expression of chemical oxygen demand (COD) conservation--they show that each methanogen group produces 1 g of methane per g of VFA consumed (both on a COD basis).
+Columns are groups, showing the group that carries out the reaction, rows are substrates or products.
+The values of 1 are an expression of chemical oxygen demand (COD) conservation--they show that each methanogen group produces 1 g of methane per g of VFA consumed (both on a COD basis, when biomass production is neglected).
 Compounds without a COD are expressed as mass N (if present), S (if present), or otherwise total compound mass.
 Here then `'SO4-2'` is as mass of S.
 So where did the `0.50` come from?
@@ -150,7 +150,8 @@ rxn
 molmass('SO4-2', 'S') * rxn['SO4-2'] / (calcCOD('CH3COOH', per = 'mol') * rxn['CH3COOH'])
 ```
 
-This gives:
+This takes acetic acid as the representative VFA.
+And it gives:
 
 ```{r, eval = FALSE}
 > library(micstoich)
@@ -165,8 +166,8 @@ CH3COOH   SO4-2      H+     H2S     HS-     H2O     CO2
 
 Note that these coefficients do not account for microbial biomass--this information is entered as a microbial yield, and the stoichiometry matrix is updated and expanded internally.
 
-We need one more matrix: `ksmat`, which has the Monod half-velocity parameters.
-Here the values are from `mic.pars2.0` in the ABM repo
+We need one more matrix for `grp_pars`: `ksmat`, which has the Monod half-velocity parameters.
+Here the values are from `mic_pars2.0` in the ABM repo.
 
 ```{r}
 ksmat <- matrix(
@@ -204,17 +205,27 @@ grp_ref <- list(
 )
 ```
 
+And check it.
+
+```{r}
+grp_ref
+```
+
 Substrates are completely defined in the `sub_pars` input.
+Like microbial groups, any number and any names could be used.
+Here we'll continue with something like the ABM parameters.
+Hydrolysis kinetics follows the same exponential response as in the Arrhenius equation used in ABM, but the parameters are different
+In abmneo, they are `h_rate_ref`: the rate constant (1/d) at 20 degrees C, and `h_rate_q10`: the relative change in rate over 10 degrees C.
 
 ```{r}
 sub_ref <- list(
   subs = c('starch', 'Cfat', 'CPs', 'CPf', 'RFd'),
   sub_enrich = c('starch', 'Cfat', 'CPs', 'RFd'),
   xd = 'xd',
-  arrA = c(starch = 1.005e13, Cfat = 2.011e13, CPs = 4.152e12, CPf = 4.152e12, RFd = 2.011e12, xd = 2.011e12),
-  arrE = c(default = 8.16e4),
-  sub_fresh = c(starch = 5.25, Cfat = 27.6, CPs = 11.6, CPf = 9.50, RFd = 25.4, xd = 0),
-  sub_init  = c(starch = 5.25, Cfat = 27.6, CPs = 11.6, CPf = 9.50, RFd = 25.4, xd = 0)
+  h_rate_ref = c(starch = 0.029, Cfat = 0.058, CPs = 0.012, CPf = 0.012, RFd = 0.0058, xd = 0.0058),
+  h_rate_q10 = c(default = 2.1),
+  sub_fresh = c(starch = 5.2, Cfat = 28, CPs = 12, CPf = 9.5, RFd = 25, xd = 0),
+  sub_init  = c(starch = 5.2, Cfat = 28, CPs = 12, CPf = 9.5, RFd = 25, xd = 0)
 )
 ```
 
@@ -224,7 +235,7 @@ These are the only required parameter groups.
 The `chem_pars` argument has COD conversion ratios in g COD per g output or input units.
 These are needed for the COD balance and expressing output in useful units.
 The default element is for methane, as g COD per g methane C.
-Of course VFA and substrates are all in COD units, so there is no conversion.
+VFA and substrates are all in COD units anyway, so there is no conversion.
 The `gases` element names the components that should be treated as gases; they do not accumulate in the slurry.
 Cumulative emission and emission rate is calculated for each gas.
 All other components are solutes, which accumulate until the storage is emptied.
@@ -237,7 +248,7 @@ We won't use that in this first example either.
 But we do need to sort out the `storage` argument.
 There are two basic approaches that can be used: "regular", with a fixed rate of influent addition and a fixed emptying interval; and "series", where influent addition and storage emptying is completely flexible, and defined by a slurry level over time.
 
-# Regular option
+## Regular option
 
 For the regular option, `abmneo()` needs a list with these elements:
 
@@ -248,7 +259,7 @@ stor_reg_ref <- list(
   storage_depth = 2,     
   area = 0.65,              
   temp_C = 20,
-  resid_enrich = 0.2,
+  resid_enrich = 0.6,
   slurry_mass = 7,     
   resid_depth = 0.01,      
   empty_int = 28,          
@@ -258,12 +269,18 @@ stor_reg_ref <- list(
 )
 ```
 
+These are approximate values for slurry in a pig house with monthly emptying, with values for one pig.
+Units here are kg for mass, m for length, and d for time.
+
+## Series option
+
 And for a series, the main element is a data frame with the measurements.
 
 ```{r}
-mass_series <- read.csv('level_pig_od_ref.csv') 
-head(mass_series)
-tail(mass_series)
+mass_series <- data.frame(
+  time =         c(0, 121, 122, 152, 153, 182, 214, 244, 365),
+  slurry_mass = c(67,  80,   2,  13,   0.01,  11,  22,  32,  67)
+)
 plot(slurry_mass ~ time, data = mass_series, type = 'o')
 
 stor_ser_ref <- list(
@@ -272,13 +289,15 @@ stor_ser_ref <- list(
   storage_depth = 2,     
   area = 0.7,              
   temp_C = 18,
-  resid_enrich = 0.2 
+  resid_enrich = 0.6 
 )
 ```
 
-These are both for pig production systems.
+This is for an outdoor storage tank, with values for single pig.
 
-Finally, let's run the model.
+# Running the model
+
+Finally, let's run the model, first with the regular option.
 
 ```{r}
 out_reg <- abmneo(
@@ -291,7 +310,7 @@ out_reg <- abmneo(
 ```
 
 Output is a data frame that contains gas emission rates, cumulative emission, and masses and concentrations of microbial biomass, substrates, VFA, and any other solutes.
-The column names, and number of columns, depends on the inputs; each microbial group and each substrate has two associated columns.
+The column names, and number of columns, depends on the inputs; each microbial group and each substrate has two associated columns (total mass in g COD and concentration in g COD / kg).
 
 ```{r}
 names(out_reg)
@@ -311,7 +330,7 @@ And cumulative emission in g.
 plot(CH4 ~ time, data = out_reg, type = 'l')
 ```
 
-Microbial biomass (g).
+Microbial biomass (g COD).
 
 ```{r}
 matplot(
@@ -324,7 +343,7 @@ matplot(
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 ```
 
-And microbial biomass concentrations (g/kg).
+And microbial biomass concentrations (g COD / kg).
 
 ```{r}
 matplot(
@@ -352,7 +371,7 @@ matplot(
 legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 ```
 
-And VFA mass and concentration.
+And VFA mass (g COD) and concentration (g COD / kg).
 
 ```{r}
 plot(VFA ~ time, data = out_reg, type = 'l')
@@ -365,30 +384,13 @@ Of course most of the temporal patterns are driven by slurry mass, which is also
 plot(slurry_mass ~ time, data = out_reg, type = 'l')
 ```
 
-# Time series option
-
-For time series, we need a data frame with time and slurry mass columns, in that order.
-Here are some values.
+And so is slurry depth (m).
 
 ```{r}
-mass_series <- read.csv('level_pig_od_ref.csv') 
-plot(slurry_mass ~ time, data = mass_series, type = 'o')
+plot(slurry_depth ~ time, data = out_reg, type = 'l')
 ```
 
-They are combined with other parameters like this.
-
-```{r}
-stor_ser_ref <- list(
-  type = 'series',
-  dat = mass_series,
-  storage_depth = 2,     
-  area = 0.03,              
-  temp_C = 15,
-  resid_enrich = 0.9 
-)
-```
-
-Let's use these inputs.
+And the series input option.
 
 ```{r}
 out_ser <- abmneo(
@@ -452,19 +454,17 @@ plot(VFA_conc ~ time, data = out_ser, type = 'l')
 
 ```{r}
 plot(slurry_mass ~ time, data = out_ser, type = 'l')
-plot(temp_C ~ time, data = out_ser, type = 'l')
 ```
 
 # Time-variable inputs
 
 Most inputs can be varied over time.
 They go into the `var_pars` argument as named data frames in a list.
+Here is an example with temperature.
 
 ```{r}
 temp_dat <- data.frame(time = seq(0, 365, length.out = 53))
-
 temp_dat$temp_C <- 10 + 10 * sin((temp_dat$time - 130) / 365 * 2 * pi)
-
 plot(temp_C ~ time, data = temp_dat, type = 'o')
 ```
 
@@ -479,7 +479,7 @@ out_var <- abmneo(
 )
 ```
 
-And the same plots again.
+And some of the same plots again.
 
 Emission rate.
 
@@ -493,50 +493,65 @@ Cumulative emission.
 plot(CH4 ~ time, data = out_var, type = 'l')
 ```
 
-```{r}
-matplot(
-  out_var$time, 
-  out_var[, nn <- grp_ref$grps], 
-  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
-  lty = 1:length(nn), type = 'l',
-  ylab = 'Xa'
-)
-legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-```
+Temperature is also returned.
 
 ```{r}
-matplot(
-  out_var$time, 
-  out_var[, nn <- paste0(grp_ref$grps, '_conc')], 
-  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
-  lty = 1:length(nn), 
-  type = 'l',
-  ylab = 'Xa conc'
-)
-legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-```
-
-```{r}
-matplot(
-  out_var$time, 
-  out_var[, nn <- paste0(sub_ref$subs, '_conc')], 
-  col = cc <- c('blue', 'orange', 'green', 'black', 'red'), 
-  lty = 1:length(nn), 
-  type = 'l',
-  ylab = 'Substrate conc.'
-)
-legend('topright', legend = nn, col = cc, lty = 1:length(nn))
-```
-
-```{r}
-plot(VFA ~ time, data = out_var, type = 'l')
-plot(VFA_conc ~ time, data = out_var, type = 'l')
-```
-
-```{r}
-plot(slurry_mass ~ time, data = out_var, type = 'l')
 plot(temp_C ~ time, data = out_var, type = 'l')
 ```
+
+Here you can see how time-varying inputs are handled.
+Instead of smooth interpolation, they are held constant within the steps implied in the `var_pars` input.
+
+# Default digeste parameter set
+
+A single default parameter set for stored digestate is included with the first release of abmneo.
+
+They include give microbial groups:
+
+```{r}
+grp_pars_dig_01
+```
+
+There are no optional solutes included, which means no sulfate reduction.
+Fresh VFA concentration is 200 mg COD / kg.
+
+```{r}
+inf_pars_dig_01
+```
+
+There is a single grouped substrate `PS`, for "particulate substrate".
+It is similar to the VS-based approach in ABM, but the name `VS` is was deemed confusing for a COD-based quantity (it typically refers to the total mass of solids lost during calcination at 550 degrees C).
+
+```{r}
+sub_pars_dig_01
+```
+
+We need `storage` inputs to use these default values.
+This is an example included with the package.
+
+```{r}
+storage_ex_dig_01
+```
+
+Let's use all these in a model run.
+
+```{r}
+out_dig <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01
+)
+```
+
+```{r}
+head(out_dig$time)
+plot(CH4 ~ time, data = out_dig, type = 'l')
+plot(slurry_mass ~ time, data = out_dig, type = 'l', ylim = c(0, 2e6))
+```
+
+
 
 # References
 

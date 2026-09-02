@@ -546,7 +546,6 @@ out_dig <- abmneo(
 ```
 
 ```{r}
-head(out_dig$time)
 plot(CH4 ~ time, data = out_dig, type = 'l')
 plot(slurry_mass ~ time, data = out_dig, type = 'l', ylim = c(0, 2e6))
 ```

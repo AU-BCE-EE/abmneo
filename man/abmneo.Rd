@@ -37,187 +37,60 @@ abmneo(
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
+  \item{storage}{
+    A storage object.
+  }
   \item{days}{
     Total number of days in simulation.
-}
+  }
   \item{delta_t}{
     Time step in output (d).
-}
+  }
   \item{times}{
     Alternative to \code{delta_t}, use to return specific times only.
     Only available with variable slurry mass.
-}
-  \item{wthr_pars}{
-    Weather inputs.
-    List with elements `temp_air_C` in degree C, `RH` relative humidity in percent, `rain` is precipitation in kg/m2/day, `pres_kpa` is ambient pressure in kPa, `rs` is solar radiation in MJ/m2/d.
-    See \code{\link{parameters}}.
-}
-  \item{evap_pars}{
-    Evaporation inputs.
-}
-  \item{mng_pars}{
-    List of management parameters including slurry production rate (kg/day) (\code{slurry_prod_rate}),
-    initial slurry mass in the system (kg) (\code{slurry_mass}). If (\code{slurry_mass}) is a data.frame with column names "time", "slurry_mass", then (\code{slurry_prod_rate}), (\code{resid_depth}), (\code{empty_int}), (\code{wash_water}), (\code{wash_int}) are calculated from the (\code{slurry_mass}) data.frame.
-    depth of slurry storage (m) (\code{storage_depth}),
-    height of slurry in the system after being emptied (m) (\code{resid_depth}),
-    surface area of the barn floor that is accesible by the animals (m^2) (\code{floor_area}),
-    surface area of the slurry storage (m^2) (\code{area}),
-    removal frequency of the slurry in the slurry storage (days), where a value of 0 = "never remove slurry" (\code{empty_int}),
-    slurry temperature (deg. C) (\code{temp_C}). The model provides some datasets for outside slurry temperatures in Denmark \code{\link{temperatures}},
-    wash water used per washing event (kg) (\code{wash_water}),
-    time between washing events (days), where NA = "washing not applied" (\code{wash_int}),
-    time that the animal section is empty after a batch of animals has been finished (days) (\code{rest_d}), argument for setting the type of cover on an outside   storage tank (\code{cover}). The type of cover only affects the ammonia emission factor, with emission factors and types of covers taken from Sommer et al. 2022, e.g. cover = \code{none} means no cover, cover = \code{tent} reduces ammonia emission by 80 percent, cover = \code{straw} reduces ammonia emission by 33 percent.
-    Factor that determines the degree of enrichment of microbes and organic matter components in the residual slurry after emptying (\code{resid_enrich}),
-    and \code{slopes} is an expert user argument for changing the excretion rate of urea or slurry production during a growth period of an animal. 
-    By default this argument is not used (\code{slopes}),
-    (\code{graze}) is a list with parameters to adjust the grazing activity outdoor, which affects the amount of slurry excreted in the barn. 
-    \code{duration} is the number of days per year that the animals are allowed to graze and \code{hours_day} are the number of hours animals graze per day during the grazing period, the \code{start} argument is the month, where grazing starts, e.g. "May". When the (\code{graze}) arguments are not 0, then the model simulation is with time reference to 1. January 00:00:00. Effectively, if start = \code{May}, the model simulates grazing from time = 120. 
-    Therefore, when combined with variable temperature, temperature should also be with time = 0 referencing to 1 January 00:00:00. 
-    \code{scale} is a multiplier for adjusting some \code{grp_pars} parmeters for all microbes at the same time (\code{scale}).
-    Each element may be a length-one vector or, in some cases, a list.
-    See usage, examples, and vignette.
-}
-  \item{man_pars}{
-    List of manure parameters. The default and alternative parameter values are detailed in \code{\link{parameters}}.
-    Elements are:
-    \code{conc_fresh}, the concentration of slurry components in fresh slurry
-    \code{pH}, pH of the slurry entering the system and in the slurry in the system
-    The \code{conc_fresh} element is a list itself, with the following elements:
-    \code{sulfide} (sulfide), \code{urea} (urea), \code{sulfate} (sulfate), \code{TAN} (ammonia nitrogen), \code{starch} (starch and sugars),
-    \code{VFA} (volatile fatty acids), \code{xa_dead} (dead microbial populations), \code{Cfat} (crude fat),
-    \code{CP} (crude protein), \code{RFd} (residual fiber that is degradable: defined as neutral detergent fiber - indigestible neutral detergent fiber), \code{iNDF} (indigestible neutral detergent fiber), \code{VSd} (degradable, volatile solids), \code{VSd_A} (degradable volatile solids for Arrhenius calculation), \code{VSnd_A} (non-degradable volatile solids for Arrhenius calcualtion), \code{ash} (ash content)
-    Concentrations are on an elemental basis (N/kg wet manure and S/kg wet manure) or else gCOD/kg wet manure (organic components). However, for VSd_A, VSnd_A and ash the unit is g/kg wet manure.
-}
-  \item{init_pars}{
-    List of parameters that define the intial concentrations of organic matter components in the slurry.
-    The elements are similar to the \code{conc_fresh} elements in 'man_pars'. 
-    By default the element values are the same as values in \code{conc_fresh}
-}
-
+  }
+  \item{inf_pars}{
+    Influent parameters.
+  }
   \item{grp_pars}{
-   List containing parameter values for the microbial groups included in the model. m designates methanogen and sr designates sulfate reducer. The default and alternative parameter values are detailed in \code{\link{parameters}}.
-   Elements are:
-   \code{yield}, Growth yield of microbial groups (g COD-biomass / g COD-substrate) ;
-   \code{xa_fresh}, Concentration of microbial groups in the slurry entering the system (g COD-biomass/kg);
-   \code{xa_init}, Initial concentration of microbial groups in the slurry (g COD-biomass/kg);
-   \code{decay_rate}, Deacay rate of microbial groups (1/day);
-   \code{ks_coefficient}, Coefficient used to tune the half saturation constant (g COD-substrate/kg);
-   \code{qhat_opt}, Maximum specific substrate utilization rate of microbial groups at their optimum growth temperature (g COD-substrate/g COD-biomass/day);
-   \code{T_opt}, Optimum growth temperature of microbial groups (K);
-   \code{T_min}, Minimum viable growth temperature of microbial groups (K);
-   \code{T_max}, Maximum vaible growth temperature of microbial groups (K);
-   \code{ki_NH3_min}, NH3 concentration at which NH3 inhibition starts (g TAN-nitrogen/kg);
-   \code{ki_NH3_max}, NH3 concentration wher microbial groups are 100 percent inhibited (g TAN-nitrogen/kg);
-   \code{ki_NH4_min}, NH4 concentration at which NH3 inhibition starts (g TAN-nitrogen/kg);
-   \code{ki_NH4_max}, NH4 concentration wher microbial groups are 100 percent inhibited (g TAN-nitrogen/kg);
-   \code{ki_H2S_slope}, inhibition parameter1 for calculating H2S inhibition factor (g H2S-sulfur/(kg pr pH unit));
-   \code{ki_H2S_int}, inhibition parameter2 for calculating H2S inhibition factor (g H2S-sulfur/kg);
-   \code{ki_H2S_min}, inhibition parameter3 for calculating H2S inhibition factor (g H2S-sulfur/kg);
-
-   Each of these elements is a vector with a named element for each group.
-   See usage, examples, and vignettes.
-}
-  \item{mic_pars}{
-    List of other microbial parameters. The default and alternative parameter values are detailed in \code{\link{parameters}}.
-    Elements are:
-    \code{ks_SO4}, Half sulfate saturation constant for sulfate reducers (g sulfate-sulfur/kg);
-    \code{km_urea}, half urea-N saturation constant for Michaelis-Menten urea hydrolysis (g urea-N/kg).
-}
+    Microbial group parameters.
+  }
+  \item{sub_pars}{
+    Substrate parameters.
+  }
   \item{chem_pars}{
-    List of other chemical parameters. 
-    The default parameter values are detailed in \code{\link{parameters}}.
-    Elements are:
-    \code{COD_conv}, conversion factors for using a COD mass basis with the following named elements:
-    \code{CH4}, Methane productivity coefficient (g COD-substrate/g CH4) ;
-    \code{xa_dead}, COD to g dry matter mass of dead microbial populations (g COD/g dry xa dead);
-    \code{RFd}, COD to g RFd (g COD/g RFd);
-    \code{iNDF}, COD to g iNDF (g COD/g iNDF);
-    \code{starch}, COD to g starch (g COD/g starch);
-    \code{Cfat}, COD to g Cfat (g COD/g Cfat);
-    \code{CP}, COD to g CP (g COD/g CP);
-    \code{VFA}, COD to g VFA (g COD/g VFA);
-    \code{RFd}, COD to g RFd (g COD/g RFd);
-    \code{S}, COD-substrate to sulfur (g sulfur/g COD-substrate) ;
-    \code{VS}, COD to g volatile solids (g COD/g volatile solids);
-    \code{CO2_ureo}, carbon dioxide productivity coefficient for urea hydrolysis (g CO2/g urea-N);
-    \code{CP_N}, crude protein COD per g crude protein N (g CP-COD/g CP-N);
-    \code{C_N_urea}, carbon to nitrogen (g C/g urea-N);
-    Other conversion factors designated \code{C_} are carbon to COD of the named substrate (gC/gCOD) 
-}
-
-  \item{arrh_pars}{
-    List of hydrolysis parameters that are related to Arrhenius kinetics. 
-    The default parameter values are detailed in \code{\link{parameters}}.
-    Elements are:
-    \code{lnA}, frequency factor used in danish methane emission inventory calculations, only used for comparing to ABM model (g CH4/ (kgVS * hour));
-    \code{E_CH4}, Activation energy used in danish methane emission inventory calculations, only used for comparing to ABM model (J/mol);
-    \code{R}, universal gas constant (J/(K * mol));
-    \code{VS_CH4}, volatile solids consumed per methane produced (g VS/g CH4); 
-    \code{A}, Arrhenius factor for calculating the temperature sensitive hydrolysis rate constants of organic matter components (1/day);
-    \code{E}, Activation energy for calculating the temperature sensitive hydrolysis rate constant of organic matter components (J/mol);
-    \code{kl}, mass transfer coefficient of ammonia from the slurry pit (m/day) and from the barn floor (m/day) and mass transfer coefficient of H2S from the slurry (m/day).
-
-}
- \item{resp}{
-    Set to \code{TRUE} (default) to include surface respiration. 
-    Can be \code{FALSE} for e.g. anaerobic digestion simulation.
-}
-    
- \item{pH_inhib_overrule}{
-    Default is \code{FALSE}. 
-    Can be \code{TRUE} if the inhibition should be governed by a pH inhibition function, rather than the default where inhibition is governed by concentrations of NH3, NH4, H2S and protonated VFA.
-}
-        
-  \item{add_pars}{
-    List of other additional parameters not set in other arguments, or to be modified from defaults.
-    See vignette.
-}
-  \item{pars}{
-    Combined parameters, as an alternative to all the `*_pars` arguments.
-    Used internally when \code{startup} > 0 and may be convenient to use in an \code{abm} call in some cases.
-}
-  \item{startup}{
-    Number of startup times the simulation should be run before running a final time.
-    Results from one simulation become starting conditions for next.
-    Used to spin up or stabilize microbial population and substrates so that initial conditions do not affect results.
-    Length-one integer vector.
+    Chemical parameters.
+    See default values.
+  }
+  \item{ctrl_pars}{
+    Control parameters.
+    See default values.
+  }
+  \item{var_pars}{
     Optional.
-}
+    Time-varying inputs.
+  }
+  \item{add_pars}{
+    Use to add or change parameters.
+  }
+  \item{pars}{
+    List of all parameters combined together.
+    Expected to only be used internally with recursive calls.
+  }
+  \item{startupt}{
+    Number of startup runs.
+    Integer.
+  }
   \item{starting}{
     Starting conditions.
-    Output (\code{value = 'ts'}) from a previous \code{abm()} call.
-    Values here for microbial biomass and slurry mass override those set in other arguments.
-    Used to start one simulation where another ended.
-    Optional.
-}
-  \item{approx_method_temp}{
-    Sets type of interpolation when temperature is variable (\code{temp_c} is a data frame).
-    Passed to \code{\link{approxfun}} through hidden (not exported) \code{makeTimeFunc()}.
-    See vignette. Suggested temperature sets for outside slurry storage are provided in \code{\link{temperatures}}.
-}
-  \item{approx_method_pH}{
-    Sets type of interpolation when pH is variable (\code{pH} is a data frame).
-    Passed to \code{\link{approxfun}} through hidden (not exported) \code{makeTimeFunc()}.
-    See vignette.
-}
-  \item{approx_method_vent_air}{
-    Sets type of interpolation when ventilation flow rate is variable.
-    Passed to \code{\link{approxfun}} through hidden (not exported) \code{makeTimeFunc()}.
-    See vignette.
-}
-  \item{par_key}{
-    Special character used to set individual nested elements within some arguments.
-    See vignette for examples.
-}
-  \item{value}{
-    Sets the type of output.
-    Default (\code{'ts'}) returns a data frame with the complete time series.
-    For a summary, use \code{'summ'} (or \code{'sum'} or \code{'summary'}).
-    code{'eff'} will return only those rows where slurry was removed--this option is convenient for working with effluent slurry.
-}
+  }
   \item{warn}{
     Set to \code{FALSE} to suppress warnings.
-}
+  }
+  \item{quiet}{
+    Set to \code{TRUE} to suppress some messages.
+  }
 }
 
 \details{

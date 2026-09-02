@@ -121,6 +121,16 @@ extract_series <- function(
     # Add any missing time 0
     if (dat[1, 'time'] > 0) {
       dat <- rbind(c(0, dat$slurry_mass[1]), dat)
+    } else if (pars$approx_method == 'early' && nrow(dat) > 1 && dat[2, 'slurry_mass'] < dat[1, 'slurry_mass']) {
+      # With the 'early' approximation, a decrease within the first interval
+      # would otherwise be flagged (in calc_prod_rem()) as a removal at time
+      # 0 itself, overwriting the given initial slurry_mass with the next
+      # row's (lower) value. Insert a distinct near-zero buffer row so the
+      # removal is instead captured just after time 0, preserving the given
+      # initial slurry_mass at time 0.
+      warning('New first row with time > 0 inserted into dat.\nTo prevent, avoid first time of 0 & approx_method of "early" & decrease in slurry_mass from row 1 to 2.')
+      dat[1, 'time'] <- min(1E-6, dat[2, 'time'] / 2)
+      dat <- rbind(c(0, dat$slurry_mass[1]), dat)
     }
 
     # For 'mid' option, other variables are copied from previous time

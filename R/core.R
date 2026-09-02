@@ -9,8 +9,8 @@ abmneo <- function(
   sub_pars = NULL,
   chem_pars = list(COD_conv = c(CH4 = 5.32, SO4 = -1.99, CO2 = 0, H2S = 0.498), gases = c('CH4', 'CO2', 'H2S')),
   ctrl_pars = list(
-    approx_method = 'early',
-    fill_method = 'interp',
+    rem_align_method = 'early',
+    var_fill_method = 'interp',
     par_key = '\\.',
     h_rate_max_temp = 313
   ),

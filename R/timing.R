@@ -45,7 +45,7 @@ get_schedule <- function(
 
 
 # Checks and prepares slurry mass series
-# Applies approx_method to slurry_mass
+# Applies rem_align_method to slurry_mass
 extract_series <- function(
   storage,
   pars,
@@ -121,20 +121,20 @@ extract_series <- function(
     # Add any missing time 0
     if (dat[1, 'time'] > 0) {
       dat <- rbind(c(0, dat$slurry_mass[1]), dat)
-    } else if (pars$approx_method == 'early' && nrow(dat) > 1 && dat[2, 'slurry_mass'] < dat[1, 'slurry_mass']) {
+    } else if (pars$rem_align_method == 'early' && nrow(dat) > 1 && dat[2, 'slurry_mass'] < dat[1, 'slurry_mass']) {
       # With the 'early' approximation, a decrease within the first interval
       # would otherwise be flagged (in calc_prod_rem()) as a removal at time
       # 0 itself, overwriting the given initial slurry_mass with the next
       # row's (lower) value. Insert a distinct near-zero buffer row so the
       # removal is instead captured just after time 0, preserving the given
       # initial slurry_mass at time 0.
-      warning('New first row with time > 0 inserted into dat.\nTo prevent, avoid first time of 0 & approx_method of "early" & decrease in slurry_mass from row 1 to 2.')
+      warning('New first row with time > 0 inserted into dat.\nTo prevent, avoid first time of 0 & rem_align_method of "early" & decrease in slurry_mass from row 1 to 2.')
       dat[1, 'time'] <- min(1E-6, dat[2, 'time'] / 2)
       dat <- rbind(c(0, dat$slurry_mass[1]), dat)
     }
 
     # For 'mid' option, other variables are copied from previous time
-    if (pars$approx_method == 'mid') {
+    if (pars$rem_align_method == 'mid') {
       # Get midpoint time
       ir <- which(- c(0, diff(series[, 'slurry_mass'])) > 0)
       tt <- (series[ir, 'time']  + series[ir - 1, 'time']) / 2
@@ -181,16 +181,16 @@ clean_series <- function(
     # And slurry_prod_rate should always use forward
     series$slurry_prod_rate <- fill_down(series$slurry_prod_rate)
 
-    if (pars$fill_method == 'interp') {
+    if (pars$var_fill_method == 'interp') {
       if (any(sapply(series, class) == 'list')) {
-        warning('ctrl_pars element fill_method \"interp\" cannot be used with list elements, so reverting to \"forward\"')
-        pars$fill_method <- 'forward'
+        warning('ctrl_pars element var_fill_method \"interp\" cannot be used with list elements, so reverting to \"forward\"')
+        pars$var_fill_method <- 'forward'
       } else {
         series <- interpm(series, 'time', names(series)[-1], rule = 2)
       }
     } 
 
-    if (pars$fill_method == 'forward') {
+    if (pars$var_fill_method == 'forward') {
        series <- fill_down_df(series)
     }
   } 
@@ -223,9 +223,9 @@ calc_prod_rem <- function(
 
   # Removals ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Note final 0--alignment is a bit tricky
-  if (pars$approx_method %in% c('late', 'mid')) {
+  if (pars$rem_align_method %in% c('late', 'mid')) {
     removals <- - c(0, diff(series[-nrow(series), 'slurry_mass']), 0) > 0
-  } else if (pars$approx_method == 'early') {
+  } else if (pars$rem_align_method == 'early') {
     removals <- - c(diff(series[, 'slurry_mass']), 0) > 0
   } 
   series$removal <- removals
@@ -237,7 +237,7 @@ calc_prod_rem <- function(
   series$slurry_prod_rate <- slurry_prod_rate_t
 
   # Residual slurry for emptying ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (pars$approx_method == 'late') {
+  if (pars$rem_align_method == 'late') {
     series$resid_mass <- series$slurry_mass
   } else {
     series$resid_mass <- c(series$slurry_mass[-1], 0)

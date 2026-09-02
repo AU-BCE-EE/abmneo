@@ -17,7 +17,7 @@ pack_pars <- function(
   if (!is.null(var_pars) && !is.null(var_pars$var)) {
     # Move extra var_pars into first (var) element, possibly as lists within each data frame element~
     var_pars <- combine_var_pars(var_pars)
-    if (ctrl_pars$approx_method == 'mid') {
+    if (ctrl_pars$rem_align_method == 'mid') {
       # Shift to mid time
       tt <- var_pars[['var']]$time
       var_pars[['var']]$time <- c(tt[1], tt[-length(tt)] + diff(tt) / 2)

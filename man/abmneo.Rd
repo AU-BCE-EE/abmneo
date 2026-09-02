@@ -1,54 +1,39 @@
-\name{abm}
-\alias{abm}
+\name{abmneo}
+\alias{abmneo}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-  The ABM model
+  An ABM model
 }
 \description{
   An implementation of the ABM model for simulation of anaerobic biodegradation of organic substrates.
 }
 \usage{
-abm(days = 365, 
-    delta_t = 1,
-    times = NULL,
-    wthr_pars = ABM::wthr_pars2.0,
-    evap_pars = list(evap = 0.5 * et(temp_C = ABM::wthr_pars2.0$temp_air_C, 
-                                     pres_kpa = ABM::wthr_pars2.0$pres_kpa, 
-                                     rs = ABM::wthr_pars2.0$rs)), 
-    mng_pars = list(slurry_prod_rate = 5700, 
-                    slurry_mass = 39000,     
-                    storage_depth = 0.6,     
-                    resid_depth = 0.05,      
-                    floor_area = 650,        
-                    area = 715,              
-                    empty_int = 42,          
-                    temp_C = 20,
-                    wash_water = 75000,            
-                    wash_int = NA,
-                    rest_d = 5,
-                    cover = 'none',
-                    resid_enrich = 0.9,
-                    slopes = c(urea = NA, slurry_prod_rate = NA),
-                    graze = c(start = 'May', duration = 0, hours_day = 0),
-                    scale = c(ks_coefficient = 1, qhat_opt = 1, 
-                              xa_fresh = 1, yield = 1, alpha_opt = 1)),
-    man_pars = ABM::man_pars2.0,
-    init_pars = list(conc_init = man_pars$conc_fresh),
-    grp_pars = ABM::grp_pars2.0,
-    mic_pars = ABM::mic_pars2.0,
-    chem_pars = ABM::chem_pars2.0,
-    arrh_pars = ABM::arrh_pars2.0,
-    resp = TRUE,
-    add_pars = NULL,
-    pars = NULL,
-    startup = 0,
-    starting = NULL,
-    approx_method_temp = 'linear', 
-    approx_method_pH = 'linear',
-    approx_method_vent_air = 'linear',
-    par_key = '\\\\.',
-    value = 'ts',                 
-    warn = TRUE)
+abmneo(
+  storage,
+  days = 365,
+  delta_t = 1,
+  times = NULL,
+  inf_pars = NULL,
+  grp_pars = NULL,
+  sub_pars = NULL,
+  chem_pars = list(
+    COD_conv = c(CH4 = 5.32, SO4 = -1.99, CO2 = 0, H2S = 0.498), 
+    gases = c('CH4', 'CO2', 'H2S')
+  ),
+  ctrl_pars = list(
+    rem_align_method = 'mid',
+    var_fill_method = 'interp',
+    par_key = '\\.',
+    h_rate_max_temp = 313
+  ),
+  var_pars = list(var = NULL),
+  add_pars = NULL,
+  pars = NULL,
+  startup = 0,
+  starting = NULL,
+  warn = TRUE,
+  quiet = FALSE
+)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -240,12 +225,12 @@ abm(days = 365,
 }
 
 \value{
-  By default, a data frame with most input and all output variables in a time series.
+  A data frame with output and some input variables.
   Each row is separated by the value set with \code{delta_t}.
   Typically the primary variable of interest is methane emission, which is returned as a total (g) and rate (g/d), overall or normalized to COD or VS loading.
   These columns all start with \code{CH4}.
   Microbial biomass (g) is given in columns with names that match those used for the names of the groups.
-  For more details, see the Output section in the vignette.
+  For more details, see the vignette.
 }
 
 \references{
@@ -276,18 +261,17 @@ Biosyst Eng \doi{10.1016/j.biosystemseng.2022.08.007}
 }
 
 \examples{
-# Simulation 1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Run model with default parameter values and input variables
-out1 <- abm()
 
-# Plot cumulative CH4 emission (g) and emission rate (g/d)
-plot(CH4_emis_cum ~ time, data = out1, type = 'l')
-plot(CH4_emis_rate ~ time, data = out1, type = 'l')
+out_dig <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01
+)
 
-# Plot microbial biomass
-matplot(out1$time, out1[, nn <- c('m0', 'm1', 'm2', 'sr1')],
-        type = 'l', lty = 1, xlab = 'Time (d)', ylab = 'Microbial biomass (g)')
-legend('topleft', nn, col = 1:4, lty = 1)
+plot(CH4 ~ time, data = out_dig, type = 'l')
+
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

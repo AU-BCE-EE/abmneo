@@ -136,9 +136,9 @@ extract_series <- function(
     # For 'mid' option, other variables are copied from previous time
     if (pars$rem_align_method == 'mid') {
       # Get midpoint time
-      ir <- which(- c(0, diff(series[, 'slurry_mass'])) > 0)
-      tt <- (series[ir, 'time']  + series[ir - 1, 'time']) / 2
-      nr <- series[ir, ]
+      ir <- which(- c(0, diff(dat[, 'slurry_mass'])) > 0)
+      tt <- (dat[ir, 'time']  + dat[ir - 1, 'time']) / 2
+      nr <- dat[ir, ]
       nr$time <- tt
       dat <- rbind(dat, nr)
       dat <- dat[order(dat$time), ]

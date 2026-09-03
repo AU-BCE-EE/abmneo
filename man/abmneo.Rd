@@ -51,13 +51,99 @@ abmneo(
     Only available with variable slurry mass.
   }
   \item{inf_pars}{
-    Influent parameters.
+    Influent and initial slurry parameters, as a named list with elements:
+    \describe{
+      \item{\code{VFA_fresh}, \code{VFA_init}}{
+        Numeric scalars giving influent and initial concentration of the intermediate VFA pool, in the same concentration units as \code{xa_fresh}/\code{xa_init} in \code{grp_pars}.
+      }
+      \item{\code{pH}}{
+        Numeric scalar giving slurry pH. Can also be supplied as a time-varying forcing variable via \code{var_pars}, in which case the \code{var_pars} value overrides this default at each time step.
+      }
+      \item{\code{dens}}{
+        Numeric scalar giving slurry density (kg/m\eqn{^3}{^3}), used with \code{storage} depth and area to determine slurry mass.
+      }
+    }
+    See \code{\link{inf_pars_dig_01}} for a complete example.
   }
   \item{grp_pars}{
-    Microbial group parameters.
+    Parameters for microbial groups, as a named list with elements:
+    \describe{
+      \item{\code{grps}}{
+        Character vector of microbial group names, e.g. \code{c('m1', 'm2', 'm3')} for methanogen groups 1, 2, and 3.
+        Defines the number, names, and order of groups used by all other elements below.
+      }
+      \item{\code{yield}, \code{xa_fresh}, \code{xa_init}, \code{d_max}}{
+        Named numeric vectors, one value per group in \code{grps}.
+        \code{yield} is microbial biomass yield in g biomass COD / g consumed substrate COD.
+        \code{xa_init} and \code{xa_fresh} are initial and influent microbial biomass concentration in g biomass COD / kg.
+        And \code{d_max} is the maximum death/decay rate in 1/d.
+        The name \code{"default"} can be used instead of group names to apply a single value to some or all groups, e.g. \code{c(default = 0.05)} or \code{c(m1 = 0.04, default = 0.05)} .
+      }
+      \item{\code{qhat_opt}, \code{T_opt}, \code{T_min}, \code{T_max}}{
+        Named numeric vectors giving maximum substrate utilization rate (\code{qhat_opt}) and Cardinal Temperature Model parameters (maximum specific substrate uptake rate, and optimum/minimum/maximum temperature, respectively) for each group.
+        As with the elements above, the name \code{"default"} can be used instead of group names to apply a single value to some or all groups.
+      }
+      \item{\code{ksmat}}{
+        Numeric matrix of half-saturation constants, with one row per limiting reactant and one column per group.
+        Row and column names must match reactant and group (\code{grps}) names. For example:
+        \preformatted{
+ksmat <- matrix(
+  c(1.1, 1.1, 1.1, 1.1, 1.1),
+  nrow = 1,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA'),
+    c('m1', 'm2', 'm3', 'm4', 'm5')
+  )
+)}
+      }
+      \item{\code{mstoich}}{
+        Numeric matrix of microbial reaction stoichiometry, with one row per reactant/product and one column per group.
+        Negative values indicate consumption, positive values production.
+        Row and column names must match reactant/product and group (\code{grps}) names.
+        Unlike the elements above, \code{mstoich} is \emph{not} expanded automatically to match \code{grps}, so it must already include a column for every group. For example:
+        \preformatted{
+mstoich <- matrix(
+  c(
+    -1, -1, -1, -1, -1,
+     1,  1,  1,  1,  1
+  ),
+  nrow = 2,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA', 'CH4'),
+    c('m1', 'm2', 'm3', 'm4', 'm5')
+  )
+)}
+      }
+    }
+    See \code{\link{grp_pars_dig_01}} for a complete example.
   }
   \item{sub_pars}{
-    Substrate parameters.
+    Substrate parameters, as a named list with elements:
+    \describe{
+      \item{\code{subs}}{
+        Character vector of particulate substrate names, e.g. \code{c('PS')} for a single group particulate substrate.
+        Defines the number, names, and order of substrates used by the elements below.
+        \code{xd} (see below) is added to \code{subs} automatically if not already included.
+      }
+      \item{\code{xd}}{
+        Character scalar giving the name of the substrate pool that receives dead/decayed microbial biomass, e.g. \code{'xd'}.
+        Should match an element of \code{subs}; otherwise it is added automatically.
+      }
+      \item{\code{sub_enrich}}{
+        Character vector, a subset of \code{subs}, naming substrates that are enriched (rather than diluted in proportion to residual slurry mass) during a removal event. See \code{resid_enrich} in the \code{storage} object.
+      }
+      \item{\code{h_rate_ref}, \code{h_rate_q10}}{
+        Named numeric vectors, one value per substrate in \code{subs} (including \code{xd}).
+        \code{h_rate_ref} is the hydrolysis rate constant at a reference temperature of 20 C (1/d), and \code{h_rate_q10} is the associated Q10 temperature coefficient.
+        As with \code{grp_pars} vector elements, the name \code{"default"} can be used instead of substrate names to apply a single value to some or all substrates.
+      }
+      \item{\code{sub_fresh}, \code{sub_init}}{
+        Named numeric vectors of influent and initial substrate concentration, one value per substrate in \code{subs} (including \code{xd}).
+      }
+    }
+    See \code{\link{sub_pars_dig_01}} for a complete example.
   }
   \item{chem_pars}{
     Chemical parameters.

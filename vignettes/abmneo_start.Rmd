@@ -681,6 +681,8 @@ lines(CH4_emis_rate ~ time, data = out_var_1s, col = 'red')
 lines(CH4_emis_rate ~ time, data = out_var_3s, col = 'blue', lty = 2)
 ```
 
+The `times` argument
+
 # References
 
 Dalby, F.R., Hafner, S.D., Petersen, S.O., Vanderzaag, A., Habtewold, J., Dunfield, K., Chantigny, M.H., Sommer, S.G., 2021. A mechanistic model of methane emission from animal slurry with a focus on microbial groups. PLOS ONE 16, e0252881. 10.1371/journal.pone.0252881

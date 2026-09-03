@@ -47,23 +47,22 @@ abmneo(
     Time step in output (d).
   }
   \item{times}{
-    Alternative to \code{delta_t}, use to return specific times only.
-    Only available with variable slurry mass.
+    Alternative to \code{delta_t}; use to return specific times only.
   }
   \item{inf_pars}{
     Influent and initial slurry parameters, as a named list with elements:
     \describe{
       \item{\code{VFA_fresh}, \code{VFA_init}}{
-        Numeric scalars giving influent and initial concentration of the intermediate VFA pool, in the same concentration units as \code{xa_fresh}/\code{xa_init} in \code{grp_pars}.
+        Numeric values with influent and initial concentration of the intermediate VFA pool, in the same concentration units as \code{xa_fresh}/\code{xa_init} in \code{grp_pars}.
       }
       \item{\code{pH}}{
-        Numeric scalar giving slurry pH. Can also be supplied as a time-varying forcing variable via \code{var_pars}, in which case the \code{var_pars} value overrides this default at each time step.
+        Surry pH. Can also be supplied as a time-varying forcing variable via \code{var_pars}, in which case the \code{var_pars} value overrides this default at each time step.
       }
       \item{\code{dens}}{
-        Numeric scalar giving slurry density (kg/m\eqn{^3}{^3}), used with \code{storage} depth and area to determine slurry mass.
+        Slurry density (kg/m3), used with \code{storage} area and slurry mass to determine slurry depth.
       }
     }
-    See \code{\link{inf_pars_dig_01}} for a complete example.
+    See \code{\link{inf_pars_dig_01}} for an example.
   }
   \item{grp_pars}{
     Parameters for microbial groups, as a named list with elements:
@@ -77,7 +76,7 @@ abmneo(
         \code{yield} is microbial biomass yield in g biomass COD / g consumed substrate COD.
         \code{xa_init} and \code{xa_fresh} are initial and influent microbial biomass concentration in g biomass COD / kg.
         And \code{d_max} is the maximum death/decay rate in 1/d.
-        The name \code{"default"} can be used instead of group names to apply a single value to some or all groups, e.g. \code{c(default = 0.05)} or \code{c(m1 = 0.04, default = 0.05)} .
+        The keyword name \code{default} can be used instead of group names to apply a single value to some or all groups, e.g. \code{c(default = 0.05)} or \code{c(m1 = 0.04, default = 0.05)} .
       }
       \item{\code{qhat_opt}, \code{T_opt}, \code{T_min}, \code{T_max}}{
         Named numeric vectors giving maximum substrate utilization rate (\code{qhat_opt}) and Cardinal Temperature Model parameters (maximum specific substrate uptake rate, and optimum/minimum/maximum temperature, respectively) for each group.
@@ -143,7 +142,7 @@ mstoich <- matrix(
         Named numeric vectors of influent and initial substrate concentration, one value per substrate in \code{subs} (including \code{xd}).
       }
     }
-    See \code{\link{sub_pars_dig_01}} for a complete example.
+    See \code{\link{sub_pars_dig_01}} for an example.
   }
   \item{chem_pars}{
     Chemical parameters.

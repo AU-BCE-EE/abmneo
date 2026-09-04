@@ -88,8 +88,13 @@ update_var_pars <- function(series, pars, y, i) {
     if (is.list(newval)) {
       newval <- newval[[1]]
     }
-    pars[[pn]] <- newval
+    if (length(newval) > 1 & !is.null(names(newval))) {
+      pars[[pn]][names(newval)] <- newval # For things like grp_pars, where only some may be supplied
+    } else {
+      pars[[pn]] <- newval
+    }
   }
+
 
   # Temperature and temperature-dependent pars could change
   # Convert temperature to K in case any C values were given in var

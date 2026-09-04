@@ -14,7 +14,7 @@ pack_pars <- function(
 ) {
 
   # Time-variable pars initial processing
-  if (!is.null(var_pars) && !is.null(var_pars$var)) {
+  if (!is.null(var_pars)) {
     # Move extra var_pars into first (var) element, possibly as lists within each data frame element~
     var_pars <- combine_var_pars(var_pars)
     if (ctrl_pars$rem_align_method == 'mid') {
@@ -36,7 +36,7 @@ pack_pars <- function(
   # * series dat must have only time and slurry_mass
   # * order of all grp pars must match
   # * check that all reactants in mstoich have a ksmat value, otherwise we get zero metabolism for that grp 
-  # 
+  # * Make sure all elements of var_par have names
 
   # Check for identical dimensions in inhibition pars
   if (!is.null(pars$ic0) && !isTRUE(all.equal(dimnames(pars$ic0), dimnames(pars$ic100)))) {
@@ -220,11 +220,22 @@ expand_pars <- function(
 }
   
 
+# This was some brilliant stuff, and I came up with the original code before AI
+# Will someday look back fondly on those days
 combine_var_pars <- function(var_pars) {
+
+  if (length(var_pars) == 1 && names(var_pars) == 'var') {
+    return(var_pars)
+  }
+
+  # If the var element is missing from var_pars, create it
+  if (!('var' %in% names(var_pars))) {
+    var_pars$var <- var_pars[[1]][, 'time', drop = FALSE]
+  }
   
   # If there is more than one data frame in var_pars, combine into one
   if (length(var_pars) > 1) {
-    for (i in 2:length(var_pars)) {
+    for (i in which(names(var_pars) != 'var')) {
       dv <- var_pars[[i]]
       nv <- names(var_pars)[[i]]
       ll <- list()

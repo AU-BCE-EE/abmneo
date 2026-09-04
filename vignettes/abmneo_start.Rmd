@@ -761,6 +761,7 @@ out_reg_1$slurry_mass
 Let's keep that same final slurry mass in the pit for a few months. 
 We'll use `add_pars` to change the initial slurry mass and slurry addition rate here, but we could also create a modified `storage` object.
 Let's change the temperature as well, just for fun.
+Notice the simplest way to indicate that emptying does not occur, with the `empty_int` argument (a value of `0` would have the same effect).
 
 ```{r}
 out_reg_2 <- abmneo(
@@ -769,7 +770,7 @@ out_reg_2 <- abmneo(
   inf_pars = inf_ref,
   grp_pars = grp_ref,
   sub_pars = sub_ref,
-  add_pars = list(slurry_mass = 146.5, slurry_prod_rate = 0, empty_int = 1e3, temp_C = 16),
+  add_pars = list(slurry_mass = 146.5, slurry_prod_rate = 0, empty_int = 0, temp_C = 16),
   starting = out_reg_1
 )
 ```
@@ -808,6 +809,71 @@ legend('topright', legend = nn, col = cc, lty = 1:length(nn))
 
 We could edit the output from one simulation before using it in the `starting` argument of the next.
 This could be used to simulate, e.g., washing.
+
+The `var_pars` example above doesn't show everything that argument can do. 
+As an example, let's kill off methanogen groups `m0` and `m1` in the `out_reg_2` simulation after 50 d and see what happens to methane production.
+Here are the original results.
+
+```{r}
+matplot(
+  out_reg_2$time, 
+  out_reg_2[, nn <- grp_ref$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1, type = 'l',
+  ylab = 'Xa'
+)
+legend('topright', legend = nn, col = cc, lty = 1)
+```
+
+```{r}
+out_reg_2k <- abmneo(
+  storage = stor_reg_ref,
+  3 * 30,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  add_pars = list(slurry_mass = 146.5, slurry_prod_rate = 0, empty_int = 0, temp_C = 16),
+  var_pars = list(qhat_opt = data.frame(time = c(0, 50), m0 = c(0.463, 0), m1 = c(0.746, 0))),
+  starting = out_reg_1
+)
+```
+
+Let's add to the plot from above.
+
+```{r}
+matlines(
+  out_reg_2k$time, 
+  out_reg_2k[, nn <- grp_ref$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'),
+  lty = 3
+)
+legend('topright', legend = nn, col = cc, lty = 3)
+```
+
+To combine this type of `var_pars` input with a simple scalar parameter, just put the scalar in a `var` data frame, like this:
+
+```{r}
+out_reg_2kt <- abmneo(
+  storage = stor_reg_ref,
+  3 * 30,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  add_pars = list(slurry_mass = 146.5, slurry_prod_rate = 0, empty_int = 0, temp_C = 16),
+  var_pars = list(var = data.frame(time = c(0, 60), temp_C = c(16, 5)), qhat_opt = data.frame(time = c(0, 50), m0 = c(0.463, 0), m1 = c(0.746, 0))),
+  starting = out_reg_1
+)
+```
+
+```{r}
+matlines(
+  out_reg_2kt$time, 
+  out_reg_2kt[, nn <- grp_ref$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'),
+  lty = 4
+)
+legend('topright', legend = nn, col = cc, lty = 3)
+```
 
 # References
 

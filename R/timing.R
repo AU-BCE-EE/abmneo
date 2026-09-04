@@ -61,50 +61,21 @@ extract_series <- function(
     if(empty_int == 0 || is.na(empty_int)) {
       empty_int <- days + 1
     }
-    
-    # Figure out time intervals for loop
-    if (!is.na(storage$wash_int) && storage$wash_water > 0) {  
-      wash_int <- storage$wash_int
-      rest_d <- storage$rest_d
-    } else {
-      wash_int <- Inf
-      rest_d <- 0
-    }
 
-    # Continue sorting out intervals
-    i <- 0
-    t_int <- 0
-    t_nowash <- 0
-    wash <- FALSE
-
-    # Each interval is either 1) the fixed empty_int or if time between washings would be exceeded, 
-    # 2) time to get to a washing event, or 3) time until end of simulation
-    while (sum(t_int, wash * rest_d) < days) {
-      i <- i + 1
-      t_int[i] <- min(wash_int - t_nowash, empty_int, days - sum(t_int, wash * rest_d))
-      if (t_int[i] == wash_int - t_nowash) {
-        wash[i] <- TRUE
-        t_nowash <- 0
-      } else {
-        wash[i] <- FALSE
-        t_nowash <- t_nowash + t_int[i]
-      }
-    }
+    n_int <- ceiling(days / empty_int)
+    t_int <- rep(empty_int, n_int) 
+    t_int[n_int] <- min(days - sum(t_int[-1]), t_int[n_int])
+    t_cum <- cumsum(t_int)
 
     # Create dat data frame
     # First resid mass, where first row is end of first interval
-    resid_mass <- c(storage$slurry_mass, rep(storage$resid_depth * pars$area * pars$dens, length(t_int) - 1))
     # dat has an additional (time 0) row
+    resid_mass <- storage$resid_depth * pars$area * pars$dens
     dat <- data.frame(
-      time = cumsum(c(0, t_int)), 
-      slurry_mass = c(
-        storage$slurry_mass,
-	storage$slurry_prod_rate * t_int + resid_mass
-      ),
-      resid_mass = storage$resid_depth * pars$area * pars$dens,
+      time = c(0, t_cum),
+      slurry_mass = c(storage$slurry_mass, storage$slurry_prod_rate * t_int[1] + storage$slurry_mass, storage$slurry_prod_rate * t_int[-1] + resid_mass),
+      resid_mass = resid_mass,
       removal = TRUE,
-      wash_water = storage$wash_water,
-      rest_days = storage$rest_d,
       slurry_prod_rate = storage$slurry_prod_rate
     )
 
@@ -208,7 +179,6 @@ clean_series <- function(
     t_end <- days
     series <- rbind(series, series[nrow(series), ])
     series[nrow(series), 'time'] <- days
-    # But may need to make sure washing is not repeated somehow!
   }
 
   return(series)

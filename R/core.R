@@ -147,10 +147,9 @@ abm_core <- function(
     t_call <- min(max(schedule[[i]]), t_rem)
 
     # Fill in current pars from var
-    # Also adds 2 temperature-dependent derivative vectors
     pars <- update_var_pars(series, pars, y, i - 1)
 
-    # Create default y.eff vector with zeros because washing could occur, and dat needs columns
+    # Create default y.eff vector with zeros for use before first emptying
     y.eff <- 0 * empty_store(y, skip = TRUE, ignore_names = unique(c(pars$gases, '_emis', '_load', '_cum_', '_conv_', 'cum$')), warn = FALSE)$eff
 
     # If there is a removal event, remove slurry before calling up ODE solver

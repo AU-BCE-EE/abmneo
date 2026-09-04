@@ -260,17 +260,16 @@ stor_reg_ref <- list(
   area = 0.65,              
   temp_C = 20,
   resid_enrich = 0.6,
-  slurry_mass = 7,     
+  slurry_mass = 6.5,     
   resid_depth = 0.01,      
-  empty_int = 28,          
-  wash_water = 0,            
-  wash_int = 90,
-  rest_d = 1
+  empty_int = 28
 )
 ```
 
 These are approximate values for slurry in a pig house with monthly emptying, with values for one pig.
 Units here are kg for mass, m for length, and d for time.
+Unlike the ABM package, washing of a slurry storage, e.g., between animal batches, is not incorporated.
+(But it could be more manually incorporated with the `starting` argument--see the final example.)
 
 ## Series option
 
@@ -553,7 +552,6 @@ plot(slurry_mass ~ time, data = out_dig, type = 'l', ylim = c(0, 2e6))
 # Optional arguments
 
 This section briefly presents the use of some of the optional `abmneo()` arguments.
-Only a subset--those that are probably the most useful--are presented here.
 
 The optional `add_pars` argument can be used to change individual parameters without repeating all the values in an argument.
 For example, in `ctrl_pars` there is a `rem_align_method` parameter that determines the interpretation of slurry removal from a series `storage` object.
@@ -681,7 +679,135 @@ lines(CH4_emis_rate ~ time, data = out_var_1s, col = 'red')
 lines(CH4_emis_rate ~ time, data = out_var_3s, col = 'blue', lty = 2)
 ```
 
-The `times` argument
+The `times` argument returns specific times only.
+For example, for (roughly) monthly output:
+
+```{r}
+out_var_sel <- abmneo(
+  storage = stor_ser_ref,
+  365,
+  times = seq(31, 365, length.out = 12),
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  var_pars = list(var = temp_dat)
+)
+```
+
+The normal, instantaneous (point) and cumulative, results are the same regardless of which times are returned.
+
+```{r}
+plot(CH4_emis_rate ~ time, data = out_var, type = 'l')
+lines(CH4_emis_rate ~ time, data = out_var_sel, type = 'o', pch = 19, col = 'red')
+```
+
+```{r}
+plot(CH4 ~ time, data = out_var, type = 'l')
+lines(CH4 ~ time, data = out_var_sel, type = 'o', pch = 19, col = 'red')
+```
+
+But there is another output column `CH4_emis_rate_ave` that is not.
+This column has the average rate over the preceding interval.
+
+```{r}
+plot(CH4_emis_rate_ave ~ time, data = out_var, type = 'S')
+lines(CH4_emis_rate_ave ~ time, data = out_var_sel, type = 'S', pch = 19, col = 'red')
+```
+
+The `times` argument also works for "regular" storage inputs.
+
+```{r}
+out_reg_sel <- abmneo(
+  storage = stor_reg_ref,
+  365,
+  times = seq(31, 365, length.out = 12),
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref
+)
+```
+
+```{r}
+plot(CH4_emis_rate_ave ~ time, data = out_reg, type = 'S')
+lines(CH4_emis_rate_ave ~ time, data = out_reg_sel, type = 'S', col = 'red')
+```
+
+In this case, it is much easier to see the slight increase in emission rate over time.
+This simulation would benefit from a startup period!
+
+The `starting` argument is used to feed the results from one simulation into another one.
+The only results transfered over are concentrations--of substrates, all solutes, and microbial biomass.
+With the ability to change any inputs, this argument provides a lot of flexiblity.
+
+For example, we can simulate 3 emptying cycles, a rest period, washing (by 10x dilution of slurry), and then another 3 months.
+First the 3 cycles:
+
+```{r}
+out_reg_1 <- abmneo(
+  storage = stor_reg_ref,
+  3 * 28,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref
+)
+```
+
+Here is slurry mass over that time:
+
+```{r}
+out_reg_1$slurry_mass
+```
+
+Let's keep that same final slurry mass in the pit for a few months. 
+We'll use `add_pars` to change the initial slurry mass and slurry addition rate here, but we could also create a modified `storage` object.
+Let's change the temperature as well, just for fun.
+
+```{r}
+out_reg_2 <- abmneo(
+  storage = stor_reg_ref,
+  3 * 30,
+  inf_pars = inf_ref,
+  grp_pars = grp_ref,
+  sub_pars = sub_ref,
+  add_pars = list(slurry_mass = 146.5, slurry_prod_rate = 0, empty_int = 1e3, temp_C = 16),
+  starting = out_reg_1
+)
+```
+
+We can combine the output from the two cosecutive simulations, but any cumulative value will be incorrect in the second one.
+
+```{r}
+out_reg_2$time <- out_reg_2$time + max(out_reg_1$time)
+out_comb <- rbind(out_reg_1, out_reg_2)
+```
+
+```{r}
+plot(CH4_emis_rate ~ time, data = out_comb, type = 'l')
+```
+
+What drives that increase in emission rate?
+There is no new substrate added.
+Slurry mass should be constant after the end of the first simulation.
+
+```{r}
+plot(slurry_mass ~ time, data = out_comb, type = 'l')
+```
+
+But take a look at what happens to the microbial community when slurry removal stops.
+
+```{r}
+matplot(
+  out_comb$time, 
+  out_comb[, nn <- grp_ref$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1:length(nn), type = 'l',
+  ylab = 'Xa'
+)
+legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+```
+
+We could edit the output from one simulation before using it in the `starting` argument of the next.
+This could be used to simulate, e.g., washing.
 
 # References
 

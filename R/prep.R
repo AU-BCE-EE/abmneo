@@ -3,15 +3,11 @@
 
 # Create initial state variable vector
 get_init_state <- function(
-  storage, 
-  pars
+  pars,
+  series
 ) {
  
-  if (storage$type == 'series') {
-    slurry_mass_init <- storage$dat[1, 'slurry_mass']
-  } else {
-    slurry_mass_init <- storage$slurry_mass
-  }
+  slurry_mass_init <- series[1, 'slurry_mass']
 
   gas_init <- rep(0, length(pars$gases))
   names(gas_init) <- pars$gases

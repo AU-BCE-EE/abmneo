@@ -69,7 +69,7 @@ abmneo <- function(
   series <- clean_series(series, pars, days)
 
   # Create initial state variable vector
-  y <- get_init_state(storage, pars) 
+  y <- get_init_state(pars, series) 
 
   # Get timing of intervals (list of times)
   schedule <- get_schedule(

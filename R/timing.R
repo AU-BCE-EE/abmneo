@@ -57,7 +57,7 @@ extract_series <- function(
 
     # If empty interval is set to 0 or NA the storage is never emptied. 
     # Set to later than complete simulation
-    empty_int <- storage$empty_int
+    empty_int <- pars$empty_int
     if(empty_int == 0 || is.na(empty_int)) {
       empty_int <- days + 1
     }
@@ -70,13 +70,13 @@ extract_series <- function(
     # Create dat data frame
     # First resid mass, where first row is end of first interval
     # dat has an additional (time 0) row
-    resid_mass <- storage$resid_depth * pars$area * pars$dens
+    resid_mass <- pars$resid_depth * pars$area * pars$dens
     dat <- data.frame(
       time = c(0, t_cum),
-      slurry_mass = c(storage$slurry_mass, storage$slurry_prod_rate * t_int[1] + storage$slurry_mass, storage$slurry_prod_rate * t_int[-1] + resid_mass),
+      slurry_mass = c(pars$slurry_mass, pars$slurry_prod_rate * t_int[1] + pars$slurry_mass, pars$slurry_prod_rate * t_int[-1] + resid_mass),
       resid_mass = resid_mass,
       removal = TRUE,
-      slurry_prod_rate = storage$slurry_prod_rate
+      slurry_prod_rate = pars$slurry_prod_rate
     )
 
     # No intial (time 0) and no final removal

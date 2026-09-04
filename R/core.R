@@ -111,7 +111,7 @@ abmneo <- function(
   }
 
   # Add average emission rate
-  dat$CH4_emis_rate_ave <- c(NA, diff(dat$CH4) / diff(dat$time))
+  dat$CH4_emis_rate_ave <- diff(c(0, dat$CH4)) / diff(c(0, dat$time))
 
 
   # Return results

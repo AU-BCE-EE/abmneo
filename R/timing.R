@@ -157,6 +157,8 @@ clean_series <- function(
         warning('ctrl_pars element var_fill_method \"interp\" cannot be used with list elements, so reverting to \"forward\"')
         pars$var_fill_method <- 'forward'
       } else {
+        # Fill in nonsense values for resid_mass to avoid irrelvant error
+        series[!series$removal & is.na(series$resid_mass), 'resid_mass'] <- -99
         series <- interpm(series, 'time', names(series)[-1], rule = 2)
       }
     } 

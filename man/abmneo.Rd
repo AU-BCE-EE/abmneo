@@ -355,6 +355,8 @@ Biosyst Eng \doi{10.1016/j.biosystemseng.2022.08.007}
 }
 
 \note{
+The \code{abmneo} function is very flexible.
+See vignette for examples.
 %%  ~~further notes~~
 }
 
@@ -366,7 +368,9 @@ Biosyst Eng \doi{10.1016/j.biosystemseng.2022.08.007}
 
 \examples{
 
-out_dig <- abmneo(
+# One year of emission from a digestate storage tank
+# Using example and default inputs included with package
+out_dig1 <- abmneo(
   storage = storage_ex_dig_01,
   365,
   inf_pars = inf_pars_dig_01,
@@ -374,7 +378,22 @@ out_dig <- abmneo(
   sub_pars = sub_pars_dig_01
 )
 
-plot(CH4 ~ time, data = out_dig, type = 'l')
+plot(CH4 ~ time, data = out_dig1, type = 'l')
+
+# Add a 1 year startup period
+out_dig2 <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_dig_01,
+  sub_pars = sub_pars_dig_01,
+  startup = 1
+)
+
+plot(CH4 ~ time, data = out_dig1, type = 'l')
+lines(CH4 ~ time, data = out_dig2, col = 'red') 
+
+# See vignette for many more examples
 
 }
 

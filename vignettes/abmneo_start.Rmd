@@ -261,7 +261,7 @@ stor_reg_ref <- list(
   temp_C = 20,
   resid_enrich = 0.6,
   slurry_mass = 6.5,     
-  resid_depth = 0.01,      
+  resid_depth = 0.05,      
   empty_int = 28
 )
 ```
@@ -292,7 +292,8 @@ stor_ser_ref <- list(
 )
 ```
 
-This is for an outdoor storage tank, with values for single pig.
+This is meant to represent outdoor storage tank, with values for single pig.
+More typically, measured values (and more of them) will be read in and used.
 
 # Running the model
 

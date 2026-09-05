@@ -875,6 +875,110 @@ matlines(
 legend('topright', legend = nn, col = cc, lty = 3)
 ```
 
+The last optional feature covered here is inhibition.
+Two matrices are required--one with the highest concentration causing no effect and one with the lowest concentration causing complete inhibition.
+To use inhibition we need to create a complete `grp_pars` object.
+Here we'll do that with only 3 microbial groups, for less typing.
+
+```{r}
+grp_pars_inhib <- list(
+  grps = c('m1', 'm2','m3'),
+  yield = c(default = 0.05),
+  xa_fresh = c(default = 0.06),
+  xa_init = c(default = 0.06),
+  d_max = c(default = 0.02),
+  qhat_opt =  c(m1 = 0.5, m2 = 1, m3 = 2),
+  T_opt = c(m1 = 18, m2 = 28, m3 = 36),
+  T_min = c(m1 =  2, m2 =  2, m3 = 15),
+  T_max = c(m1 = 25, m2 = 38, m3 = 45),
+  ksmat = matrix(
+    c(1.1, 1.1, 1.1),
+    nrow = 1,
+    byrow = TRUE,
+    dimnames = list(
+      c('VFA'),
+      c('m1', 'm2', 'm3')
+    )
+  ),
+  mstoich = matrix(
+    c(
+      -1, -1, -1,
+       1,  1,  1
+    ),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(
+      c('VFA', 'CH4'),
+      c('m1', 'm2', 'm3')
+    )
+  ),
+  ic0 = matrix(
+    c(8, 8, 8,
+      8, 8, 8,
+      6, 6, 6),
+    nrow = 3,
+    byrow = TRUE,
+    dimnames = list(
+      c('VFA_conc', 'pH', 'pH'),
+      c('m1', 'm2', 'm3')
+    )
+  ), ic100 = matrix(
+    c(15, 15, 15,
+      9, 9, 9,
+      5, 5, 5),
+    nrow = 3,
+    byrow = TRUE,
+    dimnames = list(
+      c('VFA_conc', 'pH', 'pH'),
+      c('m1', 'm2', 'm3')
+    )
+  )
+)
+```
+
+Notice how pH is entered twice and reversed?
+That makes it inhibit activity both below 6 and above 8.
+Inhibition is complete below 5 and above 9.
+We'll use the example and default inputs for other arguments.
+
+```{r}
+out_inhib_1 <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_inhib,
+  sub_pars = sub_pars_dig_01
+)
+```
+
+```{r}
+plot(CH4_emis_rate ~ time, data = out_inhib_1, type = 'l')
+plot(pH ~ time, data = out_inhib_1, type = 'l')
+plot(VFA_conc ~ time, data = out_inhib_1, type = 'l')
+```
+
+The inhibitors never get close to the ic0 even.
+So we'll increase them with `var_pars`.
+
+```{r}
+devtools::load_all()
+out_inhib_2 <- abmneo(
+  storage = storage_ex_dig_01,
+  365,
+  inf_pars = inf_pars_dig_01,
+  grp_pars = grp_pars_inhib,
+  sub_pars = sub_pars_dig_01,
+  var_pars = list(var = data.frame(time = c(0, 100), pH = c(7.5, 5.2)))
+)
+```
+
+```{r}
+plot(CH4_emis_rate ~ time, data = out_inhib_1, type = 'l')
+lines(CH4_emis_rate ~ time, data = out_inhib_2, type = 'l', col = 'red')
+```
+
+There is our inhibition.
+
 # References
 
 Dalby, F.R., Hafner, S.D., Petersen, S.O., Vanderzaag, A., Habtewold, J., Dunfield, K., Chantigny, M.H., Sommer, S.G., 2021. A mechanistic model of methane emission from animal slurry with a focus on microbial groups. PLOS ONE 16, e0252881. 10.1371/journal.pone.0252881

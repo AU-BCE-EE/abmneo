@@ -187,6 +187,41 @@ mstoich <- matrix(
   )
 )}
       }
+      \item{\code{ic0}, \code{ic100}}{
+        Optional.
+        A pair of numeric matrices, with matching dimensions, that add inhibition of microbial activity by one or more inhibitors (inhibiting components).
+        Each matrix has one row per inhibitor and one column per microbial group (matching \code{grps}). \code{ic0} gives the inhibitor level at which inhibition begins (0\% effect), and \code{ic100} the level at which it is complete (100\% effect).
+        Inhibition is linear between these values.
+        A row name ending in \code{"_conc"} (e.g. \code{"VFA_conc"}) refers to that component's concentration in the simulated slurry and any other row name (e.g. \code{"pH"}) is matched directly to a scalar parameter of the same name (from \code{inf_pars}, \code{storage}, etc.), which can be constant or time-varying via \code{var_pars}.
+        A row name can be repeated to give the same inhibitor two independent effects, e.g. inhibiting at both low and high values, by reversing the order of the \code{ic0}/\code{ic100} pair (a decreasing rather than increasing effect with the inhibitor level) for the second occurrence (the only obvious application is for pH).
+        Effects of multiple inhibitors on a group are combined multiplicatively.
+        If omitted (the default), no inhibition is applied. 
+        For example, inhibition by VFA concentration, and by pH at both low and high values:
+        \preformatted{
+ic0 <- matrix(
+  c(8, 8, 8,
+    8, 8, 8,
+    6, 6, 6),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA_conc', 'pH', 'pH'),
+    c('m1', 'm2', 'm3')
+  )
+)
+
+ic100 <- matrix(
+  c(15, 15, 15,
+     9,  9,  9,
+     5,  5,  5),
+  nrow = 3,
+  byrow = TRUE,
+  dimnames = list(
+    c('VFA_conc', 'pH', 'pH'),
+    c('m1', 'm2', 'm3')
+  )
+)}
+      }
     }
     See \code{\link{grp_pars_dig_01}} for a complete example.
   }
@@ -229,7 +264,8 @@ mstoich <- matrix(
         These get their own cumulative output columns and are excluded from removal during a storage emptying event (see \code{storage}), unlike solutes and particulate components.
       }
     }
-    See default values above; only gases actually produced (i.e., present as a row in \code{mstoich}) are kept.
+    See default values above.
+    Only gases actually produced (i.e., present as a row in \code{mstoich}) are kept.
   }
   \item{ctrl_pars}{
     Control parameters, affecting model mechanics rather than the represented system, as a named list with elements:

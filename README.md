@@ -8,7 +8,7 @@ With multiple microbial groups and group-specific parameters describing kinetics
 ABM was originally implemented in the ABM R package, still maintained here: <https://github.com/AU-BCE-EE/ABM>.
 The abmneo package is a new, simplified but more flexible version, with less hard-coding and fewer special cases in the code.
 
-# Maintainers
+# Maintainer
 Sasha D. Hafner (<https://au.dk/sasha.hafner@bce.au.dk>)
 
 # Installation and getting started

@@ -1,7 +1,7 @@
 Package: abmneo
 Type: Package
 Title: Simulate Anaerobic Biodegradation
-Version: 0.1.0
+Version: 0.1.0.9000
 Date: 2026-09-08
 Authors@R: c(person(given = c("Sasha", "D."),
                     family = "Hafner",

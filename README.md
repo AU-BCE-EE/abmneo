@@ -27,4 +27,4 @@ Dalby, F.R., Hansen, M.J., Guldberg, L.B., Hafner, S.D., Feilberg, A., 2023. Sim
 
 Dalby, F.R., Ambrose, H.W.,  Poulsen, J.S., Nielsen, J.L., Adamsen, A.P.S., 2023. Pig slurry organic matter transformation and methanogenesis at ambient storage temperatures. JEQ. <https://doi.org/10.1002/jeq2.20512> ([download here](https://drive.google.com/file/d/1636ODKPMHjlmNP50sARJViEWv0JBPfRP/view?usp=sharing))
 
-Dalby, F.R., Hafner, S.D., Ambrose, H.W., Adamsen, A.P.S., 2024. Pig manure degradation and carbon emission: Measuring and modeling combined aerobic–anaerobic transformations. JEQ. <https://doi.org/10.1002/jeq2.20603> ([download here](https://drive.google.com/file/d/1m56KUeJ5Rj9pN6ZeSjMQdNzgFENmZJ_l/view?usp=sharing))
+Dalby, F.R., Hafner, S.D., Ambrose, H.W., Adamsen, A.P.S., 2024. Pig manure degradation and carbon emission: Measuring and modeling combined aerobic-anaerobic transformations. JEQ. <https://doi.org/10.1002/jeq2.20603> ([download here](https://drive.google.com/file/d/1m56KUeJ5Rj9pN6ZeSjMQdNzgFENmZJ_l/view?usp=sharing))

@@ -1,5 +1,14 @@
 # Notes on par est
 
+Fitting to Kasper AD tank data.
+From help file in this package:
+
+  A single set "dig_01" is presently available, and was fit to methane emission measurements from a set of three digestate storage tanks in Denmark.
+  Measurements are described in Kasper et al. (2026) and original measurements were shared by first author P. Kasper.
+  Note that the four objects are meant to be used together; the `resid_enrich` value in \code{storage_ex_dig_01} was fit to measurements along with the hydrolysis constant \code{h_rate_ref}, while other parameters were loosely based on ABM parameter sets or "expert judgement".
+  
+  Kasper, P.L., Lycus, P.M. & Holm, M., 2026. Field-scale assessment of ammonia and methane emissions from tent-covered slurry storages using high-resolution tracer decay measurements. Biosystems Engineering, 270, p. 104551. \doi{10.3168/jds.2012-5340}.
+
 Using ABM as inspiration or quantitative values.
 
 From `make-Rda/make_pars.R` at 3a4d47d1b69272a158bd52e5939477e245d0fb14

@@ -1,5 +1,6 @@
 \name{grp_pars_dig_01}
 \docType{data}
+\alias{grp_pars_dig_01}
 \alias{inf_pars_dig_01}
 \alias{sub_pars_dig_01}
 \alias{storage_ex_dig_01}

@@ -2,6 +2,7 @@
 ^renv\.lock$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.claude$
 ^make-Rda$
 ^dev-examples$
 ^dev-tests$

@@ -41,6 +41,12 @@ Other dependencies were also eliminated in abmneo.
 Some of the abmneo functionality is demonstrated in the examples below.
 Not all the processes available in abmneo are shown however; respiration, ammonia production, and volatilization are available but not shown.
 
+Let's load the new package and get started.
+
+```{r}
+library(abmneo)
+```
+
 # Input arguments and parameters
 Here are the `abmneo()` arguments:
 
@@ -839,6 +845,15 @@ out_reg_2k <- abmneo(
 Let's add to the plot from above.
 
 ```{r}
+matplot(
+  out_reg_2$time, 
+  out_reg_2[, nn <- grp_ref$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1, type = 'l',
+  ylab = 'Xa'
+)
+legend('topright', legend = nn, col = cc, lty = 1)
+
 matlines(
   out_reg_2k$time, 
   out_reg_2k[, nn <- grp_ref$grps], 
@@ -864,6 +879,15 @@ out_reg_2kt <- abmneo(
 ```
 
 ```{r}
+matplot(
+  out_reg_2$time, 
+  out_reg_2[, nn <- grp_ref$grps], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1, type = 'l',
+  ylab = 'Xa'
+)
+legend('topright', legend = nn, col = cc, lty = 1)
+
 matlines(
   out_reg_2kt$time, 
   out_reg_2kt[, nn <- grp_ref$grps], 
@@ -959,7 +983,6 @@ The inhibitors never get close to the ic0 even.
 So we'll increase them with `var_pars`.
 
 ```{r}
-devtools::load_all()
 out_inhib_2 <- abmneo(
   storage = storage_ex_dig_01,
   365,

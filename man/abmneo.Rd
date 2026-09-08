@@ -325,7 +325,8 @@ ic100 <- matrix(
 }
 
 \details{
-  The function simulates anaerobic biodegradation.
+  The function simulates anaerobic biodegradation during storage of animal manure or other high-moisture organic-rich materials.
+  The original ABM model is described in Daly et al. (2021), and is implemented in the ABM R package, available here: \url{https://github.com/AU-BCE-EE/ABM}.
 }
 
 \value{

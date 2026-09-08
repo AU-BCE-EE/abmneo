@@ -13,8 +13,8 @@ date: "`r format(Sys.time(), '%d %B, %Y %H:%M')`"
 The abmneo package, with a single `abmneo()` function, is an implementation of the ABM model for anaerobic biodegradation of organic wastes (Dalby et al., 2021).
 The ABM model is also available in an earlier [ABM package](https://github.com/AU-BCE-EE/ABM).
 The new package was developed as a simpler but more flexible alternative.
-Most of that simplicity is in the code; the user experience is roughly similar if default parameter sets are used.
 For user-defined substrates, microbial groups, or metabolic pathways, the newer package provides much more flexibility.
+But it does not include all the functionality available in the ABM package, including rest days and washing between animal batches and evaporation of water. 
 This vignette demonstrates the use of the `abmneo()` model function. 
 
 # What's different?
@@ -24,25 +24,22 @@ The main differences between abmneo and ABM are:
 2. handling of time-variable inputs, and
 3. input flexibility for substrates, microbial groups, and stoichiometry.
 
-Not all of these are discussed in this document.
-
-In abmneo, time-variable inputs (2 above) are treated using steps instead of the interpolation approach used in ABM.
+In abmneo, time-variable inputs are treated using steps instead of the interpolation approach used in ABM.
 This approach ostensibly reduces the accuracy of the model as a tradeoff for simpler code, more flexibility in which inputs can vary, and faster evaluation.
 But in practice the effects seem negligible beyond a visual effect in plots.
 
 Hard-coded behavior and special cases in ABM includes the microbial community, with fixed symbols for methanogen and sulfate reducer names and designated code for each. 
-In contrast, the microbial community in abmneo is defined completely by input parameters, and stoichiometry can be specified.
+In contrast, the microbial community in abmneo is defined completely by input parameters, and stoichiometry is explicitly specified in input arguments.
 Internally, shorter vectorized or matrix operations do the work for all groups without special cases.
 Substrates and inhibition are two other areas where these types of major changes were made.
 
-C++ code and the Rcpp package were incorporated into the ABM package for speed, but at the expense of simple code and easy debugging.
-So it was dropped from abmneo, with any speed penalty apparently offset by other simplifications.
+C++ code and the Rcpp package were incorporated into the ABM package for speed, but also bring some complexity.
+The abmneo package uses only R, with any speed penalty apparently offset by other simplifications.
 In the end abmneo is not obviously slower than ABM; it is even slightly faster in some cases.
 Other dependencies were also eliminated in abmneo.
 
-```{r}
-devtools::load_all()
-```
+Some of the abmneo functionality is demonstrated in the examples below.
+Not all the processes available in abmneo are shown however; respiration, ammonia production, and volatilization are available but not shown.
 
 # Input arguments and parameters
 Here are the `abmneo()` arguments:

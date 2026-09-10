@@ -553,6 +553,83 @@ plot(CH4 ~ time, data = out_dig, type = 'l')
 plot(slurry_mass ~ time, data = out_dig, type = 'l', ylim = c(0, 2e6))
 ```
 
+# Default pig manure parameter set
+
+As of v0.1.1, the abmneo package includes a default parameter set for pig manure.
+It is loosely based on the `pig_pars3.0` set in the ABM package (commit 3a4d47d1b69272a158bd52e5939477e245d0fb14).
+And it has some overlap with the `_ref` parameters defined near the top of this vignette.
+
+```{r}
+grp_pars_pig_01
+```
+
+```{r}
+inf_pars_pig_01
+```
+
+```{r}
+sub_pars_pig_01
+```
+
+There is also an example storage object for pig housing.
+
+```{r}
+storage_ex_pig_01
+```
+
+Let's use these all together.
+
+```{r}
+out_pig_01 <- abmneo(
+  storage = storage_ex_pig_01,
+  365,
+  inf_pars = inf_pars_pig_01,
+  grp_pars = grp_pars_pig_01,
+  sub_pars = sub_pars_pig_01
+)
+```
+
+Methane emission rate, in g/d.
+
+```{r}
+plot(CH4_emis_rate ~ time, data = out_pig_01, type = 'l')
+```
+
+And cumulative emission in g.
+
+```{r}
+plot(CH4 ~ time, data = out_pig_01, type = 'l')
+```
+
+Microbial biomass concentrations (g COD / kg).
+
+```{r}
+matplot(
+  out_pig_01$time, 
+  out_pig_01[, nn <- paste0(grp_pars_pig_01$grps, '_conc')], 
+  col = cc <- c('blue', 'orange', 'green', 'black', 'black', 'black', 'red'), 
+  lty = 1:length(nn), 
+  type = 'l',
+  ylab = 'Xa conc'
+)
+legend('topright', legend = nn, col = cc, lty = 1:length(nn))
+```
+
+Is there any sulfate reduction?
+
+```{r}
+plot(SO4_conc ~ time, data = out_pig_01, type = 'l')
+plot(SO4_conc ~ time, data = out_pig_01, type = 'l', xlim = c(0, 3))
+```
+
+Yes, because sulfate is consumed, but the small amount present is completely used up in the first day of the simulation.
+
+And VFA concentration:
+
+```{r}
+plot(VFA_conc ~ time, data = out_pig_01, type = 'l')
+```
+
 # Optional arguments
 
 This section briefly presents the use of some of the optional `abmneo()` arguments.

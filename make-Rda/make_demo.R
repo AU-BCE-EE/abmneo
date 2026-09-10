@@ -14,3 +14,17 @@ storage_ex_dig_01 <- list(
 
 save(storage_ex_dig_01, file = '../data/storage_ex_dig_01.rda')
 
+storage_ex_pig_01 <- list(
+  type = 'regular',
+  slurry_prod_rate = 5, 
+  storage_depth = 2,     
+  area = 0.65,              
+  temp_C = 20,
+  resid_enrich = 0.6,
+  slurry_mass = 6.5,     
+  resid_depth = 0.05,      
+  empty_int = 28
+)
+
+save(storage_ex_pig_01, file = '../data/storage_ex_pig_01.rda')
+
